@@ -215,11 +215,12 @@ class SSHUploader:
     def _upload_binary(self, local_binary: Path) -> None:
         """Upload binary to remote host."""
         remote_binary = os.path.join(self.remote_path, self.binary_name)
-        remote_temp = f"{remote_binary}.new"
+        # Upload to /tmp first (user has write access)
+        remote_temp = f"/tmp/{self.binary_name}.new"
 
         _LOGGER.info("Uploading binary to %s:%s...", self.ssh_host, remote_binary)
 
-        # Upload to temporary location
+        # Upload to temporary location in /tmp
         scp_cmd = self._build_scp_command(str(local_binary), remote_temp)
         self._run_command(scp_cmd)
 
