@@ -12,8 +12,6 @@ from esphome.const import (
     CONF_PASSWORD,
     CONF_PATH,
     CONF_PORT,
-    CONF_RUN_AS_GROUP,
-    CONF_RUN_AS_USER,
     CONF_USERNAME,
 )
 from esphome.core import CORE, EsphomeError
@@ -21,6 +19,8 @@ from esphome.core import CORE, EsphomeError
 _LOGGER = logging.getLogger(__name__)
 
 CONF_HOST = "host"
+CONF_RUN_AS_USER = "run_as_user"
+CONF_RUN_AS_GROUP = "run_as_group"
 
 SYSTEMD_SERVICE_TEMPLATE = """\
 [Unit]

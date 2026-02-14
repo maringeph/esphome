@@ -7,14 +7,11 @@ from esphome.components.ota import BASE_OTA_SCHEMA, OTAComponent, ota_to_code
 import esphome.config_validation as cv
 from esphome.const import (
     CONF_ID,
-    CONF_INIT_SYSTEM,
     CONF_KEY,
     CONF_NAME,
     CONF_PASSWORD,
     CONF_PATH,
     CONF_PORT,
-    CONF_RUN_AS_GROUP,
-    CONF_RUN_AS_USER,
     CONF_USERNAME,
 )
 from esphome.core import CORE, coroutine_with_priority
@@ -26,6 +23,9 @@ CODEOWNERS = ["@maringeph"]
 DEPENDENCIES = ["network"]
 
 CONF_HOST = "host"
+CONF_INIT_SYSTEM = "init_system"
+CONF_RUN_AS_USER = "run_as_user"
+CONF_RUN_AS_GROUP = "run_as_group"
 
 ssh_ota_ns = cg.esphome_ns.namespace("ssh_ota")
 SSHOTAComponent = ssh_ota_ns.class_("SSHOTAComponent", OTAComponent)
