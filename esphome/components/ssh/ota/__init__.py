@@ -69,7 +69,6 @@ CONFIG_SCHEMA = cv.All(
     )
     .extend(BASE_OTA_SCHEMA)
     .extend(cv.COMPONENT_SCHEMA),
-    cv.has_at_least_one_key(CONF_KEY, CONF_PASSWORD),
 )
 
 FINAL_VALIDATE_SCHEMA = _ssh_ota_final_validate
