@@ -48,20 +48,27 @@ def upload_program(config, args, host):
     Returns:
         bool: True if upload was handled, False to fall back to default upload.
     """
+    import logging
     from esphome.const import CONF_OTA, CONF_PLATFORM
+
+    _LOGGER = logging.getLogger(__name__)
+    _LOGGER.info("Host platform upload_program() called")
 
     # Check if SSH OTA is configured
     ssh_ota_config = None
     for ota_conf in config.get(CONF_OTA, []):
+        _LOGGER.info("Found OTA config with platform: %s", ota_conf.get(CONF_PLATFORM))
         if ota_conf.get(CONF_PLATFORM) == "ssh":
             ssh_ota_config = ota_conf
             break
 
     if not ssh_ota_config:
         # No SSH OTA configured, return False to use default behavior
+        _LOGGER.info("No SSH OTA configured, falling back to default behavior")
         return False
 
     # Import SSH uploader
+    _LOGGER.info("SSH OTA configured, starting upload")
     from esphome.components.ssh.ota.ssh_uploader import upload_via_ssh
     from esphome.platformio_api import get_idedata
 
