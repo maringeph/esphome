@@ -1,0 +1,54 @@
+sensor:
+  - platform: ds100_meter
+    modbus_id: modbus_bus
+    address: 0x01
+    update_interval: 10s
+    phase_a:
+      voltage:
+        name: L1 Voltage
+      current:
+        name: L1 Current
+      active_power:
+        name: L1 Active Power
+      apparent_power:
+        name: L1 Apparent Power
+      reactive_power:
+        name: L1 Reactive Power
+      power_factor:
+        name: L1 Power Factor
+    phase_b:
+      voltage:
+        name: L2 Voltage
+    phase_c:
+      current:
+        name: L3 Current
+    total_power:
+      name: Total Power
+    frequency:
+      name: Frequency
+    active_energy:
+      name: Active Energy
+    import_active_energy:
+      name: Import Active Energy
+    export_active_energy:
+      name: Export Active Energy
+    reactive_energy:
+      name: Reactive Energy
+    import_reactive_energy:
+      name: Import Reactive Energy
+    export_reactive_energy:
+      name: Export Reactive Energy
+    # Test quadrants
+    quadrant_1:
+      name: Reactive Energy Q1
+    quadrant_2:
+      name: Reactive Energy Q2
+    # Test tariffs
+    tariff_1:
+      import_active_energy:
+        name: T1 Import Active Energy
+      quadrant_1:
+        name: T1 Reactive Energy Q1
+    tariff_2:
+      export_active_energy:
+        name: T2 Export Active Energy
