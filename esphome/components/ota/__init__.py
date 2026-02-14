@@ -50,9 +50,14 @@ def _ota_final_validate(config):
             f"At least one platform must be specified for '{CONF_OTA}'; add '{CONF_PLATFORM}: {CONF_ESPHOME}' for original OTA functionality"
         )
     if CORE.is_host:
-        _LOGGER.warning(
-            "OTA not available for platform 'host'. OTA functionality disabled."
+        # Check if SSH OTA is configured
+        has_ssh_ota = any(
+            ota_item.get(CONF_PLATFORM) == "ssh" for ota_item in config
         )
+        if not has_ssh_ota:
+            _LOGGER.warning(
+                "OTA not available for platform 'host'. OTA functionality disabled."
+            )
 
 
 FINAL_VALIDATE_SCHEMA = _ota_final_validate
