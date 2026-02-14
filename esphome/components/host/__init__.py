@@ -39,6 +39,42 @@ CONFIG_SCHEMA = cv.All(
 )
 
 
+def upload_program(config, args, host):
+    """Upload compiled binary to remote host via SSH.
+
+    This function is called by esphome/__main__.py::upload_program() when
+    the user runs 'esphome upload config.yaml' with platform: host.
+
+    Returns:
+        bool: True if upload was handled, False to fall back to default upload.
+    """
+    from esphome.const import CONF_OTA, CONF_PLATFORM
+
+    # Check if SSH OTA is configured
+    ssh_ota_config = None
+    for ota_conf in config.get(CONF_OTA, []):
+        if ota_conf.get(CONF_PLATFORM) == "ssh":
+            ssh_ota_config = ota_conf
+            break
+
+    if not ssh_ota_config:
+        # No SSH OTA configured, return False to use default behavior
+        return False
+
+    # Import SSH uploader
+    from esphome.components.ssh.ota.ssh_uploader import upload_via_ssh
+    from esphome.platformio_api import get_idedata
+
+    # Get binary path (native executable for host platform)
+    binary_path = get_idedata(config).firmware_elf_path
+
+    # Upload via SSH
+    upload_via_ssh(ssh_ota_config, binary_path)
+
+    # Return True to indicate upload was handled
+    return True
+
+
 async def to_code(config):
     cg.add_build_flag("-DUSE_HOST")
     cg.add_define("USE_ESPHOME_HOST_MAC_ADDRESS", config[CONF_MAC_ADDRESS].parts)

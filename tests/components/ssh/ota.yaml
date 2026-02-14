@@ -1,0 +1,17 @@
+esphome:
+  name: test-ssh-ota
+
+host:
+
+ota:
+  - platform: ssh
+    host: localhost
+    username: test
+    key: /tmp/test_ssh_key
+    name: test-ssh-ota
+    path: /tmp
+    init_system: systemd
+
+logger:
+
+api:
