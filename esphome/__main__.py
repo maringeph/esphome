@@ -40,6 +40,7 @@ from esphome.const import (
     CONF_PLATFORM,
     CONF_PLATFORMIO_OPTIONS,
     CONF_PORT,
+    CONF_SSH,
     CONF_SUBSTITUTIONS,
     CONF_TOPIC,
     ENV_NOGITIGNORE,
@@ -294,11 +295,11 @@ def has_api() -> bool:
 
 
 def has_ota() -> bool:
-    """Check if OTA upload is available (requires platform: esphome)."""
+    """Check if OTA upload is available (requires platform: esphome or ssh)."""
     if CONF_OTA not in CORE.config:
         return False
     return any(
-        ota_item.get(CONF_PLATFORM) == CONF_ESPHOME
+        ota_item.get(CONF_PLATFORM) in (CONF_ESPHOME, CONF_SSH)
         for ota_item in CORE.config[CONF_OTA]
     )
 
