@@ -49,13 +49,30 @@ def _ssh_ota_final_validate(config):
             "Add 'esphome: platform: host' to your configuration."
         )
 
+    # Ensure either host is specified in SSH OTA or host.use_address is configured
+    ssh_ota_conf = None
+    for ota_conf in config.get("ota", []):
+        if ota_conf.get("platform") == "ssh":
+            ssh_ota_conf = ota_conf
+            break
+
+    if ssh_ota_conf and CONF_HOST not in ssh_ota_conf:
+        # Check if host.use_address is configured
+        host_conf = config.get("host", {})
+        if "use_address" not in host_conf:
+            raise cv.Invalid(
+                "SSH OTA requires either 'host' field in ota.ssh config "
+                "or 'use_address' in host component. "
+                "Add 'host: use_address: <address>' to your configuration."
+            )
+
 CONFIG_SCHEMA = cv.All(
     cv.Schema(
         {
             cv.GenerateID(): cv.declare_id(SSHOTAComponent),
-            cv.Optional(CONF_HOST): cv.string,  # Optional: can be inferred from network
+            cv.Optional(CONF_HOST): cv.string_strict,
             cv.Optional(CONF_PORT, default=cast(Any, 22)): cv.port,
-            cv.Required(CONF_USERNAME): cv.string,  # Required: avoid confusion
+            cv.Required(CONF_USERNAME): cv.string,
             cv.Optional(CONF_KEY): cv.All(cv.string, _validate_ssh_key),
             cv.Optional(CONF_PASSWORD): cv.string,
             cv.Optional(CONF_NAME): cv.string,  # Service/binary name (default: CORE.name)
