@@ -47,14 +47,17 @@ class SSHUploader:
     def __init__(self, config: dict[str, Any]):
         """Initialize SSH uploader with configuration."""
         self.config = config
-        # Get host from config or fall back to network use_address
+        # Get host from config or fall back to CORE.address (from host.use_address)
         self.ssh_host = config.get(CONF_HOST)
         if not self.ssh_host:
-            # Will be resolved from network component at runtime
-            raise EsphomeError(
-                "SSH OTA requires 'host' parameter. "
-                "Automatic detection from network component not yet implemented."
-            )
+            # Try to get from CORE.address (set by host component)
+            self.ssh_host = CORE.address
+            if not self.ssh_host:
+                raise EsphomeError(
+                    "SSH OTA requires either 'host' parameter in ota.ssh config "
+                    "or 'use_address' in host component."
+                )
+            _LOGGER.info("Using host address from host component: %s", self.ssh_host)
         self.ssh_port = config[CONF_PORT]
         self.ssh_user = config[CONF_USERNAME]
         self.ssh_key = config.get(CONF_KEY)
