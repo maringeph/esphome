@@ -51,10 +51,10 @@ def _ota_final_validate(config):
         )
     if CORE.is_host:
         # Check if SSH OTA is configured
-        has_ssh_ota = any(
+        host_with_ota = any(
             ota_item.get(CONF_PLATFORM) == "ssh" for ota_item in config
         )
-        if not has_ssh_ota:
+        if not host_with_ota:
             _LOGGER.warning(
                 "OTA not available for platform 'host'. OTA functionality disabled."
             )

@@ -897,19 +897,11 @@ def command_run(args: ArgsProtocol, config: ConfigType) -> int | None:
     if exit_code != 0:
         return exit_code
     _LOGGER.info("Successfully compiled program.")
-    if CORE.is_host:
-        # Check for platform-specific upload hook (e.g., SSH OTA)
-        try:
-            module = importlib.import_module(
-                "esphome.components." + CORE.target_platform
-            )
-            if getattr(module, "upload_program")(config, args, ""):
-                _LOGGER.info("Successfully uploaded program.")
-                return 0
-        except (AttributeError, ImportError):
-            pass
-
-        # Fall back to running locally
+    host_with_ota = any(
+        ota.get(CONF_PLATFORM) == "ssh" for ota in config.get(CONF_OTA, [])
+    )
+    if CORE.is_host and not host_with_ota:
+        # Host platform without SSH OTA - run locally
         from esphome.platformio_api import get_idedata
 
         program_path = str(get_idedata(config).firmware_elf_path)
