@@ -668,6 +668,12 @@ class EsphomeCore:
         if CONF_OPENTHREAD in self.config:
             return f"{self.name}.local"
 
+        # Check for host platform use_address
+        if PLATFORM_HOST in self.config:
+            host_config = self.config[PLATFORM_HOST]
+            if isinstance(host_config, dict) and CONF_USE_ADDRESS in host_config:
+                return host_config[CONF_USE_ADDRESS]
+
         return None
 
     @property

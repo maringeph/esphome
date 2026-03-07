@@ -49,7 +49,12 @@ def _ota_final_validate(config):
         raise cv.Invalid(
             f"At least one platform must be specified for '{CONF_OTA}'; add '{CONF_PLATFORM}: {CONF_ESPHOME}' for original OTA functionality"
         )
-    if CORE.is_host:
+    # Check if host platform has OTA explicitly enabled
+    host_ota_enabled = False
+    if CORE.is_host and "host" in CORE.data:
+        host_ota_enabled = CORE.data["host"].get("ota", False)
+
+    if CORE.is_host and not host_ota_enabled:
         _LOGGER.warning(
             "OTA not available for platform 'host'. OTA functionality disabled."
         )
