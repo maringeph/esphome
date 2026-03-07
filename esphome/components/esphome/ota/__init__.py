@@ -16,7 +16,7 @@ from esphome.const import (
     CONF_SAFE_MODE,
     CONF_VERSION,
 )
-from esphome.core import coroutine_with_priority
+from esphome.core import CORE, coroutine_with_priority
 from esphome.coroutine import CoroPriority
 import esphome.final_validate as fv
 from esphome.types import ConfigType
@@ -139,6 +139,11 @@ FINAL_VALIDATE_SCHEMA = ota_esphome_final_validate
 
 @coroutine_with_priority(CoroPriority.OTA_UPDATES)
 async def to_code(config: ConfigType) -> None:
+    # On host platform only OTA client is used
+    if CORE.is_host:
+        cg.add_define("USE_OTA_VERSION", config[CONF_VERSION])
+        return
+
     var = cg.new_Pvariable(config[CONF_ID])
     cg.add(var.set_port(config[CONF_PORT]))
 
