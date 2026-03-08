@@ -911,12 +911,15 @@ def command_run(args: ArgsProtocol, config: ConfigType) -> int | None:
     if exit_code != 0:
         return exit_code
     _LOGGER.info("Successfully compiled program.")
+    # On host platform: run locally unless host.ota is explicitly enabled
     if CORE.is_host:
-        from esphome.platformio_api import get_idedata
+        host_config = CORE.config.get("host", {})
+        if not host_config.get("ota", False):
+            from esphome.platformio_api import get_idedata
 
-        program_path = str(get_idedata(config).firmware_elf_path)
-        _LOGGER.info("Running program from path '%s'", program_path)
-        return run_external_process(program_path)
+            program_path = str(get_idedata(config).firmware_elf_path)
+            _LOGGER.info("Running program from path '%s'", program_path)
+            return run_external_process(program_path)
 
     # Get devices, resolving special identifiers like OTA
     devices = choose_upload_log_host(
