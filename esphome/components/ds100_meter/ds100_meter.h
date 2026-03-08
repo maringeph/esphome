@@ -1,7 +1,10 @@
 #pragma once
 
+#include "esphome/components/binary_sensor/binary_sensor.h"
+#include "esphome/components/button/button.h"
 #include "esphome/components/modbus/modbus.h"
 #include "esphome/components/sensor/sensor.h"
+#include "esphome/components/text_sensor/text_sensor.h"
 #include "esphome/core/component.h"
 
 #include <array>
@@ -9,6 +12,10 @@
 
 namespace esphome {
 namespace ds100_meter {
+
+// Forward declarations for button classes (defined in settings/)
+class DS100ResetMaximumDemandButton;
+class DS100ResetStatisticsButton;
 
 /// DS100 Meter - 3-phase energy meter with Modbus interface
 class DS100Meter : public PollingComponent, public modbus::ModbusDevice {
@@ -227,6 +234,29 @@ class DS100Meter : public PollingComponent, public modbus::ModbusDevice {
     this->set_phase_sensor(this->maximum_demand_sensors_.total_reactive_, phase, sensor);
   }
 
+  // Text sensor - Serial Number
+  void set_serial_number_text_sensor(text_sensor::TextSensor *sensor) { this->serial_number_text_sensor_ = sensor; }
+
+  // Text sensor - Software Version
+  void set_software_version_text_sensor(text_sensor::TextSensor *sensor) {
+    this->software_version_text_sensor_ = sensor;
+  }
+
+  // Text sensor - Hardware Version
+  void set_hardware_version_text_sensor(text_sensor::TextSensor *sensor) {
+    this->hardware_version_text_sensor_ = sensor;
+  }
+
+  // Text sensor - Firmware Checksum
+  void set_firmware_checksum_text_sensor(text_sensor::TextSensor *sensor) {
+    this->firmware_checksum_text_sensor_ = sensor;
+  }
+
+  // Binary sensor - Terminal Signal
+  void set_terminal_signal_binary_sensor(binary_sensor::BinarySensor *sensor) {
+    this->terminal_signal_binary_sensor_ = sensor;
+  }
+
   void update() override;
   void on_modbus_data(const std::vector<uint8_t> &data) override;
   void dump_config() override;
@@ -283,7 +313,7 @@ class DS100Meter : public PollingComponent, public modbus::ModbusDevice {
 
   // Helper method to read power demand sensors (6 types × 4 phases)
   void read_power_demand_sensors(const uint8_t *data, uint16_t base_offset, PowerDemandSensors &sensors,
-                                  float scale = 1.0f);
+                                 float scale = 1.0f);
 
   // Phase data (3 phases: A, B, C)
   std::array<DS100Phase, 3> phases_;
@@ -313,11 +343,52 @@ class DS100Meter : public PollingComponent, public modbus::ModbusDevice {
   PowerDemandSensors maximum_demand_sensors_;  // Peak power demand
 
   // Resettable statistics sensors
-  EnergySensors resettable_total_energy_sensors_;           // Total resettable
+  EnergySensors resettable_total_energy_sensors_;                 // Total resettable
   std::array<EnergySensors, 3> resettable_phase_energy_sensors_;  // Per-phase resettable (A, B, C)
 
   // Per-phase energy statistics
   std::array<EnergySensors, 3> phase_energy_sensors_;  // Per-phase statistics (A, B, C)
+
+  // Text sensor - Serial Number (6 bytes from register 0x1000)
+  text_sensor::TextSensor *serial_number_text_sensor_{nullptr};
+
+  // Text sensor - Software Version (register 0x1004)
+  text_sensor::TextSensor *software_version_text_sensor_{nullptr};
+
+  // Text sensor - Hardware Version (register 0x1005)
+  text_sensor::TextSensor *hardware_version_text_sensor_{nullptr};
+
+  // Text sensor - Firmware Checksum (register 0x1006)
+  text_sensor::TextSensor *firmware_checksum_text_sensor_{nullptr};
+
+  // Binary sensor - Terminal Signal (register 0x101D)
+  binary_sensor::BinarySensor *terminal_signal_binary_sensor_{nullptr};
+};
+
+}  // namespace ds100_meter
+
+// Button classes defined here (not in separate file to avoid include issues)
+namespace ds100_meter {
+class DS100Meter;
+
+/// Button to reset maximum demand values
+class DS100ResetMaximumDemandButton : public button::Button, public Component {
+ public:
+  void set_parent(DS100Meter *parent) { this->parent_ = parent; }
+
+ protected:
+  void press_action() override;
+  DS100Meter *parent_;
+};
+
+/// Button to reset resettable statistics (energy counters)
+class DS100ResetStatisticsButton : public button::Button, public Component {
+ public:
+  void set_parent(DS100Meter *parent) { this->parent_ = parent; }
+
+ protected:
+  void press_action() override;
+  DS100Meter *parent_;
 };
 
 }  // namespace ds100_meter
