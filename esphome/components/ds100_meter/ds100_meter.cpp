@@ -283,10 +283,10 @@ void DS100Meter::on_modbus_data(const std::vector<uint8_t> &data) {
     return encode_uint16(data[byte_offset], data[byte_offset + 1]);
   };
 
-  // Helper to get register value for frequency (16-bit integer scaled by 100)
+  // Helper to get register value for frequency (16-bit integer scaled by 10)
   auto get_frequency = [&](size_t byte_offset) -> float {
     uint16_t raw = get_uint16(byte_offset);
-    return raw / 100.0f;
+    return raw / 10.0f;
   };
 
   // Helper to get register value for power factor (16-bit integer scaled by 1000)

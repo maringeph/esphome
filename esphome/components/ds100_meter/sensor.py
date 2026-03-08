@@ -28,7 +28,7 @@ from esphome.const import (
     ICON_CURRENT_AC,
     ICON_FLASH,
     STATE_CLASS_MEASUREMENT,
-    STATE_CLASS_TOTAL_INCREASING,
+    STATE_CLASS_TOTAL,
     UNIT_AMPERE,
     UNIT_DEGREES,
     UNIT_HERTZ,
@@ -78,7 +78,7 @@ DS100Meter = ds100_meter_ns.class_(
 PHASE_SENSORS = {
     CONF_VOLTAGE: sensor.sensor_schema(
         unit_of_measurement=UNIT_VOLT,
-        accuracy_decimals=2,
+        accuracy_decimals=3,
         device_class=DEVICE_CLASS_VOLTAGE,
         state_class=STATE_CLASS_MEASUREMENT,
     ),
@@ -90,18 +90,18 @@ PHASE_SENSORS = {
     ),
     CONF_ACTIVE_POWER: sensor.sensor_schema(
         unit_of_measurement=UNIT_WATT,
-        accuracy_decimals=2,
+        accuracy_decimals=0,
         device_class=DEVICE_CLASS_POWER,
         state_class=STATE_CLASS_MEASUREMENT,
     ),
     CONF_APPARENT_POWER: sensor.sensor_schema(
         unit_of_measurement=UNIT_VOLT_AMPS,
-        accuracy_decimals=2,
+        accuracy_decimals=0,
         state_class=STATE_CLASS_MEASUREMENT,
     ),
     CONF_REACTIVE_POWER: sensor.sensor_schema(
         unit_of_measurement=UNIT_VOLT_AMPS_REACTIVE,
-        accuracy_decimals=2,
+        accuracy_decimals=0,
         state_class=STATE_CLASS_MEASUREMENT,
     ),
     CONF_POWER_FACTOR: sensor.sensor_schema(
@@ -123,34 +123,34 @@ ENERGY_SENSORS = {
         unit_of_measurement=UNIT_KILOWATT_HOURS,
         accuracy_decimals=2,
         device_class=DEVICE_CLASS_ENERGY,
-        state_class=STATE_CLASS_TOTAL_INCREASING,
+        state_class=STATE_CLASS_TOTAL,
     ),
     CONF_IMPORT_ACTIVE_ENERGY: sensor.sensor_schema(
         unit_of_measurement=UNIT_KILOWATT_HOURS,
         accuracy_decimals=2,
         device_class=DEVICE_CLASS_ENERGY,
-        state_class=STATE_CLASS_TOTAL_INCREASING,
+        state_class=STATE_CLASS_TOTAL,
     ),
     CONF_EXPORT_ACTIVE_ENERGY: sensor.sensor_schema(
         unit_of_measurement=UNIT_KILOWATT_HOURS,
         accuracy_decimals=2,
         device_class=DEVICE_CLASS_ENERGY,
-        state_class=STATE_CLASS_TOTAL_INCREASING,
+        state_class=STATE_CLASS_TOTAL,
     ),
     CONF_REACTIVE_ENERGY: sensor.sensor_schema(
         unit_of_measurement=UNIT_KILOVOLT_AMPS_REACTIVE_HOURS,
         accuracy_decimals=2,
-        state_class=STATE_CLASS_TOTAL_INCREASING,
+        state_class=STATE_CLASS_TOTAL,
     ),
     CONF_IMPORT_REACTIVE_ENERGY: sensor.sensor_schema(
         unit_of_measurement=UNIT_KILOVOLT_AMPS_REACTIVE_HOURS,
         accuracy_decimals=2,
-        state_class=STATE_CLASS_TOTAL_INCREASING,
+        state_class=STATE_CLASS_TOTAL,
     ),
     CONF_EXPORT_REACTIVE_ENERGY: sensor.sensor_schema(
         unit_of_measurement=UNIT_KILOVOLT_AMPS_REACTIVE_HOURS,
         accuracy_decimals=2,
-        state_class=STATE_CLASS_TOTAL_INCREASING,
+        state_class=STATE_CLASS_TOTAL,
     ),
 }
 
@@ -158,35 +158,35 @@ ENERGY_SENSORS = {
 DEMAND_SENSORS = {
     CONF_IMPORT_ACTIVE_DEMAND: sensor.sensor_schema(
         unit_of_measurement=UNIT_WATT,
-        accuracy_decimals=2,
+        accuracy_decimals=0,
         device_class=DEVICE_CLASS_POWER,
         state_class=STATE_CLASS_MEASUREMENT,
     ),
     CONF_EXPORT_ACTIVE_DEMAND: sensor.sensor_schema(
         unit_of_measurement=UNIT_WATT,
-        accuracy_decimals=2,
+        accuracy_decimals=0,
         device_class=DEVICE_CLASS_POWER,
         state_class=STATE_CLASS_MEASUREMENT,
     ),
     CONF_TOTAL_ACTIVE_DEMAND: sensor.sensor_schema(
         unit_of_measurement=UNIT_WATT,
-        accuracy_decimals=2,
+        accuracy_decimals=0,
         device_class=DEVICE_CLASS_POWER,
         state_class=STATE_CLASS_MEASUREMENT,
     ),
     CONF_IMPORT_REACTIVE_DEMAND: sensor.sensor_schema(
         unit_of_measurement=UNIT_VOLT_AMPS_REACTIVE,
-        accuracy_decimals=2,
+        accuracy_decimals=0,
         state_class=STATE_CLASS_MEASUREMENT,
     ),
     CONF_EXPORT_REACTIVE_DEMAND: sensor.sensor_schema(
         unit_of_measurement=UNIT_VOLT_AMPS_REACTIVE,
-        accuracy_decimals=2,
+        accuracy_decimals=0,
         state_class=STATE_CLASS_MEASUREMENT,
     ),
     CONF_TOTAL_REACTIVE_DEMAND: sensor.sensor_schema(
         unit_of_measurement=UNIT_VOLT_AMPS_REACTIVE,
-        accuracy_decimals=2,
+        accuracy_decimals=0,
         state_class=STATE_CLASS_MEASUREMENT,
     ),
 }
@@ -195,35 +195,35 @@ DEMAND_SENSORS = {
 MAXIMUM_DEMAND_SENSORS = {
     CONF_IMPORT_ACTIVE_MAXIMUM_DEMAND: sensor.sensor_schema(
         unit_of_measurement=UNIT_WATT,
-        accuracy_decimals=2,
+        accuracy_decimals=0,
         device_class=DEVICE_CLASS_POWER,
         state_class=STATE_CLASS_MEASUREMENT,
     ),
     CONF_EXPORT_ACTIVE_MAXIMUM_DEMAND: sensor.sensor_schema(
         unit_of_measurement=UNIT_WATT,
-        accuracy_decimals=2,
+        accuracy_decimals=0,
         device_class=DEVICE_CLASS_POWER,
         state_class=STATE_CLASS_MEASUREMENT,
     ),
     CONF_TOTAL_ACTIVE_MAXIMUM_DEMAND: sensor.sensor_schema(
         unit_of_measurement=UNIT_WATT,
-        accuracy_decimals=2,
+        accuracy_decimals=0,
         device_class=DEVICE_CLASS_POWER,
         state_class=STATE_CLASS_MEASUREMENT,
     ),
     CONF_IMPORT_REACTIVE_MAXIMUM_DEMAND: sensor.sensor_schema(
         unit_of_measurement=UNIT_VOLT_AMPS_REACTIVE,
-        accuracy_decimals=2,
+        accuracy_decimals=0,
         state_class=STATE_CLASS_MEASUREMENT,
     ),
     CONF_EXPORT_REACTIVE_MAXIMUM_DEMAND: sensor.sensor_schema(
         unit_of_measurement=UNIT_VOLT_AMPS_REACTIVE,
-        accuracy_decimals=2,
+        accuracy_decimals=0,
         state_class=STATE_CLASS_MEASUREMENT,
     ),
     CONF_TOTAL_REACTIVE_MAXIMUM_DEMAND: sensor.sensor_schema(
         unit_of_measurement=UNIT_VOLT_AMPS_REACTIVE,
-        accuracy_decimals=2,
+        accuracy_decimals=0,
         state_class=STATE_CLASS_MEASUREMENT,
     ),
 }
@@ -233,22 +233,22 @@ QUADRANT_SENSORS = {
     CONF_QUADRANT_1: sensor.sensor_schema(
         unit_of_measurement=UNIT_KILOVOLT_AMPS_REACTIVE_HOURS,
         accuracy_decimals=2,
-        state_class=STATE_CLASS_TOTAL_INCREASING,
+        state_class=STATE_CLASS_TOTAL,
     ),
     CONF_QUADRANT_2: sensor.sensor_schema(
         unit_of_measurement=UNIT_KILOVOLT_AMPS_REACTIVE_HOURS,
         accuracy_decimals=2,
-        state_class=STATE_CLASS_TOTAL_INCREASING,
+        state_class=STATE_CLASS_TOTAL,
     ),
     CONF_QUADRANT_3: sensor.sensor_schema(
         unit_of_measurement=UNIT_KILOVOLT_AMPS_REACTIVE_HOURS,
         accuracy_decimals=2,
-        state_class=STATE_CLASS_TOTAL_INCREASING,
+        state_class=STATE_CLASS_TOTAL,
     ),
     CONF_QUADRANT_4: sensor.sensor_schema(
         unit_of_measurement=UNIT_KILOVOLT_AMPS_REACTIVE_HOURS,
         accuracy_decimals=2,
-        state_class=STATE_CLASS_TOTAL_INCREASING,
+        state_class=STATE_CLASS_TOTAL,
     ),
 }
 
@@ -330,12 +330,12 @@ CONFIG_SCHEMA = (
             cv.Optional(CONF_FREQUENCY): sensor.sensor_schema(
                 unit_of_measurement=UNIT_HERTZ,
                 icon=ICON_CURRENT_AC,
-                accuracy_decimals=3,
+                accuracy_decimals=1,
                 state_class=STATE_CLASS_MEASUREMENT,
             ),
             cv.Optional(CONF_TOTAL_POWER): sensor.sensor_schema(
                 unit_of_measurement=UNIT_WATT,
-                accuracy_decimals=2,
+                accuracy_decimals=0,
                 device_class=DEVICE_CLASS_POWER,
                 state_class=STATE_CLASS_MEASUREMENT,
             ),
@@ -344,55 +344,55 @@ CONFIG_SCHEMA = (
                 unit_of_measurement=UNIT_KILOWATT_HOURS,
                 accuracy_decimals=2,
                 device_class=DEVICE_CLASS_ENERGY,
-                state_class=STATE_CLASS_TOTAL_INCREASING,
+                state_class=STATE_CLASS_TOTAL,
             ),
             cv.Optional(CONF_IMPORT_ACTIVE_ENERGY): sensor.sensor_schema(
                 unit_of_measurement=UNIT_KILOWATT_HOURS,
                 accuracy_decimals=2,
                 device_class=DEVICE_CLASS_ENERGY,
-                state_class=STATE_CLASS_TOTAL_INCREASING,
+                state_class=STATE_CLASS_TOTAL,
             ),
             cv.Optional(CONF_EXPORT_ACTIVE_ENERGY): sensor.sensor_schema(
                 unit_of_measurement=UNIT_KILOWATT_HOURS,
                 accuracy_decimals=2,
                 device_class=DEVICE_CLASS_ENERGY,
-                state_class=STATE_CLASS_TOTAL_INCREASING,
+                state_class=STATE_CLASS_TOTAL,
             ),
             cv.Optional(CONF_REACTIVE_ENERGY): sensor.sensor_schema(
                 unit_of_measurement=UNIT_KILOVOLT_AMPS_REACTIVE_HOURS,
                 accuracy_decimals=2,
-                state_class=STATE_CLASS_TOTAL_INCREASING,
+                state_class=STATE_CLASS_TOTAL,
             ),
             cv.Optional(CONF_IMPORT_REACTIVE_ENERGY): sensor.sensor_schema(
                 unit_of_measurement=UNIT_KILOVOLT_AMPS_REACTIVE_HOURS,
                 accuracy_decimals=2,
-                state_class=STATE_CLASS_TOTAL_INCREASING,
+                state_class=STATE_CLASS_TOTAL,
             ),
             cv.Optional(CONF_EXPORT_REACTIVE_ENERGY): sensor.sensor_schema(
                 unit_of_measurement=UNIT_KILOVOLT_AMPS_REACTIVE_HOURS,
                 accuracy_decimals=2,
-                state_class=STATE_CLASS_TOTAL_INCREASING,
+                state_class=STATE_CLASS_TOTAL,
             ),
             # Quadrants for total
             cv.Optional(CONF_QUADRANT_1): sensor.sensor_schema(
                 unit_of_measurement=UNIT_KILOVOLT_AMPS_REACTIVE_HOURS,
                 accuracy_decimals=2,
-                state_class=STATE_CLASS_TOTAL_INCREASING,
+                state_class=STATE_CLASS_TOTAL,
             ),
             cv.Optional(CONF_QUADRANT_2): sensor.sensor_schema(
                 unit_of_measurement=UNIT_KILOVOLT_AMPS_REACTIVE_HOURS,
                 accuracy_decimals=2,
-                state_class=STATE_CLASS_TOTAL_INCREASING,
+                state_class=STATE_CLASS_TOTAL,
             ),
             cv.Optional(CONF_QUADRANT_3): sensor.sensor_schema(
                 unit_of_measurement=UNIT_KILOVOLT_AMPS_REACTIVE_HOURS,
                 accuracy_decimals=2,
-                state_class=STATE_CLASS_TOTAL_INCREASING,
+                state_class=STATE_CLASS_TOTAL,
             ),
             cv.Optional(CONF_QUADRANT_4): sensor.sensor_schema(
                 unit_of_measurement=UNIT_KILOVOLT_AMPS_REACTIVE_HOURS,
                 accuracy_decimals=2,
-                state_class=STATE_CLASS_TOTAL_INCREASING,
+                state_class=STATE_CLASS_TOTAL,
             ),
             # Tariffs - nested energy values
             cv.Optional(CONF_TARIFF_1): ENERGY_WITH_QUADRANTS_SCHEMA,
