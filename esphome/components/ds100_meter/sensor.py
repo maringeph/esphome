@@ -18,6 +18,7 @@ from esphome.const import (
     CONF_POWER_FACTOR,
     CONF_REACTIVE_POWER,
     CONF_TOTAL_POWER,
+    CONF_UPDATE_INTERVAL,
     CONF_VOLTAGE,
     DEVICE_CLASS_CURRENT,
     DEVICE_CLASS_ENERGY,
@@ -69,7 +70,9 @@ CONF_EXPORT_REACTIVE_MAXIMUM_DEMAND = "export_reactive_maximum_demand"
 CONF_TOTAL_REACTIVE_MAXIMUM_DEMAND = "total_reactive_maximum_demand"
 
 ds100_meter_ns = cg.esphome_ns.namespace("ds100_meter")
-DS100Meter = ds100_meter_ns.class_("DS100Meter", cg.PollingComponent, modbus.ModbusDevice)
+DS100Meter = ds100_meter_ns.class_(
+    "DS100Meter", cg.PollingComponent, modbus.ModbusDevice
+)
 
 # Sensor schemas for phase-specific sensors (livedata)
 PHASE_SENSORS = {
@@ -258,7 +261,10 @@ ENERGY_SCHEMA = cv.Schema(
 )
 
 ENERGY_WITH_QUADRANTS_SCHEMA = ENERGY_SCHEMA.extend(
-    {cv.Optional(sensor_type): schema for sensor_type, schema in QUADRANT_SENSORS.items()}
+    {
+        cv.Optional(sensor_type): schema
+        for sensor_type, schema in QUADRANT_SENSORS.items()
+    }
 )
 
 TARIFF_SCHEMA = cv.Schema(
@@ -275,7 +281,10 @@ DEMAND_SCHEMA = cv.Schema(
 )
 
 MAXIMUM_DEMAND_SCHEMA = cv.Schema(
-    {cv.Optional(sensor_type): schema for sensor_type, schema in MAXIMUM_DEMAND_SENSORS.items()}
+    {
+        cv.Optional(sensor_type): schema
+        for sensor_type, schema in MAXIMUM_DEMAND_SENSORS.items()
+    }
 )
 
 CONF_DEMAND = "demand"
@@ -286,10 +295,33 @@ CONF_STATISTICS_L1 = "statistics_l1"
 CONF_STATISTICS_L2 = "statistics_l2"
 CONF_STATISTICS_L3 = "statistics_l3"
 
+# Update interval configuration for different data categories
+CONF_UPDATE_INTERVAL_LIVEDATA = "update_interval_livedata"
+CONF_UPDATE_INTERVAL_DEMAND = "update_interval_demand"
+CONF_UPDATE_INTERVAL_MAXIMUM_DEMAND = "update_interval_maximum_demand"
+CONF_UPDATE_INTERVAL_STATISTICS = "update_interval_statistics"
+CONF_UPDATE_INTERVAL_SETTINGS = "update_interval_settings"
+CONF_UPDATE_INTERVAL_DEVICE_INFO = "update_interval_device_info"
+
+# Default update intervals in milliseconds
+DEFAULT_LIVEDATA_INTERVAL_MS = 10000  # 10s
+DEFAULT_DEMAND_INTERVAL_MS = 10000  # 10s
+DEFAULT_MAXIMUM_DEMAND_INTERVAL_MS = 60000  # 60s
+DEFAULT_STATISTICS_INTERVAL_MS = 60000  # 60s
+DEFAULT_SETTINGS_INTERVAL_MS = 60000  # 60s
+DEFAULT_DEVICE_INFO_INTERVAL_MS = 60000  # 60s
+
 CONFIG_SCHEMA = (
     cv.Schema(
         {
             cv.GenerateID(): cv.declare_id(DS100Meter),
+            # Update intervals for different data categories
+            cv.Optional(CONF_UPDATE_INTERVAL_LIVEDATA): cv.update_interval,
+            cv.Optional(CONF_UPDATE_INTERVAL_DEMAND): cv.update_interval,
+            cv.Optional(CONF_UPDATE_INTERVAL_MAXIMUM_DEMAND): cv.update_interval,
+            cv.Optional(CONF_UPDATE_INTERVAL_STATISTICS): cv.update_interval,
+            cv.Optional(CONF_UPDATE_INTERVAL_SETTINGS): cv.update_interval,
+            cv.Optional(CONF_UPDATE_INTERVAL_DEVICE_INFO): cv.update_interval,
             # Livedata - phase-specific sensors
             cv.Optional(CONF_PHASE_A): PHASE_SCHEMA,
             cv.Optional(CONF_PHASE_B): PHASE_SCHEMA,
@@ -408,14 +440,24 @@ CONFIG_SCHEMA = (
 def _check_quadrants_used(config):
     """Check if any quadrant sensors are configured."""
     # Check top-level quadrants
-    for quadrant in [CONF_QUADRANT_1, CONF_QUADRANT_2, CONF_QUADRANT_3, CONF_QUADRANT_4]:
+    for quadrant in [
+        CONF_QUADRANT_1,
+        CONF_QUADRANT_2,
+        CONF_QUADRANT_3,
+        CONF_QUADRANT_4,
+    ]:
         if quadrant in config:
             return True
     # Check tariff quadrants
     for tariff in [CONF_TARIFF_1, CONF_TARIFF_2, CONF_TARIFF_3, CONF_TARIFF_4]:
         if tariff in config:
             tariff_config = config[tariff]
-            for quadrant in [CONF_QUADRANT_1, CONF_QUADRANT_2, CONF_QUADRANT_3, CONF_QUADRANT_4]:
+            for quadrant in [
+                CONF_QUADRANT_1,
+                CONF_QUADRANT_2,
+                CONF_QUADRANT_3,
+                CONF_QUADRANT_4,
+            ]:
                 if quadrant in tariff_config:
                     return True
     return False
@@ -478,6 +520,54 @@ async def to_code(config):
     await cg.register_component(var, config)
     await modbus.register_modbus_device(var, config)
 
+    # Set update intervals for different data categories
+    # Use configured values or defaults (convert to milliseconds)
+    livedata_interval = config.get(CONF_UPDATE_INTERVAL_LIVEDATA)
+    if livedata_interval is not None:
+        cg.add(var.set_update_interval_livedata(livedata_interval.total_milliseconds))
+    else:
+        cg.add(var.set_update_interval_livedata(DEFAULT_LIVEDATA_INTERVAL_MS))
+
+    demand_interval = config.get(CONF_UPDATE_INTERVAL_DEMAND)
+    if demand_interval is not None:
+        cg.add(var.set_update_interval_demand(demand_interval.total_milliseconds))
+    else:
+        cg.add(var.set_update_interval_demand(DEFAULT_DEMAND_INTERVAL_MS))
+
+    max_demand_interval = config.get(CONF_UPDATE_INTERVAL_MAXIMUM_DEMAND)
+    if max_demand_interval is not None:
+        cg.add(
+            var.set_update_interval_maximum_demand(
+                max_demand_interval.total_milliseconds
+            )
+        )
+    else:
+        cg.add(
+            var.set_update_interval_maximum_demand(DEFAULT_MAXIMUM_DEMAND_INTERVAL_MS)
+        )
+
+    statistics_interval = config.get(CONF_UPDATE_INTERVAL_STATISTICS)
+    if statistics_interval is not None:
+        cg.add(
+            var.set_update_interval_statistics(statistics_interval.total_milliseconds)
+        )
+    else:
+        cg.add(var.set_update_interval_statistics(DEFAULT_STATISTICS_INTERVAL_MS))
+
+    settings_interval = config.get(CONF_UPDATE_INTERVAL_SETTINGS)
+    if settings_interval is not None:
+        cg.add(var.set_update_interval_settings(settings_interval.total_milliseconds))
+    else:
+        cg.add(var.set_update_interval_settings(DEFAULT_SETTINGS_INTERVAL_MS))
+
+    device_info_interval = config.get(CONF_UPDATE_INTERVAL_DEVICE_INFO)
+    if device_info_interval is not None:
+        cg.add(
+            var.set_update_interval_device_info(device_info_interval.total_milliseconds)
+        )
+    else:
+        cg.add(var.set_update_interval_device_info(DEFAULT_DEVICE_INFO_INTERVAL_MS))
+
     # Set feature flags based on configuration
     use_tariffs = _check_tariffs_used(config)
     use_quadrants = _check_quadrants_used(config)
@@ -534,13 +624,17 @@ async def to_code(config):
         cg.add(var.set_export_reactive_energy_sensor(sens))
 
     # Quadrants - total
-    for i, quadrant in enumerate([CONF_QUADRANT_1, CONF_QUADRANT_2, CONF_QUADRANT_3, CONF_QUADRANT_4]):
+    for i, quadrant in enumerate(
+        [CONF_QUADRANT_1, CONF_QUADRANT_2, CONF_QUADRANT_3, CONF_QUADRANT_4]
+    ):
         if quadrant in config:
             sens = await sensor.new_sensor(config[quadrant])
             cg.add(var.set_reactive_energy_quadrant_sensor(i + 1, sens))
 
     # Tariffs
-    for tariff_idx, tariff in enumerate([CONF_TARIFF_1, CONF_TARIFF_2, CONF_TARIFF_3, CONF_TARIFF_4]):
+    for tariff_idx, tariff in enumerate(
+        [CONF_TARIFF_1, CONF_TARIFF_2, CONF_TARIFF_3, CONF_TARIFF_4]
+    ):
         if tariff not in config:
             continue
 
@@ -573,10 +667,16 @@ async def to_code(config):
             cg.add(var.set_tariff_export_reactive_energy_sensor(tariff_num, sens))
 
         # Quadrants for this tariff
-        for quadrant_idx, quadrant in enumerate([CONF_QUADRANT_1, CONF_QUADRANT_2, CONF_QUADRANT_3, CONF_QUADRANT_4]):
+        for quadrant_idx, quadrant in enumerate(
+            [CONF_QUADRANT_1, CONF_QUADRANT_2, CONF_QUADRANT_3, CONF_QUADRANT_4]
+        ):
             if quadrant in tariff_config:
                 sens = await sensor.new_sensor(tariff_config[quadrant])
-                cg.add(var.set_tariff_reactive_energy_quadrant_sensor(tariff_num, quadrant_idx + 1, sens))
+                cg.add(
+                    var.set_tariff_reactive_energy_quadrant_sensor(
+                        tariff_num, quadrant_idx + 1, sens
+                    )
+                )
 
     # Livedata - phase sensors
     for i, phase in enumerate([CONF_PHASE_A, CONF_PHASE_B, CONF_PHASE_C]):
@@ -620,11 +720,15 @@ async def to_code(config):
                 cg.add(var.set_total_active_demand_sensor(phase_idx, sens))
 
             if CONF_IMPORT_REACTIVE_DEMAND in phase_demand:
-                sens = await sensor.new_sensor(phase_demand[CONF_IMPORT_REACTIVE_DEMAND])
+                sens = await sensor.new_sensor(
+                    phase_demand[CONF_IMPORT_REACTIVE_DEMAND]
+                )
                 cg.add(var.set_import_reactive_demand_sensor(phase_idx, sens))
 
             if CONF_EXPORT_REACTIVE_DEMAND in phase_demand:
-                sens = await sensor.new_sensor(phase_demand[CONF_EXPORT_REACTIVE_DEMAND])
+                sens = await sensor.new_sensor(
+                    phase_demand[CONF_EXPORT_REACTIVE_DEMAND]
+                )
                 cg.add(var.set_export_reactive_demand_sensor(phase_idx, sens))
 
             if CONF_TOTAL_REACTIVE_DEMAND in phase_demand:
@@ -650,27 +754,39 @@ async def to_code(config):
             phase_max_demand = max_demand_config[phase_key]
 
             if CONF_IMPORT_ACTIVE_MAXIMUM_DEMAND in phase_max_demand:
-                sens = await sensor.new_sensor(phase_max_demand[CONF_IMPORT_ACTIVE_MAXIMUM_DEMAND])
+                sens = await sensor.new_sensor(
+                    phase_max_demand[CONF_IMPORT_ACTIVE_MAXIMUM_DEMAND]
+                )
                 cg.add(var.set_import_active_maximum_demand_sensor(phase_idx, sens))
 
             if CONF_EXPORT_ACTIVE_MAXIMUM_DEMAND in phase_max_demand:
-                sens = await sensor.new_sensor(phase_max_demand[CONF_EXPORT_ACTIVE_MAXIMUM_DEMAND])
+                sens = await sensor.new_sensor(
+                    phase_max_demand[CONF_EXPORT_ACTIVE_MAXIMUM_DEMAND]
+                )
                 cg.add(var.set_export_active_maximum_demand_sensor(phase_idx, sens))
 
             if CONF_TOTAL_ACTIVE_MAXIMUM_DEMAND in phase_max_demand:
-                sens = await sensor.new_sensor(phase_max_demand[CONF_TOTAL_ACTIVE_MAXIMUM_DEMAND])
+                sens = await sensor.new_sensor(
+                    phase_max_demand[CONF_TOTAL_ACTIVE_MAXIMUM_DEMAND]
+                )
                 cg.add(var.set_total_active_maximum_demand_sensor(phase_idx, sens))
 
             if CONF_IMPORT_REACTIVE_MAXIMUM_DEMAND in phase_max_demand:
-                sens = await sensor.new_sensor(phase_max_demand[CONF_IMPORT_REACTIVE_MAXIMUM_DEMAND])
+                sens = await sensor.new_sensor(
+                    phase_max_demand[CONF_IMPORT_REACTIVE_MAXIMUM_DEMAND]
+                )
                 cg.add(var.set_import_reactive_maximum_demand_sensor(phase_idx, sens))
 
             if CONF_EXPORT_REACTIVE_MAXIMUM_DEMAND in phase_max_demand:
-                sens = await sensor.new_sensor(phase_max_demand[CONF_EXPORT_REACTIVE_MAXIMUM_DEMAND])
+                sens = await sensor.new_sensor(
+                    phase_max_demand[CONF_EXPORT_REACTIVE_MAXIMUM_DEMAND]
+                )
                 cg.add(var.set_export_reactive_maximum_demand_sensor(phase_idx, sens))
 
             if CONF_TOTAL_REACTIVE_MAXIMUM_DEMAND in phase_max_demand:
-                sens = await sensor.new_sensor(phase_max_demand[CONF_TOTAL_REACTIVE_MAXIMUM_DEMAND])
+                sens = await sensor.new_sensor(
+                    phase_max_demand[CONF_TOTAL_REACTIVE_MAXIMUM_DEMAND]
+                )
                 cg.add(var.set_total_reactive_maximum_demand_sensor(phase_idx, sens))
 
     # Resettable Statistics sensors - energy values that can be reset
@@ -686,11 +802,15 @@ async def to_code(config):
                 cg.add(var.set_resettable_active_energy_sensor(sens))
 
             if CONF_IMPORT_ACTIVE_ENERGY in total_resettable:
-                sens = await sensor.new_sensor(total_resettable[CONF_IMPORT_ACTIVE_ENERGY])
+                sens = await sensor.new_sensor(
+                    total_resettable[CONF_IMPORT_ACTIVE_ENERGY]
+                )
                 cg.add(var.set_resettable_import_active_energy_sensor(sens))
 
             if CONF_EXPORT_ACTIVE_ENERGY in total_resettable:
-                sens = await sensor.new_sensor(total_resettable[CONF_EXPORT_ACTIVE_ENERGY])
+                sens = await sensor.new_sensor(
+                    total_resettable[CONF_EXPORT_ACTIVE_ENERGY]
+                )
                 cg.add(var.set_resettable_export_active_energy_sensor(sens))
 
             if CONF_REACTIVE_ENERGY in total_resettable:
@@ -698,11 +818,15 @@ async def to_code(config):
                 cg.add(var.set_resettable_reactive_energy_sensor(sens))
 
             if CONF_IMPORT_REACTIVE_ENERGY in total_resettable:
-                sens = await sensor.new_sensor(total_resettable[CONF_IMPORT_REACTIVE_ENERGY])
+                sens = await sensor.new_sensor(
+                    total_resettable[CONF_IMPORT_REACTIVE_ENERGY]
+                )
                 cg.add(var.set_resettable_import_reactive_energy_sensor(sens))
 
             if CONF_EXPORT_REACTIVE_ENERGY in total_resettable:
-                sens = await sensor.new_sensor(total_resettable[CONF_EXPORT_REACTIVE_ENERGY])
+                sens = await sensor.new_sensor(
+                    total_resettable[CONF_EXPORT_REACTIVE_ENERGY]
+                )
                 cg.add(var.set_resettable_export_reactive_energy_sensor(sens))
 
         # Per-phase resettable statistics (A, B, C)
@@ -718,24 +842,48 @@ async def to_code(config):
                 cg.add(var.set_resettable_phase_active_energy_sensor(phase_idx, sens))
 
             if CONF_IMPORT_ACTIVE_ENERGY in phase_resettable:
-                sens = await sensor.new_sensor(phase_resettable[CONF_IMPORT_ACTIVE_ENERGY])
-                cg.add(var.set_resettable_phase_import_active_energy_sensor(phase_idx, sens))
+                sens = await sensor.new_sensor(
+                    phase_resettable[CONF_IMPORT_ACTIVE_ENERGY]
+                )
+                cg.add(
+                    var.set_resettable_phase_import_active_energy_sensor(
+                        phase_idx, sens
+                    )
+                )
 
             if CONF_EXPORT_ACTIVE_ENERGY in phase_resettable:
-                sens = await sensor.new_sensor(phase_resettable[CONF_EXPORT_ACTIVE_ENERGY])
-                cg.add(var.set_resettable_phase_export_active_energy_sensor(phase_idx, sens))
+                sens = await sensor.new_sensor(
+                    phase_resettable[CONF_EXPORT_ACTIVE_ENERGY]
+                )
+                cg.add(
+                    var.set_resettable_phase_export_active_energy_sensor(
+                        phase_idx, sens
+                    )
+                )
 
             if CONF_REACTIVE_ENERGY in phase_resettable:
                 sens = await sensor.new_sensor(phase_resettable[CONF_REACTIVE_ENERGY])
                 cg.add(var.set_resettable_phase_reactive_energy_sensor(phase_idx, sens))
 
             if CONF_IMPORT_REACTIVE_ENERGY in phase_resettable:
-                sens = await sensor.new_sensor(phase_resettable[CONF_IMPORT_REACTIVE_ENERGY])
-                cg.add(var.set_resettable_phase_import_reactive_energy_sensor(phase_idx, sens))
+                sens = await sensor.new_sensor(
+                    phase_resettable[CONF_IMPORT_REACTIVE_ENERGY]
+                )
+                cg.add(
+                    var.set_resettable_phase_import_reactive_energy_sensor(
+                        phase_idx, sens
+                    )
+                )
 
             if CONF_EXPORT_REACTIVE_ENERGY in phase_resettable:
-                sens = await sensor.new_sensor(phase_resettable[CONF_EXPORT_REACTIVE_ENERGY])
-                cg.add(var.set_resettable_phase_export_reactive_energy_sensor(phase_idx, sens))
+                sens = await sensor.new_sensor(
+                    phase_resettable[CONF_EXPORT_REACTIVE_ENERGY]
+                )
+                cg.add(
+                    var.set_resettable_phase_export_reactive_energy_sensor(
+                        phase_idx, sens
+                    )
+                )
 
     # Per-phase statistics (L1, L2, L3) - separate from livedata
     phase_stats_keys = [CONF_STATISTICS_L1, CONF_STATISTICS_L2, CONF_STATISTICS_L3]

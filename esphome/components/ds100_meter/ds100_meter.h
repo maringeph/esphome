@@ -257,6 +257,14 @@ class DS100Meter : public PollingComponent, public modbus::ModbusDevice {
     this->terminal_signal_binary_sensor_ = sensor;
   }
 
+  // Update interval setters for different data categories
+  void set_update_interval_livedata(uint32_t interval) { this->update_interval_livedata_ = interval; }
+  void set_update_interval_demand(uint32_t interval) { this->update_interval_demand_ = interval; }
+  void set_update_interval_maximum_demand(uint32_t interval) { this->update_interval_maximum_demand_ = interval; }
+  void set_update_interval_statistics(uint32_t interval) { this->update_interval_statistics_ = interval; }
+  void set_update_interval_settings(uint32_t interval) { this->update_interval_settings_ = interval; }
+  void set_update_interval_device_info(uint32_t interval) { this->update_interval_device_info_ = interval; }
+
   void update() override;
   void on_modbus_data(const std::vector<uint8_t> &data) override;
   void dump_config() override;
@@ -363,6 +371,22 @@ class DS100Meter : public PollingComponent, public modbus::ModbusDevice {
 
   // Binary sensor - Terminal Signal (register 0x101D)
   binary_sensor::BinarySensor *terminal_signal_binary_sensor_{nullptr};
+
+  // Update intervals for different data categories (in milliseconds)
+  uint32_t update_interval_livedata_{10000};        // 10s default
+  uint32_t update_interval_demand_{10000};          // 10s default
+  uint32_t update_interval_maximum_demand_{60000};  // 60s default
+  uint32_t update_interval_statistics_{60000};      // 60s default
+  uint32_t update_interval_settings_{60000};        // 60s default
+  uint32_t update_interval_device_info_{60000};     // 60s default
+
+  // Last update timestamps for each category
+  uint32_t last_update_livedata_{0};
+  uint32_t last_update_demand_{0};
+  uint32_t last_update_maximum_demand_{0};
+  uint32_t last_update_statistics_{0};
+  uint32_t last_update_settings_{0};
+  uint32_t last_update_device_info_{0};
 };
 
 }  // namespace ds100_meter

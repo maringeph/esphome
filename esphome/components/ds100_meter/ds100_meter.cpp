@@ -150,19 +150,76 @@ static const uint16_t STAT_REACTIVE_ENERGY_Q4_T4 = 196;
 #endif
 
 void DS100Meter::update() {
-  // Read device info first if any device info sensor is configured
+  uint32_t now = millis();
+
+  // Check which categories are due for update
+  bool livedata_due = (now - this->last_update_livedata_ >= this->update_interval_livedata_);
+  bool demand_due = (now - this->last_update_demand_ >= this->update_interval_demand_);
+  bool statistics_due = (now - this->last_update_statistics_ >= this->update_interval_statistics_);
+  bool max_demand_due = (now - this->last_update_maximum_demand_ >= this->update_interval_maximum_demand_);
+  bool settings_due = (now - this->last_update_settings_ >= this->update_interval_settings_);
+  bool device_info_due = (now - this->last_update_device_info_ >= this->update_interval_device_info_);
+
+  // Priority order: Livedata -> Demand -> Statistics -> Maximum Demand -> Settings -> Device Info
+
+  // Livedata has highest priority (real-time voltage, current, power)
+  if (livedata_due) {
+    ESP_LOGD(TAG, "Reading livedata");
+    this->last_update_livedata_ = now;
+    this->send(MODBUS_CMD_READ_IN_REGISTERS, DS100_LIVEDATA_ADDR, DS100_LIVEDATA_LEN);
+    return;
+  }
+
+#ifdef USE_DS100_DEMAND
+  // Check if demand is due
+  if (demand_due) {
+    ESP_LOGD(TAG, "Reading demand");
+    this->last_update_demand_ = now;
+    this->send(MODBUS_CMD_READ_IN_REGISTERS, DS100_DEMAND_ADDR, DS100_DEMAND_LEN);
+    return;
+  }
+#endif
+
+#ifdef USE_DS100_STATISTICS
+  // Check if statistics are due
+  if (statistics_due) {
+    ESP_LOGD(TAG, "Reading statistics");
+    this->last_update_statistics_ = now;
+    this->send(MODBUS_CMD_READ_IN_REGISTERS, DS100_STATISTICS_ADDR, DS100_STATISTICS_LEN);
+    return;
+  }
+#endif
+
+#ifdef USE_DS100_MAXIMUM_DEMAND
+  // Check if maximum demand is due
+  if (max_demand_due) {
+    ESP_LOGD(TAG, "Reading maximum demand");
+    this->last_update_maximum_demand_ = now;
+    this->send(MODBUS_CMD_READ_IN_REGISTERS, DS100_MAXIMUM_DEMAND_ADDR, DS100_MAXIMUM_DEMAND_LEN);
+    return;
+  }
+#endif
+
+  // Check if settings are due (lowest priority among operational data)
+  if (settings_due) {
+    // Settings are typically read manually or at very long intervals
+    // For now, we don't auto-read settings - they are write-only or read on demand
+    this->last_update_settings_ = now;
+    // Settings read not implemented - would require separate register range
+  }
+
+  // Device info has lowest priority (read once at startup, then rarely)
   bool needs_device_info =
+      device_info_due &&
       (this->serial_number_text_sensor_ != nullptr || this->software_version_text_sensor_ != nullptr ||
        this->hardware_version_text_sensor_ != nullptr || this->firmware_checksum_text_sensor_ != nullptr ||
        this->terminal_signal_binary_sensor_ != nullptr);
 
   if (needs_device_info) {
-    // Read device info registers 0x1000-0x101D (30 registers total)
-    // Covers: serial number (0x1000-0x1002), versions (0x1004-0x1006), terminal signal (0x101D)
+    ESP_LOGD(TAG, "Reading device info");
+    this->last_update_device_info_ = now;
     this->send(MODBUS_CMD_READ_IN_REGISTERS, DS100_SERIAL_NUMBER_ADDR, 30);
-  } else {
-    // Request livedata registers directly if no device info sensors configured
-    this->send(MODBUS_CMD_READ_IN_REGISTERS, DS100_LIVEDATA_ADDR, DS100_LIVEDATA_LEN);
+    return;
   }
 }
 
