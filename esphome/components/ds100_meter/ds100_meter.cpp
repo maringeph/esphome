@@ -167,37 +167,36 @@ void DS100Meter::update() {
 }
 
 void DS100Meter::on_modbus_data(const std::vector<uint8_t> &data) {
-  // Helper function to decode IEEE754 float from two consecutive registers
-  auto get_float = [&](size_t byte_offset, float scale = 1.0f) -> float {
+  // Helper function to decode 32-bit signed integer from two consecutive registers
+  // DS100 uses big-endian format: [high_reg_msb, high_reg_lsb, low_reg_msb, low_reg_lsb]
+  auto get_int32 = [&](size_t byte_offset, float scale = 1.0f) -> float {
     if (byte_offset + 3 >= data.size()) {
       return NAN;
     }
-    // DS100 stores floats as big-endian IEEE754
-    // Each register is 2 bytes (MSB, LSB)
-    // Float uses 2 registers: [reg1_msb, reg1_lsb, reg2_msb, reg2_lsb]
-    // For ESP32 (little-endian), we need to reverse: [reg2_lsb, reg2_msb, reg1_lsb, reg1_msb]
-    uint32_t raw =
-        encode_uint32(data[byte_offset + 3], data[byte_offset + 2], data[byte_offset + 1], data[byte_offset]);
-    float value;
-    memcpy(&value, &raw, sizeof(value));
-    return value * scale;
+    // Combine registers: high_reg << 16 | low_reg
+    int32_t raw = (static_cast<int32_t>(data[byte_offset]) << 24) |
+                  (static_cast<int32_t>(data[byte_offset + 1]) << 16) |
+                  (static_cast<int32_t>(data[byte_offset + 2]) << 8) | static_cast<int32_t>(data[byte_offset + 3]);
+    return static_cast<float>(raw) * scale;
+  };
+
+  // Helper to get 16-bit unsigned value (for frequency, power factor)
+  auto get_uint16 = [&](size_t byte_offset) -> uint16_t {
+    if (byte_offset + 1 >= data.size()) {
+      return 0;
+    }
+    return encode_uint16(data[byte_offset], data[byte_offset + 1]);
   };
 
   // Helper to get register value for frequency (16-bit integer scaled by 100)
   auto get_frequency = [&](size_t byte_offset) -> float {
-    if (byte_offset + 1 >= data.size()) {
-      return NAN;
-    }
-    uint16_t raw = encode_uint16(data[byte_offset], data[byte_offset + 1]);
+    uint16_t raw = get_uint16(byte_offset);
     return raw / 100.0f;
   };
 
   // Helper to get register value for power factor (16-bit integer scaled by 1000)
   auto get_power_factor = [&](size_t byte_offset) -> float {
-    if (byte_offset + 1 >= data.size()) {
-      return NAN;
-    }
-    uint16_t raw = encode_uint16(data[byte_offset], data[byte_offset + 1]);
+    uint16_t raw = get_uint16(byte_offset);
     return raw / 1000.0f;
   };
 
@@ -284,23 +283,23 @@ void DS100Meter::on_modbus_data(const std::vector<uint8_t> &data) {
       const size_t power_offset = i * 4;
 
       if (this->phases_[i].voltage_sensor_ != nullptr) {
-        float voltage = get_float(REG_VOLTAGE_L1_N + voltage_offset);
+        float voltage = get_int32(REG_VOLTAGE_L1_N + voltage_offset, 0.001f);  // mV -> V
         this->phases_[i].voltage_sensor_->publish_state(voltage);
       }
       if (this->phases_[i].current_sensor_ != nullptr) {
-        float current = get_float(REG_CURRENT_L1 + current_offset);
+        float current = get_int32(REG_CURRENT_L1 + current_offset, 0.001f);  // mA -> A
         this->phases_[i].current_sensor_->publish_state(current);
       }
       if (this->phases_[i].active_power_sensor_ != nullptr) {
-        float active_power = get_float(REG_ACTIVE_POWER_L1 + power_offset);
+        float active_power = get_int32(REG_ACTIVE_POWER_L1 + power_offset, 1.0f);  // unit: W (direct)
         this->phases_[i].active_power_sensor_->publish_state(active_power);
       }
       if (this->phases_[i].apparent_power_sensor_ != nullptr) {
-        float apparent_power = get_float(REG_APPARENT_POWER_L1 + power_offset);
+        float apparent_power = get_int32(REG_APPARENT_POWER_L1 + power_offset, 1.0f);  // unit: VA (direct)
         this->phases_[i].apparent_power_sensor_->publish_state(apparent_power);
       }
       if (this->phases_[i].reactive_power_sensor_ != nullptr) {
-        float reactive_power = get_float(REG_REACTIVE_POWER_L1 + power_offset);
+        float reactive_power = get_int32(REG_REACTIVE_POWER_L1 + power_offset, 1.0f);  // unit: var (direct)
         this->phases_[i].reactive_power_sensor_->publish_state(reactive_power);
       }
       if (this->phases_[i].power_factor_sensor_ != nullptr) {
@@ -311,7 +310,7 @@ void DS100Meter::on_modbus_data(const std::vector<uint8_t> &data) {
 
     // Read total/combined values
     if (this->total_power_sensor_ != nullptr) {
-      float total_power = get_float(REG_ACTIVE_POWER_TOTAL);
+      float total_power = get_int32(REG_ACTIVE_POWER_TOTAL, 1.0f);  // unit: W (direct)
       this->total_power_sensor_->publish_state(total_power);
     }
 
@@ -346,7 +345,7 @@ void DS100Meter::on_modbus_data(const std::vector<uint8_t> &data) {
 
     for (uint8_t i = 0; i < 4; i++) {
       if (this->reactive_energy_quadrant_sensors_[i] != nullptr) {
-        float value = get_float(quadrant_offsets[i], 0.01f);
+        float value = get_int32(quadrant_offsets[i], 0.01f);
         this->reactive_energy_quadrant_sensors_[i]->publish_state(value);
       }
     }
@@ -367,7 +366,7 @@ void DS100Meter::on_modbus_data(const std::vector<uint8_t> &data) {
     for (uint8_t q = 0; q < 4; q++) {
       for (uint8_t t = 0; t < 4; t++) {
         if (this->tariff_reactive_energy_quadrant_sensors_[t][q] != nullptr) {
-          float value = get_float(tariff_quadrant_offsets[q][t], 0.01f);
+          float value = get_int32(tariff_quadrant_offsets[q][t], 0.01f);
           this->tariff_reactive_energy_quadrant_sensors_[t][q]->publish_state(value);
         }
       }
@@ -385,8 +384,8 @@ void DS100Meter::on_modbus_data(const std::vector<uint8_t> &data) {
     // Process demand response
     ESP_LOGV(TAG, "Processing demand (%zu bytes)", data.size());
 
-    // Read demand sensors using helper function
-    this->read_power_demand_sensors(data.data(), 0, this->demand_sensors_, 1.0f);
+    // Read demand sensors using helper function (0.1W resolution)
+    this->read_power_demand_sensors(data.data(), 0, this->demand_sensors_, 0.1f);
 
     // After demand, request maximum demand if enabled
 #ifdef USE_DS100_MAXIMUM_DEMAND
@@ -399,8 +398,8 @@ void DS100Meter::on_modbus_data(const std::vector<uint8_t> &data) {
     // Process maximum demand response
     ESP_LOGV(TAG, "Processing maximum demand (%zu bytes)", data.size());
 
-    // Read maximum demand sensors using helper function
-    this->read_power_demand_sensors(data.data(), 0, this->maximum_demand_sensors_, 1.0f);
+    // Read maximum demand sensors using helper function (0.1W resolution)
+    this->read_power_demand_sensors(data.data(), 0, this->maximum_demand_sensors_, 0.1f);
 
     // After maximum demand, request resettable statistics if enabled
 #ifdef USE_DS100_RESETTABLE_STATISTICS
@@ -666,31 +665,30 @@ void DS100Meter::read_energy_sensors(const uint8_t *data, uint16_t base_offset, 
   // Offset +100: Total Reactive Energy (2 regs)
   // Each value is 2 registers (4 bytes) as IEEE754 float
 
-  auto get_float = [&](uint16_t offset) -> float {
+  auto get_int32 = [&](uint16_t offset) -> float {
     uint16_t pos = base_offset + offset;
-    uint32_t temp = encode_uint32(data[pos + 2], data[pos + 3], data[pos], data[pos + 1]);
-    float f;
-    memcpy(&f, &temp, sizeof(f));
-    return f * scale;
+    int32_t raw = (static_cast<int32_t>(data[pos]) << 24) | (static_cast<int32_t>(data[pos + 1]) << 16) |
+                  (static_cast<int32_t>(data[pos + 2]) << 8) | static_cast<int32_t>(data[pos + 3]);
+    return static_cast<float>(raw) * scale;
   };
 
   if (sensors.import_active_ != nullptr) {
-    sensors.import_active_->publish_state(get_float(0));
+    sensors.import_active_->publish_state(get_int32(0));
   }
   if (sensors.export_active_ != nullptr) {
-    sensors.export_active_->publish_state(get_float(20));
+    sensors.export_active_->publish_state(get_int32(20));
   }
   if (sensors.active_ != nullptr) {
-    sensors.active_->publish_state(get_float(40));
+    sensors.active_->publish_state(get_int32(40));
   }
   if (sensors.import_reactive_ != nullptr) {
-    sensors.import_reactive_->publish_state(get_float(60));
+    sensors.import_reactive_->publish_state(get_int32(60));
   }
   if (sensors.export_reactive_ != nullptr) {
-    sensors.export_reactive_->publish_state(get_float(80));
+    sensors.export_reactive_->publish_state(get_int32(80));
   }
   if (sensors.reactive_ != nullptr) {
-    sensors.reactive_->publish_state(get_float(100));
+    sensors.reactive_->publish_state(get_int32(100));
   }
 }
 
@@ -702,12 +700,11 @@ void DS100Meter::read_power_demand_sensors(const uint8_t *data, uint16_t base_of
   // Layout: [Import_Active_Total, Import_Active_A, Import_Active_B, Import_Active_C,
   //          Export_Active_Total, Export_Active_A, ...]
 
-  auto get_float = [&](uint16_t offset) -> float {
+  auto get_int32 = [&](uint16_t offset) -> float {
     uint16_t pos = base_offset + offset;
-    uint32_t temp = encode_uint32(data[pos + 2], data[pos + 3], data[pos], data[pos + 1]);
-    float f;
-    memcpy(&f, &temp, sizeof(f));
-    return f * scale;
+    int32_t raw = (static_cast<int32_t>(data[pos]) << 24) | (static_cast<int32_t>(data[pos + 1]) << 16) |
+                  (static_cast<int32_t>(data[pos + 2]) << 8) | static_cast<int32_t>(data[pos + 3]);
+    return static_cast<float>(raw) * scale;
   };
 
   // Each type occupies 8 bytes (4 phases × 2 bytes/reg)
@@ -715,22 +712,22 @@ void DS100Meter::read_power_demand_sensors(const uint8_t *data, uint16_t base_of
     uint16_t phase_offset = phase * 4;  // Each phase offset by 4 bytes (2 registers)
 
     if (sensors.import_active_[phase] != nullptr) {
-      sensors.import_active_[phase]->publish_state(get_float(0 + phase_offset));
+      sensors.import_active_[phase]->publish_state(get_int32(0 + phase_offset));
     }
     if (sensors.export_active_[phase] != nullptr) {
-      sensors.export_active_[phase]->publish_state(get_float(8 + phase_offset));
+      sensors.export_active_[phase]->publish_state(get_int32(8 + phase_offset));
     }
     if (sensors.total_active_[phase] != nullptr) {
-      sensors.total_active_[phase]->publish_state(get_float(16 + phase_offset));
+      sensors.total_active_[phase]->publish_state(get_int32(16 + phase_offset));
     }
     if (sensors.import_reactive_[phase] != nullptr) {
-      sensors.import_reactive_[phase]->publish_state(get_float(24 + phase_offset));
+      sensors.import_reactive_[phase]->publish_state(get_int32(24 + phase_offset));
     }
     if (sensors.export_reactive_[phase] != nullptr) {
-      sensors.export_reactive_[phase]->publish_state(get_float(32 + phase_offset));
+      sensors.export_reactive_[phase]->publish_state(get_int32(32 + phase_offset));
     }
     if (sensors.total_reactive_[phase] != nullptr) {
-      sensors.total_reactive_[phase]->publish_state(get_float(40 + phase_offset));
+      sensors.total_reactive_[phase]->publish_state(get_int32(40 + phase_offset));
     }
   }
 }
