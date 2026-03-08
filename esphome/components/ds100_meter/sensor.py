@@ -914,24 +914,7 @@ async def to_code(config):
         sens = await _register_sensor_with_device(
             var, config[CONF_EXPORT_REACTIVE_ENERGY], device_id
         )
-        cg.add(var.set_export_active_energy_sensor(sens))
-
-    if CONF_REACTIVE_ENERGY in config:
-        sens = await _register_sensor_with_device(
-            var, config[CONF_REACTIVE_ENERGY], device_id
-        )
-        cg.add(var.set_reactive_energy_sensor(sens))
-
-    if CONF_IMPORT_REACTIVE_ENERGY in config:
-        sens = await _register_sensor_with_device(
-            var, config[CONF_IMPORT_REACTIVE_ENERGY], device_id
-        )
-        cg.add(var.set_import_reactive_energy_sensor(sens))
-
-    if CONF_EXPORT_REACTIVE_ENERGY in config:
-        sens = await _register_sensor_with_device(
-            var, config[CONF_EXPORT_REACTIVE_ENERGY], device_id
-        )
+        cg.add(var.set_export_reactive_energy_sensor(sens))
         cg.add(var.set_export_reactive_energy_sensor(sens))
 
     # Quadrants - total
