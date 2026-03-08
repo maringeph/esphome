@@ -269,6 +269,20 @@ class DS100Meter : public PollingComponent, public modbus::ModbusDevice {
   void on_modbus_data(const std::vector<uint8_t> &data) override;
   void dump_config() override;
 
+  // Request queue with priorities (lower number = higher priority)
+  enum class RequestType : uint8_t {
+    LIVEDATA = 0,        // Highest priority - real-time data
+    DEMAND = 1,          // Current power demand
+    STATISTICS = 2,      // Energy statistics (chain: Total -> L1 -> L2 -> L3)
+    MAXIMUM_DEMAND = 3,  // Peak demand values
+    DEVICE_INFO = 4,     // Lowest priority - serial number, versions
+  };
+
+  // Request queue management
+  void queue_request(RequestType type);
+  RequestType get_highest_priority_pending();
+  void process_next_request();
+
   // Reset functions
   void reset_maximum_demand();
   void reset_statistics();
@@ -392,6 +406,17 @@ class DS100Meter : public PollingComponent, public modbus::ModbusDevice {
   uint8_t statistics_cycle_state_{0};
   // Tracks last request for response routing: 0=Total, 1=L1, 2=L2, 3=L3
   uint8_t last_statistics_request_{0};
+
+  // Pending requests bitmask
+  static const uint8_t PENDING_LIVEDATA = 0x01;
+  static const uint8_t PENDING_DEMAND = 0x02;
+  static const uint8_t PENDING_STATISTICS = 0x04;
+  static const uint8_t PENDING_MAXIMUM_DEMAND = 0x08;
+  static const uint8_t PENDING_DEVICE_INFO = 0x10;
+
+  uint8_t pending_requests_{0};      // Bitmask of pending request types
+  bool request_in_progress_{false};  // True if waiting for Modbus response
+  uint32_t last_request_time_{0};    // Timestamp of last request for timeout tracking
 };
 
 }  // namespace ds100_meter

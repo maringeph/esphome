@@ -166,106 +166,169 @@ static const uint16_t STAT_REACTIVE_ENERGY_Q4_T4 = 196;
 void DS100Meter::update() {
   uint32_t now = millis();
 
-  // Check which categories are due for update
-  bool livedata_due = (now - this->last_update_livedata_ >= this->update_interval_livedata_);
-  bool demand_due = (now - this->last_update_demand_ >= this->update_interval_demand_);
-  bool statistics_due = (now - this->last_update_statistics_ >= this->update_interval_statistics_);
-  bool max_demand_due = (now - this->last_update_maximum_demand_ >= this->update_interval_maximum_demand_);
-  bool settings_due = (now - this->last_update_settings_ >= this->update_interval_settings_);
-  bool device_info_due = (now - this->last_update_device_info_ >= this->update_interval_device_info_);
+  // Timeout handling: Reset request_in_progress_ if no response for 500ms
+  if (this->request_in_progress_ && (now - this->last_request_time_ > 500)) {
+    ESP_LOGW(TAG, "Request timeout - resetting request_in_progress");
+    this->request_in_progress_ = false;
+    this->last_request_time_ = 0;
+  }
 
-  ESP_LOGD(TAG, "Update check - livedata_due: %d, demand_due: %d, statistics_due: %d, max_demand_due: %d", livedata_due,
-           demand_due, statistics_due, max_demand_due);
-
-  // Priority order: Livedata -> Demand -> Statistics -> Maximum Demand -> Settings -> Device Info
-
-  // Livedata has highest priority (real-time voltage, current, power)
-  if (livedata_due) {
-    ESP_LOGD(TAG, "Reading livedata");
-    this->last_update_livedata_ = now;
-    this->send(MODBUS_CMD_READ_IN_REGISTERS, DS100_LIVEDATA_ADDR, DS100_LIVEDATA_LEN);
-    return;
+  // Check which categories are due and add them to the request queue
+  if (now - this->last_update_livedata_ >= this->update_interval_livedata_) {
+    this->queue_request(RequestType::LIVEDATA);
   }
 
 #ifdef USE_DS100_DEMAND
-  // Check if demand is due
-  if (demand_due) {
-    ESP_LOGD(TAG, "Reading demand");
-    this->last_update_demand_ = now;
-    this->send(MODBUS_CMD_READ_IN_REGISTERS, DS100_DEMAND_ADDR, DS100_DEMAND_LEN);
-    return;
+  if (now - this->last_update_demand_ >= this->update_interval_demand_) {
+    this->queue_request(RequestType::DEMAND);
   }
 #endif
 
 #ifdef USE_DS100_STATISTICS
-  // Statistics chain: Total -> L1 -> L2 -> L3
-  // State 0 = idle/not in chain, State 1 = L1 pending, State 2 = L2 pending, State 3 = L3 pending
-
-  // Continue chain if active (states 1-3)
-  if (this->statistics_cycle_state_ > 0) {
-    const uint16_t phase_addrs[] = {DS100_PHASE_L1_STATISTICS_ADDR, DS100_PHASE_L2_STATISTICS_ADDR,
-                                    DS100_PHASE_L3_STATISTICS_ADDR};
-    uint8_t phase_idx = this->statistics_cycle_state_ - 1;
-    ESP_LOGD(TAG, "Continuing chain: Reading phase L%d statistics", this->statistics_cycle_state_);
-    this->last_statistics_request_ = this->statistics_cycle_state_;  // Track for response routing
-    this->send(MODBUS_CMD_READ_IN_REGISTERS, phase_addrs[phase_idx], DS100_PHASE_STATISTICS_LEN);
-
-    if (this->statistics_cycle_state_ < 3) {
-      // Next phase in chain
-      this->statistics_cycle_state_++;
-    } else {
-      // Chain complete after L3
-      this->statistics_cycle_state_ = 0;
-      this->last_update_statistics_ = now;
-    }
-    return;
-  }
-
-  // Start new chain when interval reached
-  if (statistics_due) {
-    ESP_LOGD(TAG, "Starting statistics chain with total");
-    this->last_statistics_request_ = 0;  // Total statistics
-    this->send(MODBUS_CMD_READ_IN_REGISTERS, DS100_STATISTICS_ADDR, DS100_STATISTICS_LEN);
-    this->statistics_cycle_state_ = 1;  // Next: L1
-    return;
+  if (this->statistics_cycle_state_ > 0 || now - this->last_update_statistics_ >= this->update_interval_statistics_) {
+    this->queue_request(RequestType::STATISTICS);
   }
 #endif
 
 #ifdef USE_DS100_MAXIMUM_DEMAND
-  // Check if maximum demand is due
-  if (max_demand_due) {
-    ESP_LOGD(TAG, "Reading maximum demand");
-    this->last_update_maximum_demand_ = now;
-    this->send(MODBUS_CMD_READ_IN_REGISTERS, DS100_MAXIMUM_DEMAND_ADDR, DS100_MAXIMUM_DEMAND_LEN);
-    return;
+  if (now - this->last_update_maximum_demand_ >= this->update_interval_maximum_demand_) {
+    this->queue_request(RequestType::MAXIMUM_DEMAND);
   }
 #endif
 
-  // Check if settings are due (lowest priority among operational data)
-  if (settings_due) {
-    // Settings are typically read manually or at very long intervals
-    // For now, we don't auto-read settings - they are write-only or read on demand
-    this->last_update_settings_ = now;
-    // Settings read not implemented - would require separate register range
+  if (now - this->last_update_device_info_ >= this->update_interval_device_info_) {
+    bool needs_device_info =
+        (this->serial_number_text_sensor_ != nullptr || this->software_version_text_sensor_ != nullptr ||
+         this->hardware_version_text_sensor_ != nullptr || this->firmware_checksum_text_sensor_ != nullptr ||
+         this->terminal_signal_binary_sensor_ != nullptr);
+    if (needs_device_info) {
+      this->queue_request(RequestType::DEVICE_INFO);
+    }
   }
 
-  // Device info has lowest priority (read once at startup, then rarely)
-  bool needs_device_info =
-      device_info_due &&
-      (this->serial_number_text_sensor_ != nullptr || this->software_version_text_sensor_ != nullptr ||
-       this->hardware_version_text_sensor_ != nullptr || this->firmware_checksum_text_sensor_ != nullptr ||
-       this->terminal_signal_binary_sensor_ != nullptr);
+  ESP_LOGD(TAG, "Update check - pending: 0x%02X, in_progress: %d", this->pending_requests_, this->request_in_progress_);
 
-  if (needs_device_info) {
-    ESP_LOGD(TAG, "Reading device info");
-    this->last_update_device_info_ = now;
-    this->send(MODBUS_CMD_READ_IN_REGISTERS, DS100_SERIAL_NUMBER_ADDR, 30);
-    return;
+  // Process the highest priority pending request if no request is currently in progress
+  if (!this->request_in_progress_ && this->pending_requests_ != 0) {
+    this->process_next_request();
   }
 }
 
-void DS100Meter::on_modbus_data(const std::vector<uint8_t> &data) {
-  // Helper function to decode 32-bit signed integer from two consecutive registers
+void DS100Meter::queue_request(RequestType type) {
+  switch (type) {
+    case RequestType::LIVEDATA:
+      this->pending_requests_ |= PENDING_LIVEDATA;
+      break;
+    case RequestType::DEMAND:
+      this->pending_requests_ |= PENDING_DEMAND;
+      break;
+    case RequestType::STATISTICS:
+      this->pending_requests_ |= PENDING_STATISTICS;
+      break;
+    case RequestType::MAXIMUM_DEMAND:
+      this->pending_requests_ |= PENDING_MAXIMUM_DEMAND;
+      break;
+    case RequestType::DEVICE_INFO:
+      this->pending_requests_ |= PENDING_DEVICE_INFO;
+      break;
+  }
+}
+
+DS100Meter::RequestType DS100Meter::get_highest_priority_pending() {
+  // Check in priority order (lower number = higher priority)
+  if (this->pending_requests_ & PENDING_LIVEDATA)
+    return RequestType::LIVEDATA;
+  if (this->pending_requests_ & PENDING_DEMAND)
+    return RequestType::DEMAND;
+  if (this->pending_requests_ & PENDING_STATISTICS)
+    return RequestType::STATISTICS;
+  if (this->pending_requests_ & PENDING_MAXIMUM_DEMAND)
+    return RequestType::MAXIMUM_DEMAND;
+  if (this->pending_requests_ & PENDING_DEVICE_INFO)
+    return RequestType::DEVICE_INFO;
+  return RequestType::DEVICE_INFO;  // Should never reach here if
+                                    // pending_requests_ != 0
+}
+
+void DS100Meter::process_next_request() {
+  if (this->pending_requests_ == 0)
+    return;
+
+  RequestType next = this->get_highest_priority_pending();
+  uint32_t now = millis();
+  this->last_request_time_ = now;  // Track request time for timeout handling
+
+  switch (next) {
+    case RequestType::LIVEDATA:
+      ESP_LOGD(TAG, "Processing request: livedata");
+      this->last_update_livedata_ = now;
+      this->pending_requests_ &= ~PENDING_LIVEDATA;
+      this->request_in_progress_ = true;
+      this->send(MODBUS_CMD_READ_IN_REGISTERS, DS100_LIVEDATA_ADDR, DS100_LIVEDATA_LEN);
+      break;
+
+#ifdef USE_DS100_DEMAND
+    case RequestType::DEMAND:
+      ESP_LOGD(TAG, "Processing request: demand");
+      this->last_update_demand_ = now;
+      this->pending_requests_ &= ~PENDING_DEMAND;
+      this->request_in_progress_ = true;
+      this->send(MODBUS_CMD_READ_IN_REGISTERS, DS100_DEMAND_ADDR, DS100_DEMAND_LEN);
+      break;
+#endif
+
+#ifdef USE_DS100_STATISTICS
+    case RequestType::STATISTICS:
+      if (this->statistics_cycle_state_ > 0) {
+        // Continue chain: L1, L2, or L3
+        const uint16_t phase_addrs[] = {DS100_PHASE_L1_STATISTICS_ADDR, DS100_PHASE_L2_STATISTICS_ADDR,
+                                        DS100_PHASE_L3_STATISTICS_ADDR};
+        uint8_t phase_idx = this->statistics_cycle_state_ - 1;
+        ESP_LOGD(TAG, "Processing request: statistics L%d", this->statistics_cycle_state_);
+        this->last_statistics_request_ = this->statistics_cycle_state_;
+        this->request_in_progress_ = true;
+        this->send(MODBUS_CMD_READ_IN_REGISTERS, phase_addrs[phase_idx], DS100_PHASE_STATISTICS_LEN);
+
+        if (this->statistics_cycle_state_ < 3) {
+          this->statistics_cycle_state_++;
+        } else {
+          this->statistics_cycle_state_ = 0;
+          this->last_update_statistics_ = now;
+          this->pending_requests_ &= ~PENDING_STATISTICS;
+        }
+      } else {
+        // Start new chain with Total
+        ESP_LOGD(TAG, "Processing request: statistics total");
+        this->last_statistics_request_ = 0;
+        this->request_in_progress_ = true;
+        this->send(MODBUS_CMD_READ_IN_REGISTERS, DS100_STATISTICS_ADDR, DS100_STATISTICS_LEN);
+        this->statistics_cycle_state_ = 1;
+      }
+      break;
+#endif
+
+#ifdef USE_DS100_MAXIMUM_DEMAND
+    case RequestType::MAXIMUM_DEMAND:
+      ESP_LOGD(TAG, "Processing request: maximum demand");
+      this->last_update_maximum_demand_ = now;
+      this->pending_requests_ &= ~PENDING_MAXIMUM_DEMAND;
+      this->request_in_progress_ = true;
+      this->send(MODBUS_CMD_READ_IN_REGISTERS, DS100_MAXIMUM_DEMAND_ADDR, DS100_MAXIMUM_DEMAND_LEN);
+      break;
+#endif
+
+    case RequestType::DEVICE_INFO:
+      ESP_LOGD(TAG, "Processing request: device info");
+      this->last_update_device_info_ = now;
+      this->pending_requests_ &= ~PENDING_DEVICE_INFO;
+      this->request_in_progress_ = true;
+      this->send(MODBUS_CMD_READ_IN_REGISTERS, DS100_SERIAL_NUMBER_ADDR, 30);
+      break;
+  }
+}
+
+void DS100Meter::on_modbus_data(const std::vector<uint8_t> &data) {  // Helper function to decode 32-bit signed integer
+                                                                     // from two consecutive registers
   // DS100 uses big-endian format: [high_reg_msb, high_reg_lsb, low_reg_msb, low_reg_lsb]
   auto get_int32 = [&](size_t byte_offset, float scale = 1.0f) -> float {
     if (byte_offset + 3 >= data.size()) {
@@ -512,6 +575,12 @@ void DS100Meter::on_modbus_data(const std::vector<uint8_t> &data) {
 
   } else {
     ESP_LOGW(TAG, "Unexpected data size: %zu bytes", data.size());
+  }
+
+  // Mark request as completed and process next pending request
+  this->request_in_progress_ = false;
+  if (this->pending_requests_ != 0) {
+    this->process_next_request();
   }
 }
 

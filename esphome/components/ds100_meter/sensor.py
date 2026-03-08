@@ -582,51 +582,75 @@ async def to_code(config):
 
     # Set update intervals for different data categories
     # Use configured values or defaults (convert to milliseconds)
+    # Collect all update intervals
     livedata_interval = config.get(CONF_UPDATE_INTERVAL_LIVEDATA)
-    if livedata_interval is not None:
-        cg.add(var.set_update_interval_livedata(livedata_interval.total_milliseconds))
-    else:
-        cg.add(var.set_update_interval_livedata(DEFAULT_LIVEDATA_INTERVAL_MS))
+    livedata_ms = (
+        livedata_interval.total_milliseconds
+        if livedata_interval is not None
+        else DEFAULT_LIVEDATA_INTERVAL_MS
+    )
 
     demand_interval = config.get(CONF_UPDATE_INTERVAL_DEMAND)
-    if demand_interval is not None:
-        cg.add(var.set_update_interval_demand(demand_interval.total_milliseconds))
-    else:
-        cg.add(var.set_update_interval_demand(DEFAULT_DEMAND_INTERVAL_MS))
+    demand_ms = (
+        demand_interval.total_milliseconds
+        if demand_interval is not None
+        else DEFAULT_DEMAND_INTERVAL_MS
+    )
 
     max_demand_interval = config.get(CONF_UPDATE_INTERVAL_MAXIMUM_DEMAND)
-    if max_demand_interval is not None:
-        cg.add(
-            var.set_update_interval_maximum_demand(
-                max_demand_interval.total_milliseconds
-            )
-        )
-    else:
-        cg.add(
-            var.set_update_interval_maximum_demand(DEFAULT_MAXIMUM_DEMAND_INTERVAL_MS)
-        )
+    max_demand_ms = (
+        max_demand_interval.total_milliseconds
+        if max_demand_interval is not None
+        else DEFAULT_MAXIMUM_DEMAND_INTERVAL_MS
+    )
 
     statistics_interval = config.get(CONF_UPDATE_INTERVAL_STATISTICS)
-    if statistics_interval is not None:
-        cg.add(
-            var.set_update_interval_statistics(statistics_interval.total_milliseconds)
-        )
-    else:
-        cg.add(var.set_update_interval_statistics(DEFAULT_STATISTICS_INTERVAL_MS))
+    statistics_ms = (
+        statistics_interval.total_milliseconds
+        if statistics_interval is not None
+        else DEFAULT_STATISTICS_INTERVAL_MS
+    )
 
     settings_interval = config.get(CONF_UPDATE_INTERVAL_SETTINGS)
-    if settings_interval is not None:
-        cg.add(var.set_update_interval_settings(settings_interval.total_milliseconds))
-    else:
-        cg.add(var.set_update_interval_settings(DEFAULT_SETTINGS_INTERVAL_MS))
+    settings_ms = (
+        settings_interval.total_milliseconds
+        if settings_interval is not None
+        else DEFAULT_SETTINGS_INTERVAL_MS
+    )
 
     device_info_interval = config.get(CONF_UPDATE_INTERVAL_DEVICE_INFO)
-    if device_info_interval is not None:
-        cg.add(
-            var.set_update_interval_device_info(device_info_interval.total_milliseconds)
-        )
-    else:
-        cg.add(var.set_update_interval_device_info(DEFAULT_DEVICE_INFO_INTERVAL_MS))
+    device_info_ms = (
+        device_info_interval.total_milliseconds
+        if device_info_interval is not None
+        else DEFAULT_DEVICE_INFO_INTERVAL_MS
+    )
+
+    # Calculate GCD of all intervals for efficient polling
+    from math import gcd
+
+    intervals = [
+        livedata_ms,
+        demand_ms,
+        max_demand_ms,
+        statistics_ms,
+        settings_ms,
+        device_info_ms,
+    ]
+    base_interval = intervals[0]
+    for interval in intervals[1:]:
+        base_interval = gcd(base_interval, interval)
+
+    # Set base update interval (minimum 100ms to avoid too frequent updates)
+    base_interval = max(base_interval, 100)
+    cg.add(var.set_update_interval(base_interval))
+
+    # Set individual category intervals
+    cg.add(var.set_update_interval_livedata(livedata_ms))
+    cg.add(var.set_update_interval_demand(demand_ms))
+    cg.add(var.set_update_interval_maximum_demand(max_demand_ms))
+    cg.add(var.set_update_interval_statistics(statistics_ms))
+    cg.add(var.set_update_interval_settings(settings_ms))
+    cg.add(var.set_update_interval_device_info(device_info_ms))
 
     # Set feature flags based on configuration
     use_tariffs = _check_tariffs_used(config)
