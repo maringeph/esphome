@@ -1,6 +1,6 @@
 #pragma once
 
-#include "esphome/components/automation/automation.h"
+#include "esphome/core/automation.h"
 #include "esphome/components/binary_sensor/binary_sensor.h"
 #include "esphome/components/button/button.h"
 #include "esphome/components/modbus/modbus.h"
