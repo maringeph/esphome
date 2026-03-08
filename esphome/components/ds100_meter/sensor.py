@@ -575,6 +575,37 @@ def _check_phase_statistics_used(config):
     return False
 
 
+def _check_statistics_used(config):
+    """Check if any total statistics sensors are configured."""
+    # Check total energy sensors
+    if CONF_ACTIVE_ENERGY in config:
+        return True
+    if CONF_IMPORT_ACTIVE_ENERGY in config:
+        return True
+    if CONF_EXPORT_ACTIVE_ENERGY in config:
+        return True
+    if CONF_REACTIVE_ENERGY in config:
+        return True
+    if CONF_IMPORT_REACTIVE_ENERGY in config:
+        return True
+    if CONF_EXPORT_REACTIVE_ENERGY in config:
+        return True
+    # Check quadrants
+    for quadrant in [
+        CONF_QUADRANT_1,
+        CONF_QUADRANT_2,
+        CONF_QUADRANT_3,
+        CONF_QUADRANT_4,
+    ]:
+        if quadrant in config:
+            return True
+    # Check tariffs
+    for tariff in [CONF_TARIFF_1, CONF_TARIFF_2, CONF_TARIFF_3, CONF_TARIFF_4]:
+        if tariff in config and config[tariff]:
+            return True
+    return False
+
+
 async def to_code(config):
     var = cg.new_Pvariable(config[CONF_ID])
     await cg.register_component(var, config)
@@ -660,6 +691,7 @@ async def to_code(config):
     use_maximum_demand = _check_maximum_demand_used(config)
     use_resettable_statistics = _check_resettable_statistics_used(config)
     use_phase_statistics = _check_phase_statistics_used(config)
+    use_statistics = _check_statistics_used(config)
 
     if use_tariffs:
         cg.add_define("USE_DS100_TARIFFS")
@@ -675,6 +707,8 @@ async def to_code(config):
         cg.add_define("USE_DS100_RESETTABLE_STATISTICS")
     if use_phase_statistics:
         cg.add_define("USE_DS100_PHASE_STATISTICS")
+    if use_statistics:
+        cg.add_define("USE_DS100_STATISTICS")
 
     # Livedata - total/combined sensors
     if CONF_TOTAL_POWER in config:
