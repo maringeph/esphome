@@ -779,6 +779,8 @@ class EsphomeCore:
             return self.relative_build_path("build", f"{self.name}.bin")
         if self.is_libretiny:
             return self.relative_pioenvs_path(self.name, "firmware.uf2")
+        if self.is_host:
+            return self.relative_pioenvs_path(self.name, "program")
         return self.relative_pioenvs_path(self.name, "firmware.bin")
 
     @property
