@@ -49,9 +49,28 @@ class DS100Meter : public PollingComponent, public modbus::ModbusDevice {
     this->phases_[phase].setup_ = true;
     this->phases_[phase].phase_angle_sensor_ = phase_angle_sensor;
   }
+  void set_phase_frequency_sensor(uint8_t phase, sensor::Sensor *frequency_sensor) {
+    this->phases_[phase].setup_ = true;
+    this->phases_[phase].frequency_sensor_ = frequency_sensor;
+  }
   // Total/combined sensors (livedata)
   void set_total_power_sensor(sensor::Sensor *total_power_sensor) { this->total_power_sensor_ = total_power_sensor; }
   void set_frequency_sensor(sensor::Sensor *frequency_sensor) { this->frequency_sensor_ = frequency_sensor; }
+  void set_current_n_sensor(sensor::Sensor *current_n_sensor) { this->current_n_sensor_ = current_n_sensor; }
+  // Line-to-line voltage sensors
+  void set_voltage_l1_l2_sensor(sensor::Sensor *sensor) { this->voltage_l1_l2_sensor_ = sensor; }
+  void set_voltage_l2_l3_sensor(sensor::Sensor *sensor) { this->voltage_l2_l3_sensor_ = sensor; }
+  void set_voltage_l3_l1_sensor(sensor::Sensor *sensor) { this->voltage_l3_l1_sensor_ = sensor; }
+  // Average voltage sensors
+  void set_voltage_l_n_avg_sensor(sensor::Sensor *sensor) { this->voltage_l_n_avg_sensor_ = sensor; }
+  void set_voltage_l_l_avg_sensor(sensor::Sensor *sensor) { this->voltage_l_l_avg_sensor_ = sensor; }
+  // Average current sensor
+  void set_current_avg_sensor(sensor::Sensor *sensor) { this->current_avg_sensor_ = sensor; }
+  // Total power sensors
+  void set_apparent_power_total_sensor(sensor::Sensor *sensor) { this->apparent_power_total_sensor_ = sensor; }
+  void set_reactive_power_total_sensor(sensor::Sensor *sensor) { this->reactive_power_total_sensor_ = sensor; }
+  // Power factor average
+  void set_power_factor_avg_sensor(sensor::Sensor *sensor) { this->power_factor_avg_sensor_ = sensor; }
 
   // Total energy sensors (statistics)
   void set_active_energy_sensor(sensor::Sensor *sensor) { this->total_energy_sensors_.active_ = sensor; }
@@ -313,6 +332,7 @@ class DS100Meter : public PollingComponent, public modbus::ModbusDevice {
     sensor::Sensor *reactive_power_sensor_{nullptr};
     sensor::Sensor *power_factor_sensor_{nullptr};
     sensor::Sensor *phase_angle_sensor_{nullptr};
+    sensor::Sensor *frequency_sensor_{nullptr};
   };
 
   // Struct to group energy sensors (6 types: active, import/export active, reactive, import/export reactive)
@@ -356,6 +376,23 @@ class DS100Meter : public PollingComponent, public modbus::ModbusDevice {
   // Total/combined sensors (livedata)
   sensor::Sensor *frequency_sensor_{nullptr};
   sensor::Sensor *total_power_sensor_{nullptr};
+  sensor::Sensor *current_n_sensor_{nullptr};
+  // Line-to-line voltage sensors
+  sensor::Sensor *voltage_l1_l2_sensor_{nullptr};
+  sensor::Sensor *voltage_l2_l3_sensor_{nullptr};
+  sensor::Sensor *voltage_l3_l1_sensor_{nullptr};
+  // Average voltage sensors
+  sensor::Sensor *voltage_l_n_avg_sensor_{nullptr};
+  sensor::Sensor *voltage_l_l_avg_sensor_{nullptr};
+  // Average current sensor
+  sensor::Sensor *current_avg_sensor_{nullptr};
+  // Total power sensors
+  sensor::Sensor *apparent_power_total_sensor_{nullptr};
+  sensor::Sensor *reactive_power_total_sensor_{nullptr};
+  // Frequency sensors per phase and average
+
+  // Power factor average
+  sensor::Sensor *power_factor_avg_sensor_{nullptr};
 
   // Total energy sensors (statistics)
   EnergySensors total_energy_sensors_;

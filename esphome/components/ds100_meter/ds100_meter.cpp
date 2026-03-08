@@ -69,26 +69,39 @@ static const uint16_t DS100_STATISTICS_LEN = 30;  // Basic statistics only
 #endif
 
 // Byte offsets within livedata response (each register = 2 bytes)
-static const uint16_t REG_VOLTAGE_L1_N = 0;         // Register 0x0400
-static const uint16_t REG_VOLTAGE_L2_N = 4;         // Register 0x0402
-static const uint16_t REG_VOLTAGE_L3_N = 8;         // Register 0x0404
-static const uint16_t REG_CURRENT_L1 = 32;          // Register 0x0410
-static const uint16_t REG_CURRENT_L2 = 36;          // Register 0x0412
-static const uint16_t REG_CURRENT_L3 = 40;          // Register 0x0414
-static const uint16_t REG_ACTIVE_POWER_L1 = 52;     // Register 0x041A
-static const uint16_t REG_ACTIVE_POWER_L2 = 56;     // Register 0x041C
-static const uint16_t REG_ACTIVE_POWER_L3 = 60;     // Register 0x041E
-static const uint16_t REG_ACTIVE_POWER_TOTAL = 64;  // Register 0x0420
-static const uint16_t REG_APPARENT_POWER_L1 = 68;   // Register 0x0422
-static const uint16_t REG_APPARENT_POWER_L2 = 72;   // Register 0x0424
-static const uint16_t REG_APPARENT_POWER_L3 = 76;   // Register 0x0426
-static const uint16_t REG_REACTIVE_POWER_L1 = 84;   // Register 0x042A
-static const uint16_t REG_REACTIVE_POWER_L2 = 88;   // Register 0x042C
-static const uint16_t REG_REACTIVE_POWER_L3 = 92;   // Register 0x042E
-static const uint16_t REG_FREQUENCY_L1 = 100;       // Register 0x0432
-static const uint16_t REG_POWER_FACTOR_L1 = 108;    // Register 0x0436
-static const uint16_t REG_POWER_FACTOR_L2 = 110;    // Register 0x0437
-static const uint16_t REG_POWER_FACTOR_L3 = 112;    // Register 0x0438
+static const uint16_t REG_VOLTAGE_L1_N = 0;           // Register 0x0400
+static const uint16_t REG_VOLTAGE_L2_N = 4;           // Register 0x0402
+static const uint16_t REG_VOLTAGE_L3_N = 8;           // Register 0x0404
+static const uint16_t REG_VOLTAGE_L1_L2 = 12;         // Register 0x0406
+static const uint16_t REG_VOLTAGE_L2_L3 = 16;         // Register 0x0408
+static const uint16_t REG_VOLTAGE_L3_L1 = 20;         // Register 0x040A
+static const uint16_t REG_VOLTAGE_L_N_AVG = 24;       // Register 0x040C
+static const uint16_t REG_VOLTAGE_L_L_AVG = 28;       // Register 0x040E
+static const uint16_t REG_CURRENT_L1 = 32;            // Register 0x0410
+static const uint16_t REG_CURRENT_L2 = 36;            // Register 0x0412
+static const uint16_t REG_CURRENT_L3 = 40;            // Register 0x0414
+static const uint16_t REG_CURRENT_N = 44;             // Register 0x0416
+static const uint16_t REG_CURRENT_AVG = 48;           // Register 0x0418
+static const uint16_t REG_ACTIVE_POWER_L1 = 52;       // Register 0x041A
+static const uint16_t REG_ACTIVE_POWER_L2 = 56;       // Register 0x041C
+static const uint16_t REG_ACTIVE_POWER_L3 = 60;       // Register 0x041E
+static const uint16_t REG_ACTIVE_POWER_TOTAL = 64;    // Register 0x0420
+static const uint16_t REG_APPARENT_POWER_L1 = 68;     // Register 0x0422
+static const uint16_t REG_APPARENT_POWER_L2 = 72;     // Register 0x0424
+static const uint16_t REG_APPARENT_POWER_L3 = 76;     // Register 0x0426
+static const uint16_t REG_APPARENT_POWER_TOTAL = 80;  // Register 0x0428
+static const uint16_t REG_REACTIVE_POWER_L1 = 84;     // Register 0x042A
+static const uint16_t REG_REACTIVE_POWER_L2 = 88;     // Register 0x042C
+static const uint16_t REG_REACTIVE_POWER_L3 = 92;     // Register 0x042E
+static const uint16_t REG_REACTIVE_POWER_TOTAL = 96;  // Register 0x0430
+static const uint16_t REG_FREQUENCY_L1 = 100;         // Register 0x0432
+static const uint16_t REG_FREQUENCY_L2 = 102;         // Register 0x0433
+static const uint16_t REG_FREQUENCY_L3 = 104;         // Register 0x0434
+static const uint16_t REG_FREQUENCY_AVG = 106;        // Register 0x0435
+static const uint16_t REG_POWER_FACTOR_L1 = 108;      // Register 0x0436
+static const uint16_t REG_POWER_FACTOR_L2 = 110;      // Register 0x0437
+static const uint16_t REG_POWER_FACTOR_L3 = 112;      // Register 0x0438
+static const uint16_t REG_POWER_FACTOR_AVG = 114;     // Register 0x0439
 
 // Register offsets within statistics block (byte offsets, relative to start of statistics data)
 // Base statistics (always present)
@@ -464,6 +477,46 @@ void DS100Meter::on_modbus_data(const std::vector<uint8_t> &data) {  // Helper f
         float power_factor = get_power_factor(REG_POWER_FACTOR_L1 + (i * 2));
         this->phases_[i].power_factor_sensor_->publish_state(power_factor);
       }
+      if (this->phases_[i].frequency_sensor_ != nullptr) {
+        float frequency = get_frequency(REG_FREQUENCY_L1 + (i * 2));
+        this->phases_[i].frequency_sensor_->publish_state(frequency);
+      }
+    }
+
+    // Read neutral current
+    if (this->current_n_sensor_ != nullptr) {
+      float current_n = get_int32(REG_CURRENT_N, 0.001f);  // mA -> A
+      this->current_n_sensor_->publish_state(current_n);
+    }
+
+    // Read line-to-line voltages
+    if (this->voltage_l1_l2_sensor_ != nullptr) {
+      float voltage = get_int32(REG_VOLTAGE_L1_L2, 0.001f);  // mV -> V
+      this->voltage_l1_l2_sensor_->publish_state(voltage);
+    }
+    if (this->voltage_l2_l3_sensor_ != nullptr) {
+      float voltage = get_int32(REG_VOLTAGE_L2_L3, 0.001f);  // mV -> V
+      this->voltage_l2_l3_sensor_->publish_state(voltage);
+    }
+    if (this->voltage_l3_l1_sensor_ != nullptr) {
+      float voltage = get_int32(REG_VOLTAGE_L3_L1, 0.001f);  // mV -> V
+      this->voltage_l3_l1_sensor_->publish_state(voltage);
+    }
+
+    // Read average voltages
+    if (this->voltage_l_n_avg_sensor_ != nullptr) {
+      float voltage = get_int32(REG_VOLTAGE_L_N_AVG, 0.001f);  // mV -> V
+      this->voltage_l_n_avg_sensor_->publish_state(voltage);
+    }
+    if (this->voltage_l_l_avg_sensor_ != nullptr) {
+      float voltage = get_int32(REG_VOLTAGE_L_L_AVG, 0.001f);  // mV -> V
+      this->voltage_l_l_avg_sensor_->publish_state(voltage);
+    }
+
+    // Read three-phase vector current
+    if (this->three_phase_vector_current_sensor_ != nullptr) {
+      float current = get_int32(REG_CURRENT_AVG, 0.001f);  // mA -> A
+      this->three_phase_vector_current_sensor_->publish_state(current);
     }
 
     // Read total/combined values
@@ -606,6 +659,13 @@ void DS100Meter::dump_config() {
   // Log total/combined sensors
   LOG_SENSOR("  ", "Total Power", this->total_power_sensor_);
   LOG_SENSOR("  ", "Frequency", this->frequency_sensor_);
+  LOG_SENSOR("  ", "Current N", this->current_n_sensor_);
+  LOG_SENSOR("  ", "Voltage L1-L2", this->voltage_l1_l2_sensor_);
+  LOG_SENSOR("  ", "Voltage L2-L3", this->voltage_l2_l3_sensor_);
+  LOG_SENSOR("  ", "Voltage L3-L1", this->voltage_l3_l1_sensor_);
+  LOG_SENSOR("  ", "Voltage L-N Avg", this->voltage_l_n_avg_sensor_);
+  LOG_SENSOR("  ", "Voltage L-L Avg", this->voltage_l_l_avg_sensor_);
+  LOG_SENSOR("  ", "3-Phase Vector Current", this->three_phase_vector_current_sensor_);
 
   // Log energy sensors
   LOG_SENSOR("  ", "Active Energy", this->total_energy_sensors_.active_);

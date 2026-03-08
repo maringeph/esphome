@@ -68,6 +68,20 @@ CONF_TOTAL_ACTIVE_MAXIMUM_DEMAND = "total_active_maximum_demand"
 CONF_IMPORT_REACTIVE_MAXIMUM_DEMAND = "import_reactive_maximum_demand"
 CONF_EXPORT_REACTIVE_MAXIMUM_DEMAND = "export_reactive_maximum_demand"
 CONF_TOTAL_REACTIVE_MAXIMUM_DEMAND = "total_reactive_maximum_demand"
+CONF_CURRENT_N = "current_n"
+
+# Line-to-line voltages
+CONF_VOLTAGE_L1_L2 = "voltage_l1_l2"
+CONF_VOLTAGE_L2_L3 = "voltage_l2_l3"
+CONF_VOLTAGE_L3_L1 = "voltage_l3_l1"
+
+# Average voltages
+CONF_VOLTAGE_L_N_AVG = "voltage_l_n_avg"
+CONF_VOLTAGE_L_L_AVG = "voltage_l_l_avg"
+
+# Total power sensors
+CONF_APPARENT_POWER_TOTAL = "apparent_power"
+CONF_REACTIVE_POWER_TOTAL = "reactive_power"
 
 ds100_meter_ns = cg.esphome_ns.namespace("ds100_meter")
 DS100Meter = ds100_meter_ns.class_(
@@ -113,6 +127,11 @@ PHASE_SENSORS = {
         unit_of_measurement=UNIT_DEGREES,
         icon=ICON_FLASH,
         accuracy_decimals=3,
+        state_class=STATE_CLASS_MEASUREMENT,
+    ),
+    CONF_FREQUENCY: sensor.sensor_schema(
+        unit_of_measurement=UNIT_HERTZ,
+        accuracy_decimals=1,
         state_class=STATE_CLASS_MEASUREMENT,
     ),
 }
@@ -340,6 +359,68 @@ CONFIG_SCHEMA = (
                 unit_of_measurement=UNIT_WATT,
                 accuracy_decimals=0,
                 device_class=DEVICE_CLASS_POWER,
+                state_class=STATE_CLASS_MEASUREMENT,
+            ),
+            cv.Optional(CONF_CURRENT_N): sensor.sensor_schema(
+                unit_of_measurement=UNIT_AMPERE,
+                accuracy_decimals=3,
+                device_class=DEVICE_CLASS_CURRENT,
+                state_class=STATE_CLASS_MEASUREMENT,
+            ),
+            # Line-to-line voltages
+            cv.Optional(CONF_VOLTAGE_L1_L2): sensor.sensor_schema(
+                unit_of_measurement=UNIT_VOLT,
+                accuracy_decimals=3,
+                device_class=DEVICE_CLASS_VOLTAGE,
+                state_class=STATE_CLASS_MEASUREMENT,
+            ),
+            cv.Optional(CONF_VOLTAGE_L2_L3): sensor.sensor_schema(
+                unit_of_measurement=UNIT_VOLT,
+                accuracy_decimals=3,
+                device_class=DEVICE_CLASS_VOLTAGE,
+                state_class=STATE_CLASS_MEASUREMENT,
+            ),
+            cv.Optional(CONF_VOLTAGE_L3_L1): sensor.sensor_schema(
+                unit_of_measurement=UNIT_VOLT,
+                accuracy_decimals=3,
+                device_class=DEVICE_CLASS_VOLTAGE,
+                state_class=STATE_CLASS_MEASUREMENT,
+            ),
+            # Average voltages
+            cv.Optional(CONF_VOLTAGE_L_N_AVG): sensor.sensor_schema(
+                unit_of_measurement=UNIT_VOLT,
+                accuracy_decimals=3,
+                device_class=DEVICE_CLASS_VOLTAGE,
+                state_class=STATE_CLASS_MEASUREMENT,
+            ),
+            cv.Optional(CONF_VOLTAGE_L_L_AVG): sensor.sensor_schema(
+                unit_of_measurement=UNIT_VOLT,
+                accuracy_decimals=3,
+                device_class=DEVICE_CLASS_VOLTAGE,
+                state_class=STATE_CLASS_MEASUREMENT,
+            ),
+            # Average current
+            cv.Optional(CONF_CURRENT): sensor.sensor_schema(
+                unit_of_measurement=UNIT_AMPERE,
+                accuracy_decimals=3,
+                device_class=DEVICE_CLASS_CURRENT,
+                state_class=STATE_CLASS_MEASUREMENT,
+            ),
+            # Total power sensors
+            cv.Optional(CONF_APPARENT_POWER_TOTAL): sensor.sensor_schema(
+                unit_of_measurement=UNIT_VOLT_AMPS,
+                accuracy_decimals=0,
+                state_class=STATE_CLASS_MEASUREMENT,
+            ),
+            cv.Optional(CONF_REACTIVE_POWER_TOTAL): sensor.sensor_schema(
+                unit_of_measurement=UNIT_VOLT_AMPS_REACTIVE,
+                accuracy_decimals=0,
+                state_class=STATE_CLASS_MEASUREMENT,
+            ),
+            # Power factor average
+            cv.Optional(CONF_POWER_FACTOR): sensor.sensor_schema(
+                accuracy_decimals=3,
+                device_class=DEVICE_CLASS_POWER_FACTOR,
                 state_class=STATE_CLASS_MEASUREMENT,
             ),
             # Statistics - total energy values with optional quadrants
@@ -737,6 +818,69 @@ async def to_code(config):
             var, config[CONF_FREQUENCY], device_id
         )
         cg.add(var.set_frequency_sensor(sens))
+
+    if CONF_CURRENT_N in config:
+        sens = await _register_sensor_with_device(
+            var, config[CONF_CURRENT_N], device_id
+        )
+        cg.add(var.set_current_n_sensor(sens))
+
+    # Line-to-line voltages
+    if CONF_VOLTAGE_L1_L2 in config:
+        sens = await _register_sensor_with_device(
+            var, config[CONF_VOLTAGE_L1_L2], device_id
+        )
+        cg.add(var.set_voltage_l1_l2_sensor(sens))
+
+    if CONF_VOLTAGE_L2_L3 in config:
+        sens = await _register_sensor_with_device(
+            var, config[CONF_VOLTAGE_L2_L3], device_id
+        )
+        cg.add(var.set_voltage_l2_l3_sensor(sens))
+
+    if CONF_VOLTAGE_L3_L1 in config:
+        sens = await _register_sensor_with_device(
+            var, config[CONF_VOLTAGE_L3_L1], device_id
+        )
+        cg.add(var.set_voltage_l3_l1_sensor(sens))
+
+    # Average voltages
+    if CONF_VOLTAGE_L_N_AVG in config:
+        sens = await _register_sensor_with_device(
+            var, config[CONF_VOLTAGE_L_N_AVG], device_id
+        )
+        cg.add(var.set_voltage_l_n_avg_sensor(sens))
+
+    if CONF_VOLTAGE_L_L_AVG in config:
+        sens = await _register_sensor_with_device(
+            var, config[CONF_VOLTAGE_L_L_AVG], device_id
+        )
+        cg.add(var.set_voltage_l_l_avg_sensor(sens))
+
+    # Average current
+    if CONF_CURRENT in config:
+        sens = await _register_sensor_with_device(var, config[CONF_CURRENT], device_id)
+        cg.add(var.set_current_avg_sensor(sens))
+
+    # Total power sensors
+    if CONF_APPARENT_POWER_TOTAL in config:
+        sens = await _register_sensor_with_device(
+            var, config[CONF_APPARENT_POWER_TOTAL], device_id
+        )
+        cg.add(var.set_apparent_power_total_sensor(sens))
+
+    if CONF_REACTIVE_POWER_TOTAL in config:
+        sens = await _register_sensor_with_device(
+            var, config[CONF_REACTIVE_POWER_TOTAL], device_id
+        )
+        cg.add(var.set_reactive_power_total_sensor(sens))
+
+    # Power factor average
+    if CONF_POWER_FACTOR in config:
+        sens = await _register_sensor_with_device(
+            var, config[CONF_POWER_FACTOR], device_id
+        )
+        cg.add(var.set_power_factor_avg_sensor(sens))
 
     # Statistics - total energy sensors
     if CONF_ACTIVE_ENERGY in config:
