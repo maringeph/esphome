@@ -336,7 +336,7 @@ CONFIG_SCHEMA = (
     cv.Schema(
         {
             cv.GenerateID(): cv.declare_id(DS100Meter),
-            cv.Optional(CONF_DEVICE_ID): cv.use_id(cg.Component),
+            cv.Optional(CONF_DEVICE_ID): cv.string,
             # Update intervals for different data categories
             cv.Optional(CONF_UPDATE_INTERVAL_LIVEDATA): cv.update_interval,
             cv.Optional(CONF_UPDATE_INTERVAL_DEMAND): cv.update_interval,
@@ -693,9 +693,6 @@ def _check_statistics_used(config):
 async def _register_sensor_with_device(var, sensor_config, device_id):
     """Register a sensor and set device_id if configured."""
     sens = await sensor.new_sensor(sensor_config)
-    if device_id is not None:
-        device = await cg.get_variable(device_id)
-        cg.add(sens.set_device(device))
     return sens
 
 

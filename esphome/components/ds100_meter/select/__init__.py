@@ -21,7 +21,7 @@ DS100StopBitsSelect = ds100_meter_ns.class_("DS100StopBitsSelect", select.Select
 CONFIG_SCHEMA = {
     cv.GenerateID(CONF_ID): cv.declare_id(cg.EntityBase),
     cv.GenerateID(CONF_DS100_METER_ID): cv.use_id(ds100_meter_ns.class_("DS100Meter")),
-    cv.Optional(CONF_DEVICE_ID): cv.use_id(cg.Component),
+    cv.Optional(CONF_DEVICE_ID): cv.string,
     cv.Optional(CONF_BAUD_RATE): select.select_schema(
         DS100BaudRateSelect,
         entity_category=ENTITY_CATEGORY_CONFIG,
@@ -41,9 +41,6 @@ async def _register_select_with_device(config, device_id, parent_id, options):
     """Register a select and set device_id if configured."""
     s = await select.new_select(config, options=options)
     await cg.register_parented(s, parent_id)
-    if device_id is not None:
-        device = await cg.get_variable(device_id)
-        cg.add(s.set_device(device))
     return s
 
 

@@ -27,7 +27,7 @@ CONFIG_SCHEMA = cv.Schema(
         cv.GenerateID(CONF_DS100_METER_ID): cv.use_id(
             ds100_meter_ns.class_("DS100Meter")
         ),
-        cv.Optional(CONF_DEVICE_ID): cv.use_id(cg.Component),
+        cv.Optional(CONF_DEVICE_ID): cv.string,
         cv.Optional(CONF_RESET_MAXIMUM_DEMAND): button.button_schema(
             DS100ResetMaximumDemandButton,
             device_class=DEVICE_CLASS_RESTART,
@@ -48,9 +48,6 @@ async def _register_button_with_device(config, device_id):
     """Register a button and set device_id if configured."""
     btn = await button.new_button(config)
     await cg.register_component(btn, config)
-    if device_id is not None:
-        device = await cg.get_variable(device_id)
-        cg.add(btn.set_device(device))
     return btn
 
 

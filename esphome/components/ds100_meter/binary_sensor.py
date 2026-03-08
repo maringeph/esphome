@@ -16,7 +16,7 @@ CONF_TERMINAL_SIGNAL = "terminal_signal"
 CONFIG_SCHEMA = cv.Schema(
     {
         cv.GenerateID(CONF_DS100_METER_ID): cv.use_id(DS100Meter),
-        cv.Optional(CONF_DEVICE_ID): cv.use_id(cg.Component),
+        cv.Optional(CONF_DEVICE_ID): cv.string,
         cv.Optional(CONF_TERMINAL_SIGNAL): binary_sensor.binary_sensor_schema(
             entity_category=ENTITY_CATEGORY_DIAGNOSTIC,
         ),
@@ -27,9 +27,6 @@ CONFIG_SCHEMA = cv.Schema(
 async def _register_binary_sensor_with_device(sensor_config, device_id):
     """Register a binary sensor and set device_id if configured."""
     bs = await binary_sensor.new_binary_sensor(sensor_config)
-    if device_id is not None:
-        device = await cg.get_variable(device_id)
-        cg.add(bs.set_device(device))
     return bs
 
 
