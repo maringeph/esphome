@@ -23,38 +23,30 @@ CONF_RESET_STATISTICS = "reset_statistics"
 
 CONFIG_SCHEMA = cv.Schema(
     {
+        cv.GenerateID(CONF_DS100_METER_ID): cv.use_id(
+            ds100_meter_ns.class_("DS100Meter")
+        ),
         cv.Optional(CONF_RESET_MAXIMUM_DEMAND): button.button_schema(
             DS100ResetMaximumDemandButton,
             device_class=DEVICE_CLASS_RESTART,
             entity_category=ENTITY_CATEGORY_CONFIG,
             icon=ICON_RESTART,
-        ).extend(
-            {
-                cv.GenerateID(CONF_DS100_METER_ID): cv.use_id(
-                    ds100_meter_ns.class_("DS100Meter")
-                ),
-            }
         ),
         cv.Optional(CONF_RESET_STATISTICS): button.button_schema(
             DS100ResetStatisticsButton,
             device_class=DEVICE_CLASS_RESTART,
             entity_category=ENTITY_CATEGORY_CONFIG,
             icon=ICON_RESTART,
-        ).extend(
-            {
-                cv.GenerateID(CONF_DS100_METER_ID): cv.use_id(
-                    ds100_meter_ns.class_("DS100Meter")
-                ),
-            }
         ),
     }
 )
 
 
 async def to_code(config):
+    parent = await cg.get_variable(config[CONF_DS100_METER_ID])
+
     if CONF_RESET_MAXIMUM_DEMAND in config:
         conf = config[CONF_RESET_MAXIMUM_DEMAND]
-        parent = await cg.get_variable(conf[CONF_DS100_METER_ID])
         btn = await button.new_button(conf)
         await cg.register_component(btn, conf)
         cg.add(btn.set_parent(parent))
@@ -62,7 +54,6 @@ async def to_code(config):
 
     if CONF_RESET_STATISTICS in config:
         conf = config[CONF_RESET_STATISTICS]
-        parent = await cg.get_variable(conf[CONF_DS100_METER_ID])
         btn = await button.new_button(conf)
         await cg.register_component(btn, conf)
         cg.add(btn.set_parent(parent))
