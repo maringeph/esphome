@@ -471,6 +471,66 @@ def _check_tariffs_used(config):
     return False
 
 
+def _check_reactive_energy_used(config):
+    """Check if any reactive energy sensors are configured (for statistics length calculation)."""
+    # Check total reactive energy sensors
+    if CONF_REACTIVE_ENERGY in config:
+        return True
+    if CONF_IMPORT_REACTIVE_ENERGY in config:
+        return True
+    if CONF_EXPORT_REACTIVE_ENERGY in config:
+        return True
+
+    # Check reactive energy in tariffs
+    for tariff in [CONF_TARIFF_1, CONF_TARIFF_2, CONF_TARIFF_3, CONF_TARIFF_4]:
+        if tariff in config:
+            tariff_config = config[tariff]
+            if CONF_REACTIVE_ENERGY in tariff_config:
+                return True
+            if CONF_IMPORT_REACTIVE_ENERGY in tariff_config:
+                return True
+            if CONF_EXPORT_REACTIVE_ENERGY in tariff_config:
+                return True
+
+    # Check reactive energy in phase statistics
+    if CONF_STATISTICS_L1 in config:
+        l1_config = config[CONF_STATISTICS_L1]
+        if CONF_REACTIVE_ENERGY in l1_config:
+            return True
+        if CONF_IMPORT_REACTIVE_ENERGY in l1_config:
+            return True
+        if CONF_EXPORT_REACTIVE_ENERGY in l1_config:
+            return True
+    if CONF_STATISTICS_L2 in config:
+        l2_config = config[CONF_STATISTICS_L2]
+        if CONF_REACTIVE_ENERGY in l2_config:
+            return True
+        if CONF_IMPORT_REACTIVE_ENERGY in l2_config:
+            return True
+        if CONF_EXPORT_REACTIVE_ENERGY in l2_config:
+            return True
+    if CONF_STATISTICS_L3 in config:
+        l3_config = config[CONF_STATISTICS_L3]
+        if CONF_REACTIVE_ENERGY in l3_config:
+            return True
+        if CONF_IMPORT_REACTIVE_ENERGY in l3_config:
+            return True
+        if CONF_EXPORT_REACTIVE_ENERGY in l3_config:
+            return True
+
+    # Check reactive energy in resettable statistics
+    if CONF_RESETTABLE_STATISTICS in config:
+        reset_config = config[CONF_RESETTABLE_STATISTICS]
+        if CONF_REACTIVE_ENERGY in reset_config:
+            return True
+        if CONF_IMPORT_REACTIVE_ENERGY in reset_config:
+            return True
+        if CONF_EXPORT_REACTIVE_ENERGY in reset_config:
+            return True
+
+    return False
+
+
 def _check_demand_used(config):
     """Check if any demand sensors are configured."""
     if CONF_DEMAND not in config:
@@ -571,6 +631,7 @@ async def to_code(config):
     # Set feature flags based on configuration
     use_tariffs = _check_tariffs_used(config)
     use_quadrants = _check_quadrants_used(config)
+    use_reactive_energy = _check_reactive_energy_used(config)
     use_demand = _check_demand_used(config)
     use_maximum_demand = _check_maximum_demand_used(config)
     use_resettable_statistics = _check_resettable_statistics_used(config)
@@ -580,6 +641,8 @@ async def to_code(config):
         cg.add_define("USE_DS100_TARIFFS")
     if use_quadrants:
         cg.add_define("USE_DS100_QUADRANTS")
+    if use_reactive_energy:
+        cg.add_define("USE_DS100_REACTIVE_ENERGY")
     if use_demand:
         cg.add_define("USE_DS100_DEMAND")
     if use_maximum_demand:

@@ -387,6 +387,11 @@ class DS100Meter : public PollingComponent, public modbus::ModbusDevice {
   uint32_t last_update_statistics_{0};
   uint32_t last_update_settings_{0};
   uint32_t last_update_device_info_{0};
+
+  // Statistics chain state: 0=idle, 1=L1 pending, 2=L2 pending, 3=L3 pending
+  uint8_t statistics_cycle_state_{0};
+  // Tracks last request for response routing: 0=Total, 1=L1, 2=L2, 3=L3
+  uint8_t last_statistics_request_{0};
 };
 
 }  // namespace ds100_meter

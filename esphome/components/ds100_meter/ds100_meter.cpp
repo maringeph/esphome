@@ -28,14 +28,28 @@ static const uint16_t DS100_MAXIMUM_DEMAND_LEN = 24;  // 6 types × 4 phases = 2
 
 #ifdef USE_DS100_RESETTABLE_STATISTICS
 static const uint16_t DS100_RESETTABLE_STATISTICS_ADDR = 0x062C;
-static const uint16_t DS100_RESETTABLE_STATISTICS_LEN = 48;  // Total + 3 phases, 6 values each
+// Resettable statistics length depends on enabled features
+// 6 values (import_active, export_active, active, import_reactive, export_reactive, reactive) per phase
+// Each value is 2 registers
+#if defined(USE_DS100_REACTIVE_ENERGY)
+static const uint16_t DS100_RESETTABLE_STATISTICS_LEN = 48;  // 6 values × 4 phases × 2 registers
+#else
+static const uint16_t DS100_RESETTABLE_STATISTICS_LEN = 24;  // 3 values (active only) × 4 phases × 2 registers
+#endif
 #endif
 
 #ifdef USE_DS100_PHASE_STATISTICS
 static const uint16_t DS100_PHASE_L1_STATISTICS_ADDR = 0x0500;
 static const uint16_t DS100_PHASE_L2_STATISTICS_ADDR = 0x0564;
 static const uint16_t DS100_PHASE_L3_STATISTICS_ADDR = 0x05C8;
-static const uint16_t DS100_PHASE_STATISTICS_LEN = 30;  // 6 energy values per phase
+// Phase statistics length depends on enabled features (same as total statistics)
+#if defined(USE_DS100_QUADRANTS)
+static const uint16_t DS100_PHASE_STATISTICS_LEN = 100;  // 30 active + 30 reactive + 40 quadrants
+#elif defined(USE_DS100_REACTIVE_ENERGY)
+static const uint16_t DS100_PHASE_STATISTICS_LEN = 60;  // 30 active + 30 reactive
+#else
+static const uint16_t DS100_PHASE_STATISTICS_LEN = 30;  // 30 active only
+#endif
 #endif
 
 // Device info registers (Input Registers)
@@ -181,11 +195,35 @@ void DS100Meter::update() {
 #endif
 
 #ifdef USE_DS100_STATISTICS
-  // Check if statistics are due
+  // Statistics chain: Total -> L1 -> L2 -> L3
+  // State 0 = idle/not in chain, State 1 = L1 pending, State 2 = L2 pending, State 3 = L3 pending
+
+  // Continue chain if active (states 1-3)
+  if (this->statistics_cycle_state_ > 0) {
+    const uint16_t phase_addrs[] = {DS100_PHASE_L1_STATISTICS_ADDR, DS100_PHASE_L2_STATISTICS_ADDR,
+                                    DS100_PHASE_L3_STATISTICS_ADDR};
+    uint8_t phase_idx = this->statistics_cycle_state_ - 1;
+    ESP_LOGD(TAG, "Continuing chain: Reading phase L%d statistics", this->statistics_cycle_state_);
+    this->last_statistics_request_ = this->statistics_cycle_state_;  // Track for response routing
+    this->send(MODBUS_CMD_READ_IN_REGISTERS, phase_addrs[phase_idx], DS100_PHASE_STATISTICS_LEN);
+
+    if (this->statistics_cycle_state_ < 3) {
+      // Next phase in chain
+      this->statistics_cycle_state_++;
+    } else {
+      // Chain complete after L3
+      this->statistics_cycle_state_ = 0;
+      this->last_update_statistics_ = now;
+    }
+    return;
+  }
+
+  // Start new chain when interval reached
   if (statistics_due) {
-    ESP_LOGD(TAG, "Reading statistics");
-    this->last_update_statistics_ = now;
+    ESP_LOGD(TAG, "Starting statistics chain with total");
+    this->last_statistics_request_ = 0;  // Total statistics
     this->send(MODBUS_CMD_READ_IN_REGISTERS, DS100_STATISTICS_ADDR, DS100_STATISTICS_LEN);
+    this->statistics_cycle_state_ = 1;  // Next: L1
     return;
   }
 #endif
@@ -321,9 +359,6 @@ void DS100Meter::on_modbus_data(const std::vector<uint8_t> &data) {
       this->terminal_signal_binary_sensor_->publish_state(terminal_signal);
     }
 
-    // After device info, request livedata
-    this->send(MODBUS_CMD_READ_IN_REGISTERS, DS100_LIVEDATA_ADDR, DS100_LIVEDATA_LEN);
-
   } else if (data.size() == livedata_size) {
     // Process livedata response
     ESP_LOGV(TAG, "Processing livedata (%zu bytes)", data.size());
@@ -375,9 +410,6 @@ void DS100Meter::on_modbus_data(const std::vector<uint8_t> &data) {
       float frequency = get_frequency(REG_FREQUENCY_L1);
       this->frequency_sensor_->publish_state(frequency);
     }
-
-    // After livedata, request statistics
-    this->send(MODBUS_CMD_READ_IN_REGISTERS, DS100_STATISTICS_ADDR, DS100_STATISTICS_LEN);
 
   } else if (data.size() == statistics_size) {
     // Process statistics response
@@ -431,11 +463,6 @@ void DS100Meter::on_modbus_data(const std::vector<uint8_t> &data) {
 #endif
 #endif
 
-    // After statistics, request demand if enabled
-#ifdef USE_DS100_DEMAND
-    this->send(MODBUS_CMD_READ_IN_REGISTERS, DS100_DEMAND_ADDR, DS100_DEMAND_LEN);
-#endif
-
 #ifdef USE_DS100_DEMAND
   } else if (data.size() == demand_size) {
     // Process demand response
@@ -443,11 +470,6 @@ void DS100Meter::on_modbus_data(const std::vector<uint8_t> &data) {
 
     // Read demand sensors using helper function (0.1W resolution)
     this->read_power_demand_sensors(data.data(), 0, this->demand_sensors_, 0.1f);
-
-    // After demand, request maximum demand if enabled
-#ifdef USE_DS100_MAXIMUM_DEMAND
-    this->send(MODBUS_CMD_READ_IN_REGISTERS, DS100_MAXIMUM_DEMAND_ADDR, DS100_MAXIMUM_DEMAND_LEN);
-#endif
 #endif
 
 #ifdef USE_DS100_MAXIMUM_DEMAND
@@ -457,11 +479,6 @@ void DS100Meter::on_modbus_data(const std::vector<uint8_t> &data) {
 
     // Read maximum demand sensors using helper function (0.1W resolution)
     this->read_power_demand_sensors(data.data(), 0, this->maximum_demand_sensors_, 0.1f);
-
-    // After maximum demand, request resettable statistics if enabled
-#ifdef USE_DS100_RESETTABLE_STATISTICS
-    this->send(MODBUS_CMD_READ_IN_REGISTERS, DS100_RESETTABLE_STATISTICS_ADDR, DS100_RESETTABLE_STATISTICS_LEN);
-#endif
 #endif
 
 #ifdef USE_DS100_RESETTABLE_STATISTICS
@@ -477,36 +494,17 @@ void DS100Meter::on_modbus_data(const std::vector<uint8_t> &data) {
     for (uint8_t phase = 0; phase < 3; phase++) {
       this->read_energy_sensors(data.data(), 120 * (phase + 1), this->resettable_phase_energy_sensors_[phase], 0.01f);
     }
-
-    // After resettable statistics, request per-phase statistics if enabled
-#ifdef USE_DS100_PHASE_STATISTICS
-    this->send(MODBUS_CMD_READ_IN_REGISTERS, DS100_PHASE_L1_STATISTICS_ADDR, DS100_PHASE_STATISTICS_LEN);
-#endif
 #endif
 
 #ifdef USE_DS100_PHASE_STATISTICS
   } else if (data.size() == phase_statistics_size) {
     // Process per-phase statistics response
-    // This is a stateful reader that cycles through L1 -> L2 -> L3
-    static uint8_t phase_statistics_state = 0;
+    // last_statistics_request_ is 1, 2, or 3 for L1, L2, L3 (0 would be total statistics)
+    uint8_t phase_idx = this->last_statistics_request_ - 1;  // Convert to 0, 1, 2
+    ESP_LOGV(TAG, "Processing phase L%d statistics (%zu bytes)", phase_idx + 1, data.size());
 
-    ESP_LOGV(TAG, "Processing phase L%d statistics (%zu bytes)", phase_statistics_state + 1, data.size());
-
-    // Read phase statistics using helper function
-    this->read_energy_sensors(data.data(), 0, this->phase_energy_sensors_[phase_statistics_state], 0.01f);
-
-    // Move to next phase
-    phase_statistics_state++;
-
-    if (phase_statistics_state < 3) {
-      // Request next phase statistics
-      const uint16_t phase_addrs[] = {DS100_PHASE_L1_STATISTICS_ADDR, DS100_PHASE_L2_STATISTICS_ADDR,
-                                      DS100_PHASE_L3_STATISTICS_ADDR};
-      this->send(MODBUS_CMD_READ_IN_REGISTERS, phase_addrs[phase_statistics_state], DS100_PHASE_STATISTICS_LEN);
-    } else {
-      // Reset state for next update cycle
-      phase_statistics_state = 0;
-    }
+    // Read phase statistics using helper function for the correct phase
+    this->read_energy_sensors(data.data(), 0, this->phase_energy_sensors_[phase_idx], 0.01f);
 #endif
 
   } else {
