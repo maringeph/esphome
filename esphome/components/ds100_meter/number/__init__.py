@@ -3,6 +3,7 @@ from esphome.components import number
 import esphome.config_validation as cv
 from esphome.const import (
     CONF_ADDRESS,
+    CONF_DEVICE_ID,
     CONF_ID,
     CONF_PASSWORD,
     ENTITY_CATEGORY_CONFIG,
@@ -12,9 +13,15 @@ from esphome.const import (
 
 from .. import CONF_DS100_METER_ID, ds100_meter_ns
 
-DS100ModbusAddressNumber = ds100_meter_ns.class_("DS100ModbusAddressNumber", number.Number)
-DS100ScrollingTimeNumber = ds100_meter_ns.class_("DS100ScrollingTimeNumber", number.Number)
-DS100DemandPeriodNumber = ds100_meter_ns.class_("DS100DemandPeriodNumber", number.Number)
+DS100ModbusAddressNumber = ds100_meter_ns.class_(
+    "DS100ModbusAddressNumber", number.Number
+)
+DS100ScrollingTimeNumber = ds100_meter_ns.class_(
+    "DS100ScrollingTimeNumber", number.Number
+)
+DS100DemandPeriodNumber = ds100_meter_ns.class_(
+    "DS100DemandPeriodNumber", number.Number
+)
 DS100PasswordNumber = ds100_meter_ns.class_("DS100PasswordNumber", number.Number)
 
 CONF_SCROLLING_TIME = "scrolling_time"
@@ -23,6 +30,7 @@ CONF_DEMAND_PERIOD = "demand_period"
 CONFIG_SCHEMA = {
     cv.GenerateID(CONF_ID): cv.declare_id(cg.EntityBase),
     cv.GenerateID(CONF_DS100_METER_ID): cv.use_id(ds100_meter_ns.class_("DS100Meter")),
+    cv.Optional(CONF_DEVICE_ID): cv.use_id(cg.Component),
     cv.Optional(CONF_ADDRESS): number.number_schema(
         DS100ModbusAddressNumber,
         entity_category=ENTITY_CATEGORY_CONFIG,
@@ -44,39 +52,38 @@ CONFIG_SCHEMA = {
 }
 
 
+async def _register_number_with_device(
+    config, device_id, parent_id, min_val, max_val, step
+):
+    """Register a number and set device_id if configured."""
+    n = await number.new_number(config, min_value=min_val, max_value=max_val, step=step)
+    await cg.register_parented(n, parent_id)
+    if device_id is not None:
+        device = await cg.get_variable(device_id)
+        cg.add(n.set_device(device))
+    return n
+
+
 async def to_code(config):
+    device_id = config.get(CONF_DEVICE_ID)
+    parent_id = config[CONF_DS100_METER_ID]
+
     if address_config := config.get(CONF_ADDRESS):
-        n = await number.new_number(
-            address_config,
-            min_value=1,
-            max_value=247,
-            step=1,
+        await _register_number_with_device(
+            address_config, device_id, parent_id, 1, 247, 1
         )
-        await cg.register_parented(n, config[CONF_DS100_METER_ID])
 
     if scrolling_time_config := config.get(CONF_SCROLLING_TIME):
-        n = await number.new_number(
-            scrolling_time_config,
-            min_value=0,
-            max_value=99,
-            step=1,
+        await _register_number_with_device(
+            scrolling_time_config, device_id, parent_id, 0, 99, 1
         )
-        await cg.register_parented(n, config[CONF_DS100_METER_ID])
 
     if demand_period_config := config.get(CONF_DEMAND_PERIOD):
-        n = await number.new_number(
-            demand_period_config,
-            min_value=1,
-            max_value=30,
-            step=1,
+        await _register_number_with_device(
+            demand_period_config, device_id, parent_id, 1, 30, 1
         )
-        await cg.register_parented(n, config[CONF_DS100_METER_ID])
 
     if password_config := config.get(CONF_PASSWORD):
-        n = await number.new_number(
-            password_config,
-            min_value=0,
-            max_value=9999,
-            step=1,
+        await _register_number_with_device(
+            password_config, device_id, parent_id, 0, 9999, 1
         )
-        await cg.register_parented(n, config[CONF_DS100_METER_ID])

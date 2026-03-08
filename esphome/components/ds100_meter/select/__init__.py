@@ -3,6 +3,7 @@ from esphome.components import select
 import esphome.config_validation as cv
 from esphome.const import (
     CONF_BAUD_RATE,
+    CONF_DEVICE_ID,
     CONF_ID,
     ENTITY_CATEGORY_CONFIG,
 )
@@ -20,6 +21,7 @@ DS100StopBitsSelect = ds100_meter_ns.class_("DS100StopBitsSelect", select.Select
 CONFIG_SCHEMA = {
     cv.GenerateID(CONF_ID): cv.declare_id(cg.EntityBase),
     cv.GenerateID(CONF_DS100_METER_ID): cv.use_id(ds100_meter_ns.class_("DS100Meter")),
+    cv.Optional(CONF_DEVICE_ID): cv.use_id(cg.Component),
     cv.Optional(CONF_BAUD_RATE): select.select_schema(
         DS100BaudRateSelect,
         entity_category=ENTITY_CATEGORY_CONFIG,
@@ -35,24 +37,31 @@ CONFIG_SCHEMA = {
 }
 
 
+async def _register_select_with_device(config, device_id, parent_id, options):
+    """Register a select and set device_id if configured."""
+    s = await select.new_select(config, options=options)
+    await cg.register_parented(s, parent_id)
+    if device_id is not None:
+        device = await cg.get_variable(device_id)
+        cg.add(s.set_device(device))
+    return s
+
+
 async def to_code(config):
+    device_id = config.get(CONF_DEVICE_ID)
+    parent_id = config[CONF_DS100_METER_ID]
+
     if baud_rate_config := config.get(CONF_BAUD_RATE):
-        s = await select.new_select(
-            baud_rate_config,
-            options=["9600", "19200", "38400", "115200"],
+        await _register_select_with_device(
+            baud_rate_config, device_id, parent_id, ["9600", "19200", "38400", "115200"]
         )
-        await cg.register_parented(s, config[CONF_DS100_METER_ID])
 
     if parity_config := config.get(CONF_PARITY):
-        s = await select.new_select(
-            parity_config,
-            options=["None", "Odd", "Even"],
+        await _register_select_with_device(
+            parity_config, device_id, parent_id, ["None", "Odd", "Even"]
         )
-        await cg.register_parented(s, config[CONF_DS100_METER_ID])
 
     if stop_bits_config := config.get(CONF_STOP_BITS):
-        s = await select.new_select(
-            stop_bits_config,
-            options=["1", "2"],
+        await _register_select_with_device(
+            stop_bits_config, device_id, parent_id, ["1", "2"]
         )
-        await cg.register_parented(s, config[CONF_DS100_METER_ID])
