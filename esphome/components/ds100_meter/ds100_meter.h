@@ -1,5 +1,6 @@
 #pragma once
 
+#include "esphome/components/automation/automation.h"
 #include "esphome/components/binary_sensor/binary_sensor.h"
 #include "esphome/components/button/button.h"
 #include "esphome/components/modbus/modbus.h"
@@ -269,13 +270,24 @@ class DS100Meter : public PollingComponent, public modbus::ModbusDevice {
   void on_modbus_data(const std::vector<uint8_t> &data) override;
   void dump_config() override;
 
+  // Automation actions - manual read triggers
+  void read_livedata() { this->queue_request(RequestType::LIVEDATA); }
+  void read_demand() { this->queue_request(RequestType::DEMAND); }
+  void read_statistics() { this->queue_request(RequestType::STATISTICS); }
+  void read_maximum_demand() { this->queue_request(RequestType::MAXIMUM_DEMAND); }
+  void read_device_info() { this->queue_request(RequestType::DEVICE_INFO); }
+  void read_statistics_resettable() { this->queue_request(RequestType::RESETTABLE_STATISTICS); }
+  void read_settings() { this->queue_request(RequestType::SETTINGS); }
+
   // Request queue with priorities (lower number = higher priority)
   enum class RequestType : uint8_t {
-    LIVEDATA = 0,        // Highest priority - real-time data
-    DEMAND = 1,          // Current power demand
-    STATISTICS = 2,      // Energy statistics (chain: Total -> L1 -> L2 -> L3)
-    MAXIMUM_DEMAND = 3,  // Peak demand values
-    DEVICE_INFO = 4,     // Lowest priority - serial number, versions
+    LIVEDATA = 0,               // Highest priority - real-time data
+    DEMAND = 1,                 // Current power demand
+    STATISTICS = 2,             // Energy statistics (chain: Total -> L1 -> L2 -> L3)
+    MAXIMUM_DEMAND = 3,         // Peak demand values
+    RESETTABLE_STATISTICS = 4,  // Resettable energy counters
+    SETTINGS = 5,               // Device configuration
+    DEVICE_INFO = 6,            // Lowest priority - serial number, versions
   };
 
   // Request queue management
@@ -286,6 +298,7 @@ class DS100Meter : public PollingComponent, public modbus::ModbusDevice {
   // Reset functions
   void reset_maximum_demand();
   void reset_statistics();
+  void send_reset_command(uint16_t address);
 
   // Write register (for configuration)
   void write_register(uint16_t address, uint16_t value);
@@ -443,6 +456,70 @@ class DS100ResetStatisticsButton : public button::Button, public Component {
  protected:
   void press_action() override;
   DS100Meter *parent_;
+};
+
+// Automation actions - manual read triggers
+class ReadLivedataAction : public Action<> {
+ public:
+  explicit ReadLivedataAction(DS100Meter *meter) : meter_(meter) {}
+  void play(Ts... x) override { this->meter_->read_livedata(); }
+
+ protected:
+  DS100Meter *meter_;
+};
+
+class ReadDemandAction : public Action<> {
+ public:
+  explicit ReadDemandAction(DS100Meter *meter) : meter_(meter) {}
+  void play(Ts... x) override { this->meter_->read_demand(); }
+
+ protected:
+  DS100Meter *meter_;
+};
+
+class ReadStatisticsAction : public Action<> {
+ public:
+  explicit ReadStatisticsAction(DS100Meter *meter) : meter_(meter) {}
+  void play(Ts... x) override { this->meter_->read_statistics(); }
+
+ protected:
+  DS100Meter *meter_;
+};
+
+class ReadMaximumDemandAction : public Action<> {
+ public:
+  explicit ReadMaximumDemandAction(DS100Meter *meter) : meter_(meter) {}
+  void play(Ts... x) override { this->meter_->read_maximum_demand(); }
+
+ protected:
+  DS100Meter *meter_;
+};
+
+class ReadDeviceInfoAction : public Action<> {
+ public:
+  explicit ReadDeviceInfoAction(DS100Meter *meter) : meter_(meter) {}
+  void play(Ts... x) override { this->meter_->read_device_info(); }
+
+ protected:
+  DS100Meter *meter_;
+};
+
+class ReadResettableStatisticsAction : public Action<> {
+ public:
+  explicit ReadResettableStatisticsAction(DS100Meter *meter) : meter_(meter) {}
+  void play(Ts... x) override { this->meter_->read_statistics_resettable(); }
+
+ protected:
+  DS100Meter *meter_;
+};
+
+class ReadSettingsAction : public Action<> {
+ public:
+  explicit ReadSettingsAction(DS100Meter *meter) : meter_(meter) {}
+  void play(Ts... x) override { this->meter_->read_settings(); }
+
+ protected:
+  DS100Meter *meter_;
 };
 
 }  // namespace ds100_meter
