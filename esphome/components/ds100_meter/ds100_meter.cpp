@@ -174,6 +174,9 @@ void DS100Meter::update() {
   bool settings_due = (now - this->last_update_settings_ >= this->update_interval_settings_);
   bool device_info_due = (now - this->last_update_device_info_ >= this->update_interval_device_info_);
 
+  ESP_LOGD(TAG, "Update check - livedata_due: %d, demand_due: %d, statistics_due: %d, max_demand_due: %d", livedata_due,
+           demand_due, statistics_due, max_demand_due);
+
   // Priority order: Livedata -> Demand -> Statistics -> Maximum Demand -> Settings -> Device Info
 
   // Livedata has highest priority (real-time voltage, current, power)
