@@ -38,6 +38,13 @@ static const uint16_t DS100_PHASE_L3_STATISTICS_ADDR = 0x05C8;
 static const uint16_t DS100_PHASE_STATISTICS_LEN = 30;  // 6 energy values per phase
 #endif
 
+// Device info registers (Input Registers)
+static const uint16_t DS100_SERIAL_NUMBER_ADDR = 0x1000;
+static const uint16_t DS100_SERIAL_NUMBER_LEN = 3;  // 3 registers = 6 bytes
+
+static const uint16_t DS100_TERMINAL_SIGNAL_ADDR = 0x101D;
+static const uint16_t DS100_TERMINAL_SIGNAL_LEN = 1;  // 1 register
+
 // Calculate statistics length based on enabled features
 #if defined(USE_DS100_QUADRANTS)
 static const uint16_t DS100_STATISTICS_LEN = 100;  // Full statistics with quadrants
@@ -48,26 +55,26 @@ static const uint16_t DS100_STATISTICS_LEN = 30;  // Basic statistics only
 #endif
 
 // Byte offsets within livedata response (each register = 2 bytes)
-static const uint16_t REG_VOLTAGE_L1_N = 0;          // Register 0x0400
-static const uint16_t REG_VOLTAGE_L2_N = 4;          // Register 0x0402
-static const uint16_t REG_VOLTAGE_L3_N = 8;          // Register 0x0404
-static const uint16_t REG_CURRENT_L1 = 32;           // Register 0x0410
-static const uint16_t REG_CURRENT_L2 = 36;           // Register 0x0412
-static const uint16_t REG_CURRENT_L3 = 40;           // Register 0x0414
-static const uint16_t REG_ACTIVE_POWER_L1 = 52;      // Register 0x041A
-static const uint16_t REG_ACTIVE_POWER_L2 = 56;      // Register 0x041C
-static const uint16_t REG_ACTIVE_POWER_L3 = 60;      // Register 0x041E
-static const uint16_t REG_ACTIVE_POWER_TOTAL = 64;   // Register 0x0420
-static const uint16_t REG_APPARENT_POWER_L1 = 68;    // Register 0x0422
-static const uint16_t REG_APPARENT_POWER_L2 = 72;    // Register 0x0424
-static const uint16_t REG_APPARENT_POWER_L3 = 76;    // Register 0x0426
-static const uint16_t REG_REACTIVE_POWER_L1 = 84;    // Register 0x042A
-static const uint16_t REG_REACTIVE_POWER_L2 = 88;    // Register 0x042C
-static const uint16_t REG_REACTIVE_POWER_L3 = 92;    // Register 0x042E
-static const uint16_t REG_FREQUENCY_L1 = 100;        // Register 0x0432
-static const uint16_t REG_POWER_FACTOR_L1 = 108;     // Register 0x0436
-static const uint16_t REG_POWER_FACTOR_L2 = 110;     // Register 0x0437
-static const uint16_t REG_POWER_FACTOR_L3 = 112;     // Register 0x0438
+static const uint16_t REG_VOLTAGE_L1_N = 0;         // Register 0x0400
+static const uint16_t REG_VOLTAGE_L2_N = 4;         // Register 0x0402
+static const uint16_t REG_VOLTAGE_L3_N = 8;         // Register 0x0404
+static const uint16_t REG_CURRENT_L1 = 32;          // Register 0x0410
+static const uint16_t REG_CURRENT_L2 = 36;          // Register 0x0412
+static const uint16_t REG_CURRENT_L3 = 40;          // Register 0x0414
+static const uint16_t REG_ACTIVE_POWER_L1 = 52;     // Register 0x041A
+static const uint16_t REG_ACTIVE_POWER_L2 = 56;     // Register 0x041C
+static const uint16_t REG_ACTIVE_POWER_L3 = 60;     // Register 0x041E
+static const uint16_t REG_ACTIVE_POWER_TOTAL = 64;  // Register 0x0420
+static const uint16_t REG_APPARENT_POWER_L1 = 68;   // Register 0x0422
+static const uint16_t REG_APPARENT_POWER_L2 = 72;   // Register 0x0424
+static const uint16_t REG_APPARENT_POWER_L3 = 76;   // Register 0x0426
+static const uint16_t REG_REACTIVE_POWER_L1 = 84;   // Register 0x042A
+static const uint16_t REG_REACTIVE_POWER_L2 = 88;   // Register 0x042C
+static const uint16_t REG_REACTIVE_POWER_L3 = 92;   // Register 0x042E
+static const uint16_t REG_FREQUENCY_L1 = 100;       // Register 0x0432
+static const uint16_t REG_POWER_FACTOR_L1 = 108;    // Register 0x0436
+static const uint16_t REG_POWER_FACTOR_L2 = 110;    // Register 0x0437
+static const uint16_t REG_POWER_FACTOR_L3 = 112;    // Register 0x0438
 
 // Register offsets within statistics block (byte offsets, relative to start of statistics data)
 // Base statistics (always present)
@@ -143,8 +150,20 @@ static const uint16_t STAT_REACTIVE_ENERGY_Q4_T4 = 196;
 #endif
 
 void DS100Meter::update() {
-  // Request livedata registers
-  this->send(MODBUS_CMD_READ_IN_REGISTERS, DS100_LIVEDATA_ADDR, DS100_LIVEDATA_LEN);
+  // Read device info first if any device info sensor is configured
+  bool needs_device_info =
+      (this->serial_number_text_sensor_ != nullptr || this->software_version_text_sensor_ != nullptr ||
+       this->hardware_version_text_sensor_ != nullptr || this->firmware_checksum_text_sensor_ != nullptr ||
+       this->terminal_signal_binary_sensor_ != nullptr);
+
+  if (needs_device_info) {
+    // Read device info registers 0x1000-0x101D (30 registers total)
+    // Covers: serial number (0x1000-0x1002), versions (0x1004-0x1006), terminal signal (0x101D)
+    this->send(MODBUS_CMD_READ_IN_REGISTERS, DS100_SERIAL_NUMBER_ADDR, 30);
+  } else {
+    // Request livedata registers directly if no device info sensors configured
+    this->send(MODBUS_CMD_READ_IN_REGISTERS, DS100_LIVEDATA_ADDR, DS100_LIVEDATA_LEN);
+  }
 }
 
 void DS100Meter::on_modbus_data(const std::vector<uint8_t> &data) {
@@ -153,10 +172,12 @@ void DS100Meter::on_modbus_data(const std::vector<uint8_t> &data) {
     if (byte_offset + 3 >= data.size()) {
       return NAN;
     }
-    // DS100 stores floats in big-endian format with register word swapping
-    // Bytes arrive as: [reg_high_msb, reg_high_lsb, reg_low_msb, reg_low_lsb]
-    // Need to reorder to: [reg_low_msb, reg_low_lsb, reg_high_msb, reg_high_lsb]
-    uint32_t raw = encode_uint32(data[byte_offset + 2], data[byte_offset + 3], data[byte_offset], data[byte_offset + 1]);
+    // DS100 stores floats as big-endian IEEE754
+    // Each register is 2 bytes (MSB, LSB)
+    // Float uses 2 registers: [reg1_msb, reg1_lsb, reg2_msb, reg2_lsb]
+    // For ESP32 (little-endian), we need to reverse: [reg2_lsb, reg2_msb, reg1_lsb, reg1_msb]
+    uint32_t raw =
+        encode_uint32(data[byte_offset + 3], data[byte_offset + 2], data[byte_offset + 1], data[byte_offset]);
     float value;
     memcpy(&value, &raw, sizeof(value));
     return value * scale;
@@ -196,7 +217,58 @@ void DS100Meter::on_modbus_data(const std::vector<uint8_t> &data) {
   const size_t phase_statistics_size = DS100_PHASE_STATISTICS_LEN * 2;
 #endif
 
-  if (data.size() == livedata_size) {
+  // Device info (serial number + terminal signal) = 30 registers
+  const size_t device_info_size = 30 * 2;
+
+  if (data.size() == device_info_size) {
+    // Process device info response (serial number, versions, and terminal signal)
+    ESP_LOGV(TAG, "Processing device info (%zu bytes)", data.size());
+
+    // Serial number is at offset 0 (registers 0x1000-0x1002 = 6 bytes)
+    if (this->serial_number_text_sensor_ != nullptr) {
+      // Format serial number as hex string: XX XX XX XX XX XX
+      char serial_str[13];
+      snprintf(serial_str, sizeof(serial_str), "%02X%02X%02X%02X%02X%02X", data[0], data[1], data[2], data[3], data[4],
+               data[5]);
+      this->serial_number_text_sensor_->publish_state(serial_str);
+    }
+
+    // Software Version at register 0x1004 (offset = (0x1004 - 0x1000) * 2 = 4 * 2 = 8)
+    if (this->software_version_text_sensor_ != nullptr) {
+      uint16_t version = encode_uint16(data[8], data[9]);
+      char version_str[8];
+      // Format as decimal (e.g., 301 -> "301")
+      snprintf(version_str, sizeof(version_str), "%u", version);
+      this->software_version_text_sensor_->publish_state(version_str);
+    }
+
+    // Hardware Version at register 0x1005 (offset = (0x1005 - 0x1000) * 2 = 5 * 2 = 10)
+    if (this->hardware_version_text_sensor_ != nullptr) {
+      uint16_t version = encode_uint16(data[10], data[11]);
+      char version_str[8];
+      snprintf(version_str, sizeof(version_str), "%u", version);
+      this->hardware_version_text_sensor_->publish_state(version_str);
+    }
+
+    // Firmware Checksum at register 0x1006 (offset = (0x1006 - 0x1000) * 2 = 6 * 2 = 12)
+    if (this->firmware_checksum_text_sensor_ != nullptr) {
+      uint16_t checksum = encode_uint16(data[12], data[13]);
+      char checksum_str[5];
+      // Format as hex (e.g., 0x5B61 -> "5B61")
+      snprintf(checksum_str, sizeof(checksum_str), "%04X", checksum);
+      this->firmware_checksum_text_sensor_->publish_state(checksum_str);
+    }
+
+    // Terminal signal is at register 0x101D (offset = (0x101D - 0x1000) * 2 = 29 * 2 = 58)
+    if (this->terminal_signal_binary_sensor_ != nullptr) {
+      bool terminal_signal = (data[58] != 0);
+      this->terminal_signal_binary_sensor_->publish_state(terminal_signal);
+    }
+
+    // After device info, request livedata
+    this->send(MODBUS_CMD_READ_IN_REGISTERS, DS100_LIVEDATA_ADDR, DS100_LIVEDATA_LEN);
+
+  } else if (data.size() == livedata_size) {
     // Process livedata response
     ESP_LOGV(TAG, "Processing livedata (%zu bytes)", data.size());
 
@@ -270,7 +342,7 @@ void DS100Meter::on_modbus_data(const std::vector<uint8_t> &data) {
 #ifdef USE_DS100_QUADRANTS
     // Quadrant reactive energy values
     const uint16_t quadrant_offsets[] = {STAT_REACTIVE_ENERGY_Q1, STAT_REACTIVE_ENERGY_Q2, STAT_REACTIVE_ENERGY_Q3,
-                                          STAT_REACTIVE_ENERGY_Q4};
+                                         STAT_REACTIVE_ENERGY_Q4};
 
     for (uint8_t i = 0; i < 4; i++) {
       if (this->reactive_energy_quadrant_sensors_[i] != nullptr) {
@@ -373,7 +445,7 @@ void DS100Meter::on_modbus_data(const std::vector<uint8_t> &data) {
     if (phase_statistics_state < 3) {
       // Request next phase statistics
       const uint16_t phase_addrs[] = {DS100_PHASE_L1_STATISTICS_ADDR, DS100_PHASE_L2_STATISTICS_ADDR,
-                                       DS100_PHASE_L3_STATISTICS_ADDR};
+                                      DS100_PHASE_L3_STATISTICS_ADDR};
       this->send(MODBUS_CMD_READ_IN_REGISTERS, phase_addrs[phase_statistics_state], DS100_PHASE_STATISTICS_LEN);
     } else {
       // Reset state for next update cycle
@@ -569,6 +641,19 @@ void DS100Meter::dump_config() {
     }
   }
 #endif
+
+  // Device info sensors
+  ESP_LOGCONFIG(TAG, "  Device Info:");
+  if (this->serial_number_text_sensor_ != nullptr)
+    ESP_LOGCONFIG(TAG, "    Serial Number: %s", this->serial_number_text_sensor_);
+  if (this->software_version_text_sensor_ != nullptr)
+    ESP_LOGCONFIG(TAG, "    Software Version: %s", this->software_version_text_sensor_);
+  if (this->hardware_version_text_sensor_ != nullptr)
+    ESP_LOGCONFIG(TAG, "    Hardware Version: %s", this->hardware_version_text_sensor_);
+  if (this->firmware_checksum_text_sensor_ != nullptr)
+    ESP_LOGCONFIG(TAG, "    Firmware Checksum: %s", this->firmware_checksum_text_sensor_);
+  if (this->terminal_signal_binary_sensor_ != nullptr)
+    ESP_LOGCONFIG(TAG, "    Terminal Signal: %s", this->terminal_signal_binary_sensor_);
 }
 
 void DS100Meter::read_energy_sensors(const uint8_t *data, uint16_t base_offset, EnergySensors &sensors, float scale) {
@@ -610,7 +695,7 @@ void DS100Meter::read_energy_sensors(const uint8_t *data, uint16_t base_offset, 
 }
 
 void DS100Meter::read_power_demand_sensors(const uint8_t *data, uint16_t base_offset, PowerDemandSensors &sensors,
-                                             float scale) {
+                                           float scale) {
   // DS100 power demand pattern (demand/maximum demand follow same layout):
   // 6 types × 4 phases (Total, A, B, C) = 24 values
   // Each type has 4 consecutive registers (one per phase), each value is 2 registers (4 bytes)
@@ -662,12 +747,12 @@ void DS100Meter::reset_maximum_demand() {
 
   // Build Modbus WRITE_SINGLE_REGISTER (0x06) command - single allocation with initializer list
   const std::vector<uint8_t> cmd = {
-      this->address_,                                                        // Slave address
-      0x06,                                                                  // Function code
-      static_cast<uint8_t>(DS100_RESET_MAXIMUM_DEMAND_ADDR >> 8),           // Register high byte
-      static_cast<uint8_t>(DS100_RESET_MAXIMUM_DEMAND_ADDR & 0xFF),         // Register low byte
-      static_cast<uint8_t>(reset_value >> 8),                               // Value high byte
-      static_cast<uint8_t>(reset_value & 0xFF),                             // Value low byte
+      this->address_,                                                // Slave address
+      0x06,                                                          // Function code
+      static_cast<uint8_t>(DS100_RESET_MAXIMUM_DEMAND_ADDR >> 8),    // Register high byte
+      static_cast<uint8_t>(DS100_RESET_MAXIMUM_DEMAND_ADDR & 0xFF),  // Register low byte
+      static_cast<uint8_t>(reset_value >> 8),                        // Value high byte
+      static_cast<uint8_t>(reset_value & 0xFF),                      // Value low byte
   };  // CRC is automatically appended by send_raw()
 
   this->send_raw(cmd);
@@ -687,12 +772,12 @@ void DS100Meter::reset_statistics() {
 
   // Build Modbus WRITE_SINGLE_REGISTER (0x06) command - single allocation with initializer list
   const std::vector<uint8_t> cmd = {
-      this->address_,                                               // Slave address
-      0x06,                                                         // Function code
-      static_cast<uint8_t>(DS100_RESET_STATISTICS_ADDR >> 8),      // Register high byte
-      static_cast<uint8_t>(DS100_RESET_STATISTICS_ADDR & 0xFF),    // Register low byte
-      static_cast<uint8_t>(reset_value >> 8),                      // Value high byte
-      static_cast<uint8_t>(reset_value & 0xFF),                    // Value low byte
+      this->address_,                                            // Slave address
+      0x06,                                                      // Function code
+      static_cast<uint8_t>(DS100_RESET_STATISTICS_ADDR >> 8),    // Register high byte
+      static_cast<uint8_t>(DS100_RESET_STATISTICS_ADDR & 0xFF),  // Register low byte
+      static_cast<uint8_t>(reset_value >> 8),                    // Value high byte
+      static_cast<uint8_t>(reset_value & 0xFF),                  // Value low byte
   };  // CRC is automatically appended by send_raw()
 
   this->send_raw(cmd);
@@ -706,15 +791,28 @@ void DS100Meter::write_register(uint16_t address, uint16_t value) {
 
   // Build Modbus WRITE_SINGLE_REGISTER (0x06) command - single allocation with initializer list
   const std::vector<uint8_t> cmd = {
-      this->address_,                       // Slave address
-      0x06,                                 // Function code
-      static_cast<uint8_t>(address >> 8),   // Register high byte
-      static_cast<uint8_t>(address & 0xFF), // Register low byte
-      static_cast<uint8_t>(value >> 8),     // Value high byte
-      static_cast<uint8_t>(value & 0xFF),   // Value low byte
+      this->address_,                        // Slave address
+      0x06,                                  // Function code
+      static_cast<uint8_t>(address >> 8),    // Register high byte
+      static_cast<uint8_t>(address & 0xFF),  // Register low byte
+      static_cast<uint8_t>(value >> 8),      // Value high byte
+      static_cast<uint8_t>(value & 0xFF),    // Value low byte
   };  // CRC is automatically appended by send_raw()
 
   this->send_raw(cmd);
+}
+
+// Button implementations
+static const char *const BUTTON_TAG = "ds100_meter.button";
+
+void DS100ResetMaximumDemandButton::press_action() {
+  ESP_LOGI(BUTTON_TAG, "Resetting maximum demand");
+  this->parent_->reset_maximum_demand();
+}
+
+void DS100ResetStatisticsButton::press_action() {
+  ESP_LOGI(BUTTON_TAG, "Resetting statistics");
+  this->parent_->reset_statistics();
 }
 
 }  // namespace ds100_meter
