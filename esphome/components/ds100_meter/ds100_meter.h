@@ -488,10 +488,8 @@ class DS100Meter : public PollingComponent, public modbus::ModbusDevice {
   uint32_t last_request_time_{0};    // Timestamp of last request for timeout tracking
 };
 
-}  // namespace ds100_meter
-
 // Automation actions - manual read triggers
-class ReadLivedataAction : public Action<> {
+template<typename... Ts> class ReadLivedataAction : public Action<Ts...> {
  public:
   explicit ReadLivedataAction(DS100Meter *meter) : meter_(meter) {}
   void play(Ts... x) override { this->meter_->read_livedata(); }
@@ -500,7 +498,7 @@ class ReadLivedataAction : public Action<> {
   DS100Meter *meter_;
 };
 
-class ReadDemandAction : public Action<> {
+template<typename... Ts> class ReadDemandAction : public Action<Ts...> {
  public:
   explicit ReadDemandAction(DS100Meter *meter) : meter_(meter) {}
   void play(Ts... x) override { this->meter_->read_demand(); }
@@ -509,7 +507,7 @@ class ReadDemandAction : public Action<> {
   DS100Meter *meter_;
 };
 
-class ReadStatisticsAction : public Action<> {
+template<typename... Ts> class ReadStatisticsAction : public Action<Ts...> {
  public:
   explicit ReadStatisticsAction(DS100Meter *meter) : meter_(meter) {}
   void play(Ts... x) override { this->meter_->read_statistics(); }
@@ -518,7 +516,7 @@ class ReadStatisticsAction : public Action<> {
   DS100Meter *meter_;
 };
 
-class ReadMaximumDemandAction : public Action<> {
+template<typename... Ts> class ReadMaximumDemandAction : public Action<Ts...> {
  public:
   explicit ReadMaximumDemandAction(DS100Meter *meter) : meter_(meter) {}
   void play(Ts... x) override { this->meter_->read_maximum_demand(); }
@@ -527,7 +525,7 @@ class ReadMaximumDemandAction : public Action<> {
   DS100Meter *meter_;
 };
 
-class ReadDeviceInfoAction : public Action<> {
+template<typename... Ts> class ReadDeviceInfoAction : public Action<Ts...> {
  public:
   explicit ReadDeviceInfoAction(DS100Meter *meter) : meter_(meter) {}
   void play(Ts... x) override { this->meter_->read_device_info(); }
@@ -536,7 +534,7 @@ class ReadDeviceInfoAction : public Action<> {
   DS100Meter *meter_;
 };
 
-class ReadResettableStatisticsAction : public Action<> {
+template<typename... Ts> class ReadResettableStatisticsAction : public Action<Ts...> {
  public:
   explicit ReadResettableStatisticsAction(DS100Meter *meter) : meter_(meter) {}
   void play(Ts... x) override { this->meter_->read_statistics_resettable(); }
@@ -545,7 +543,7 @@ class ReadResettableStatisticsAction : public Action<> {
   DS100Meter *meter_;
 };
 
-class ReadSettingsAction : public Action<> {
+template<typename... Ts> class ReadSettingsAction : public Action<Ts...> {
  public:
   explicit ReadSettingsAction(DS100Meter *meter) : meter_(meter) {}
   void play(Ts... x) override { this->meter_->read_settings(); }

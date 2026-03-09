@@ -999,18 +999,5 @@ void DS100Meter::write_register(uint16_t address, uint16_t value) {
   this->send_raw(cmd);
 }
 
-// Button implementations
-static const char *const BUTTON_TAG = "ds100_meter.button";
-
-void DS100ResetMaximumDemandButton::press_action() {
-  ESP_LOGI(BUTTON_TAG, "Resetting maximum demand");
-  this->parent_->reset_maximum_demand();
-}
-
-void DS100ResetStatisticsButton::press_action() {
-  ESP_LOGI(BUTTON_TAG, "Resetting statistics");
-  this->parent_->reset_statistics();
-}
-
 }  // namespace ds100_meter
 }  // namespace esphome
