@@ -1,5 +1,7 @@
 #pragma once
 
+#ifdef USE_BUTTON
+
 #include "esphome/components/button/button.h"
 #include "esphome/core/component.h"
 
@@ -30,3 +32,5 @@ class DS100ResetStatisticsButton : public button::Button, public Component {
 
 }  // namespace ds100_meter
 }  // namespace esphome
+
+#endif  // USE_BUTTON

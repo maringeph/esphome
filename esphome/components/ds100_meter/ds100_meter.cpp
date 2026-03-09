@@ -210,10 +210,15 @@ void DS100Meter::update() {
 #endif
 
   if (now - this->last_update_device_info_ >= this->update_interval_device_info_) {
-    bool needs_device_info =
+    bool needs_device_info = false;
+#ifdef USE_TEXT_SENSOR
+    needs_device_info =
         (this->serial_number_text_sensor_ != nullptr || this->software_version_text_sensor_ != nullptr ||
-         this->hardware_version_text_sensor_ != nullptr || this->firmware_checksum_text_sensor_ != nullptr ||
-         this->terminal_signal_binary_sensor_ != nullptr);
+         this->hardware_version_text_sensor_ != nullptr || this->firmware_checksum_text_sensor_ != nullptr);
+#endif
+#ifdef USE_BINARY_SENSOR
+    needs_device_info = needs_device_info || (this->terminal_signal_binary_sensor_ != nullptr);
+#endif
     if (needs_device_info) {
       this->queue_request(RequestType::DEVICE_INFO);
     }
@@ -394,6 +399,7 @@ void DS100Meter::on_modbus_data(const std::vector<uint8_t> &data) {  // Helper f
   const size_t device_info_size = 30 * 2;
 
   if (data.size() == device_info_size) {
+#ifdef USE_TEXT_SENSOR
     // Process device info response (serial number, versions, and terminal signal)
     ESP_LOGV(TAG, "Processing device info (%zu bytes)", data.size());
 
@@ -431,12 +437,15 @@ void DS100Meter::on_modbus_data(const std::vector<uint8_t> &data) {  // Helper f
       snprintf(checksum_str, sizeof(checksum_str), "%04X", checksum);
       this->firmware_checksum_text_sensor_->publish_state(checksum_str);
     }
+#endif
 
+#ifdef USE_BINARY_SENSOR
     // Terminal signal is at register 0x101D (offset = (0x101D - 0x1000) * 2 = 29 * 2 = 58)
     if (this->terminal_signal_binary_sensor_ != nullptr) {
       bool terminal_signal = (data[58] != 0);
       this->terminal_signal_binary_sensor_->publish_state(terminal_signal);
     }
+#endif
 
   } else if (data.size() == livedata_size) {
     // Process livedata response
@@ -513,10 +522,10 @@ void DS100Meter::on_modbus_data(const std::vector<uint8_t> &data) {  // Helper f
       this->voltage_l_l_avg_sensor_->publish_state(voltage);
     }
 
-    // Read three-phase vector current
-    if (this->three_phase_vector_current_sensor_ != nullptr) {
+    // Read average current
+    if (this->current_avg_sensor_ != nullptr) {
       float current = get_int32(REG_CURRENT_AVG, 0.001f);  // mA -> A
-      this->three_phase_vector_current_sensor_->publish_state(current);
+      this->current_avg_sensor_->publish_state(current);
     }
 
     // Read total/combined values
@@ -665,7 +674,7 @@ void DS100Meter::dump_config() {
   LOG_SENSOR("  ", "Voltage L3-L1", this->voltage_l3_l1_sensor_);
   LOG_SENSOR("  ", "Voltage L-N Avg", this->voltage_l_n_avg_sensor_);
   LOG_SENSOR("  ", "Voltage L-L Avg", this->voltage_l_l_avg_sensor_);
-  LOG_SENSOR("  ", "3-Phase Vector Current", this->three_phase_vector_current_sensor_);
+  LOG_SENSOR("  ", "Current Avg", this->current_avg_sensor_);
 
   // Log energy sensors
   LOG_SENSOR("  ", "Active Energy", this->total_energy_sensors_.active_);
@@ -828,6 +837,7 @@ void DS100Meter::dump_config() {
   }
 #endif
 
+#ifdef USE_TEXT_SENSOR
   // Device info sensors
   ESP_LOGCONFIG(TAG, "  Device Info:");
   if (this->serial_number_text_sensor_ != nullptr)
@@ -838,8 +848,11 @@ void DS100Meter::dump_config() {
     ESP_LOGCONFIG(TAG, "    Hardware Version: %s", this->hardware_version_text_sensor_);
   if (this->firmware_checksum_text_sensor_ != nullptr)
     ESP_LOGCONFIG(TAG, "    Firmware Checksum: %s", this->firmware_checksum_text_sensor_);
+#endif
+#ifdef USE_BINARY_SENSOR
   if (this->terminal_signal_binary_sensor_ != nullptr)
     ESP_LOGCONFIG(TAG, "    Terminal Signal: %s", this->terminal_signal_binary_sensor_);
+#endif
 }
 
 void DS100Meter::read_energy_sensors(const uint8_t *data, uint16_t base_offset, EnergySensors &sensors, float scale) {

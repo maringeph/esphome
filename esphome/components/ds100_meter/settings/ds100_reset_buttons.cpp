@@ -1,4 +1,7 @@
 #include "ds100_reset_buttons.h"
+
+#ifdef USE_BUTTON
+
 #include "../ds100_meter.h"
 #include "esphome/core/log.h"
 
@@ -19,3 +22,5 @@ void DS100ResetStatisticsButton::press_action() {
 
 }  // namespace ds100_meter
 }  // namespace esphome
+
+#endif  // USE_BUTTON

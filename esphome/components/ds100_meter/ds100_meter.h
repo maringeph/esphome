@@ -23,9 +23,11 @@
 namespace esphome {
 namespace ds100_meter {
 
+#ifdef USE_BUTTON
 // Forward declarations for button classes (defined in settings/)
 class DS100ResetMaximumDemandButton;
 class DS100ResetStatisticsButton;
+#endif
 
 /// DS100 Meter - 3-phase energy meter with Modbus interface
 class DS100Meter : public PollingComponent, public modbus::ModbusDevice {
@@ -263,6 +265,7 @@ class DS100Meter : public PollingComponent, public modbus::ModbusDevice {
     this->set_phase_sensor(this->maximum_demand_sensors_.total_reactive_, phase, sensor);
   }
 
+#ifdef USE_TEXT_SENSOR
   // Text sensor - Serial Number
   void set_serial_number_text_sensor(text_sensor::TextSensor *sensor) { this->serial_number_text_sensor_ = sensor; }
 
@@ -280,11 +283,14 @@ class DS100Meter : public PollingComponent, public modbus::ModbusDevice {
   void set_firmware_checksum_text_sensor(text_sensor::TextSensor *sensor) {
     this->firmware_checksum_text_sensor_ = sensor;
   }
+#endif
 
+#ifdef USE_BINARY_SENSOR
   // Binary sensor - Terminal Signal
   void set_terminal_signal_binary_sensor(binary_sensor::BinarySensor *sensor) {
     this->terminal_signal_binary_sensor_ = sensor;
   }
+#endif
 
   // Update interval setters for different data categories
   void set_update_interval_livedata(uint32_t interval) { this->update_interval_livedata_ = interval; }
@@ -430,6 +436,7 @@ class DS100Meter : public PollingComponent, public modbus::ModbusDevice {
   // Per-phase energy statistics
   std::array<EnergySensors, 3> phase_energy_sensors_;  // Per-phase statistics (A, B, C)
 
+#ifdef USE_TEXT_SENSOR
   // Text sensor - Serial Number (6 bytes from register 0x1000)
   text_sensor::TextSensor *serial_number_text_sensor_{nullptr};
 
@@ -441,9 +448,12 @@ class DS100Meter : public PollingComponent, public modbus::ModbusDevice {
 
   // Text sensor - Firmware Checksum (register 0x1006)
   text_sensor::TextSensor *firmware_checksum_text_sensor_{nullptr};
+#endif
 
+#ifdef USE_BINARY_SENSOR
   // Binary sensor - Terminal Signal (register 0x101D)
   binary_sensor::BinarySensor *terminal_signal_binary_sensor_{nullptr};
+#endif
 
   // Update intervals for different data categories (in milliseconds)
   uint32_t update_interval_livedata_{10000};        // 10s default
@@ -479,30 +489,6 @@ class DS100Meter : public PollingComponent, public modbus::ModbusDevice {
 };
 
 }  // namespace ds100_meter
-
-// Button classes defined here (not in separate file to avoid include issues)
-namespace ds100_meter {
-class DS100Meter;
-
-/// Button to reset maximum demand values
-class DS100ResetMaximumDemandButton : public button::Button, public Component {
- public:
-  void set_parent(DS100Meter *parent) { this->parent_ = parent; }
-
- protected:
-  void press_action() override;
-  DS100Meter *parent_;
-};
-
-/// Button to reset resettable statistics (energy counters)
-class DS100ResetStatisticsButton : public button::Button, public Component {
- public:
-  void set_parent(DS100Meter *parent) { this->parent_ = parent; }
-
- protected:
-  void press_action() override;
-  DS100Meter *parent_;
-};
 
 // Automation actions - manual read triggers
 class ReadLivedataAction : public Action<> {
