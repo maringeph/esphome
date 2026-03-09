@@ -1,12 +1,21 @@
 #pragma once
 
 #include "esphome/core/automation.h"
-#include "esphome/components/binary_sensor/binary_sensor.h"
-#include "esphome/components/button/button.h"
-#include "esphome/components/modbus/modbus.h"
-#include "esphome/components/sensor/sensor.h"
-#include "esphome/components/text_sensor/text_sensor.h"
 #include "esphome/core/component.h"
+#include "esphome/components/modbus/modbus.h"
+
+#ifdef USE_BUTTON
+#include "esphome/components/button/button.h"
+#endif
+#ifdef USE_SENSOR
+#include "esphome/components/sensor/sensor.h"
+#endif
+#ifdef USE_TEXT_SENSOR
+#include "esphome/components/text_sensor/text_sensor.h"
+#endif
+#ifdef USE_BINARY_SENSOR
+#include "esphome/components/binary_sensor/binary_sensor.h"
+#endif
 
 #include <array>
 #include <vector>
