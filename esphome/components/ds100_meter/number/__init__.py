@@ -67,23 +67,28 @@ async def to_code(config):
     device_id = config.get(CONF_DEVICE_ID)
     device_obj = await get_or_create_device(device_id)
     parent_id = config[CONF_DS100_METER_ID]
+    parent = await cg.get_variable(parent_id)
 
     if address_config := config.get(CONF_ADDRESS):
-        await _register_number_with_device(
+        num = await _register_number_with_device(
             address_config, device_obj, parent_id, 1, 247, 1
         )
+        cg.add(parent.set_address_number(num))
 
     if scrolling_time_config := config.get(CONF_SCROLLING_TIME):
-        await _register_number_with_device(
+        num = await _register_number_with_device(
             scrolling_time_config, device_obj, parent_id, 0, 99, 1
         )
+        cg.add(parent.set_scrolling_time_number(num))
 
     if demand_period_config := config.get(CONF_DEMAND_PERIOD):
-        await _register_number_with_device(
+        num = await _register_number_with_device(
             demand_period_config, device_obj, parent_id, 1, 30, 1
         )
+        cg.add(parent.set_demand_period_number(num))
 
     if password_config := config.get(CONF_PASSWORD):
-        await _register_number_with_device(
+        num = await _register_number_with_device(
             password_config, device_obj, parent_id, 0, 9999, 1
         )
+        cg.add(parent.set_password_number(num))

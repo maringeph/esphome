@@ -50,18 +50,25 @@ async def to_code(config):
     device_id = config.get(CONF_DEVICE_ID)
     device_obj = await get_or_create_device(device_id)
     parent_id = config[CONF_DS100_METER_ID]
+    parent = await cg.get_variable(parent_id)
 
     if baud_rate_config := config.get(CONF_BAUD_RATE):
-        await _register_select_with_device(
-            baud_rate_config, device_obj, parent_id, ["9600", "19200", "38400", "115200"]
+        sel = await _register_select_with_device(
+            baud_rate_config,
+            device_obj,
+            parent_id,
+            ["9600", "19200", "38400", "115200"],
         )
+        cg.add(parent.set_baud_rate_select(sel))
 
     if parity_config := config.get(CONF_PARITY):
-        await _register_select_with_device(
+        sel = await _register_select_with_device(
             parity_config, device_obj, parent_id, ["None", "Odd", "Even"]
         )
+        cg.add(parent.set_parity_select(sel))
 
     if stop_bits_config := config.get(CONF_STOP_BITS):
-        await _register_select_with_device(
+        sel = await _register_select_with_device(
             stop_bits_config, device_obj, parent_id, ["1", "2"]
         )
+        cg.add(parent.set_stop_bits_select(sel))

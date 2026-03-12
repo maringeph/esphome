@@ -299,6 +299,17 @@ class DS100Meter : public PollingComponent, public modbus::ModbusDevice {
   }
 #endif
 
+  // Select components for settings
+  void set_baud_rate_select(select::Select *select) { this->baud_rate_select_ = select; }
+  void set_parity_select(select::Select *select) { this->parity_select_ = select; }
+  void set_stop_bits_select(select::Select *select) { this->stop_bits_select_ = select; }
+
+  // Number components for settings
+  void set_address_number(number::Number *number) { this->address_number_ = number; }
+  void set_scrolling_time_number(number::Number *number) { this->scrolling_time_number_ = number; }
+  void set_demand_period_number(number::Number *number) { this->demand_period_number_ = number; }
+  void set_password_number(number::Number *number) { this->password_number_ = number; }
+
   // Update interval setters for different data categories
   void set_update_interval_livedata(uint32_t interval) { this->update_interval_livedata_ = interval; }
   void set_update_interval_demand(uint32_t interval) { this->update_interval_demand_ = interval; }
@@ -463,6 +474,17 @@ class DS100Meter : public PollingComponent, public modbus::ModbusDevice {
   binary_sensor::BinarySensor *terminal_signal_binary_sensor_{nullptr};
 #endif
 
+  // Select components for settings (configuration)
+  select::Select *baud_rate_select_{nullptr};
+  select::Select *parity_select_{nullptr};
+  select::Select *stop_bits_select_{nullptr};
+
+  // Number components for settings (configuration)
+  number::Number *address_number_{nullptr};
+  number::Number *scrolling_time_number_{nullptr};
+  number::Number *demand_period_number_{nullptr};
+  number::Number *password_number_{nullptr};
+
   // Update intervals for different data categories (in milliseconds)
   uint32_t update_interval_livedata_{10000};        // 10s default
   uint32_t update_interval_demand_{10000};          // 10s default
@@ -490,6 +512,8 @@ class DS100Meter : public PollingComponent, public modbus::ModbusDevice {
   static const uint8_t PENDING_STATISTICS = 0x04;
   static const uint8_t PENDING_MAXIMUM_DEMAND = 0x08;
   static const uint8_t PENDING_DEVICE_INFO = 0x10;
+  static const uint8_t PENDING_SETTINGS = 0x20;
+  static const uint8_t PENDING_RESETTABLE_STATISTICS = 0x40;
 
   uint8_t pending_requests_{0};      // Bitmask of pending request types
   bool request_in_progress_{false};  // True if waiting for Modbus response

@@ -76,6 +76,19 @@ static const uint16_t OFFSET_FIRMWARE_CHECKSUM = 18;  // 0x1009 - 0x1000 = 9 reg
 static const uint16_t DS100_TERMINAL_SIGNAL_ADDR = 0x101D;
 static const uint16_t DS100_TERMINAL_SIGNAL_LEN = 1;  // 1 register
 
+// Settings registers (Holding Registers)
+static const uint16_t DS100_SETTINGS_ADDR = 0x1003;  // Start address
+static const uint16_t DS100_SETTINGS_LEN = 20;       // Read 20 registers to cover all settings
+
+// Settings register addresses (for write operations)
+static const uint16_t REG_MODBUS_ADDRESS = 0x1003;
+static const uint16_t REG_SCROLLING_TIME = 0x100B;
+static const uint16_t REG_DEMAND_PERIOD = 0x1011;
+static const uint16_t REG_PASSWORD = 0x1016;
+static const uint16_t REG_BAUD_RATE = 0x100C;
+static const uint16_t REG_PARITY = 0x100D;
+static const uint16_t REG_STOP_BITS = 0x100E;
+
 // Calculate statistics length based on enabled features
 #if defined(USE_DS100_QUADRANTS)
 static const uint16_t DS100_STATISTICS_LEN = 100;  // Full statistics with quadrants
@@ -263,6 +276,12 @@ void DS100Meter::queue_request(RequestType type) {
     case RequestType::MAXIMUM_DEMAND:
       this->pending_requests_ |= PENDING_MAXIMUM_DEMAND;
       break;
+    case RequestType::RESETTABLE_STATISTICS:
+      this->pending_requests_ |= PENDING_RESETTABLE_STATISTICS;
+      break;
+    case RequestType::SETTINGS:
+      this->pending_requests_ |= PENDING_SETTINGS;
+      break;
     case RequestType::DEVICE_INFO:
       this->pending_requests_ |= PENDING_DEVICE_INFO;
       break;
@@ -279,6 +298,10 @@ DS100Meter::RequestType DS100Meter::get_highest_priority_pending() {
     return RequestType::STATISTICS;
   if (this->pending_requests_ & PENDING_MAXIMUM_DEMAND)
     return RequestType::MAXIMUM_DEMAND;
+  if (this->pending_requests_ & PENDING_RESETTABLE_STATISTICS)
+    return RequestType::RESETTABLE_STATISTICS;
+  if (this->pending_requests_ & PENDING_SETTINGS)
+    return RequestType::SETTINGS;
   if (this->pending_requests_ & PENDING_DEVICE_INFO)
     return RequestType::DEVICE_INFO;
   return RequestType::DEVICE_INFO;  // Should never reach here if
@@ -351,6 +374,25 @@ void DS100Meter::process_next_request() {
       this->send(MODBUS_CMD_READ_IN_REGISTERS, DS100_MAXIMUM_DEMAND_ADDR, DS100_MAXIMUM_DEMAND_LEN);
       break;
 #endif
+
+#ifdef USE_DS100_RESETTABLE_STATISTICS
+    case RequestType::RESETTABLE_STATISTICS:
+      ESP_LOGD(TAG, "Processing request: resettable statistics");
+      this->last_update_resettable_statistics_ = now;
+      this->pending_requests_ &= ~PENDING_RESETTABLE_STATISTICS;
+      this->request_in_progress_ = true;
+      this->send(MODBUS_CMD_READ_IN_REGISTERS, DS100_RESETTABLE_STATISTICS_ADDR, DS100_RESETTABLE_STATISTICS_LEN);
+      break;
+#endif
+
+    case RequestType::SETTINGS:
+      ESP_LOGD(TAG, "Processing request: settings");
+      this->last_update_settings_ = now;
+      this->pending_requests_ &= ~PENDING_SETTINGS;
+      this->request_in_progress_ = true;
+      // Read holding registers for settings
+      this->send(0x03, DS100_SETTINGS_ADDR, DS100_SETTINGS_LEN);
+      break;
 
     case RequestType::DEVICE_INFO:
       ESP_LOGD(TAG, "Processing request: device info");
@@ -466,6 +508,73 @@ void DS100Meter::on_modbus_data(const std::vector<uint8_t> &data) {  // Helper f
       this->terminal_signal_binary_sensor_->publish_state(terminal_signal);
     }
 #endif
+
+  } else if (data.size() == DS100_SETTINGS_LEN * 2) {
+    // Process settings response (20 holding registers starting at 0x1003)
+    ESP_LOGV(TAG, "Processing settings (%zu bytes)", data.size());
+    
+    // Helper to read 16-bit value from settings data
+    auto get_setting = [&](uint16_t reg_offset) -> uint16_t {
+      uint16_t byte_offset = reg_offset * 2;
+      if (byte_offset + 1 >= data.size()) return 0;
+      return encode_uint16(data[byte_offset], data[byte_offset + 1]);
+    };
+    
+    // Modbus Address (register 0x1003, offset 0)
+    if (this->address_number_ != nullptr) {
+      uint16_t addr = get_setting(0);
+      this->address_number_->publish_state(static_cast<float>(addr));
+    }
+    
+    // Scrolling Time (register 0x100B, offset 8)
+    if (this->scrolling_time_number_ != nullptr) {
+      uint16_t time = get_setting(8);
+      this->scrolling_time_number_->publish_state(static_cast<float>(time));
+    }
+    
+    // Demand Period (register 0x1011, offset 14)
+    if (this->demand_period_number_ != nullptr) {
+      uint16_t period = get_setting(14);
+      this->demand_period_number_->publish_state(static_cast<float>(period));
+    }
+    
+    // Password (register 0x1016, offset 19)
+    if (this->password_number_ != nullptr) {
+      uint16_t pwd = get_setting(19);
+      this->password_number_->publish_state(static_cast<float>(pwd));
+    }
+    
+    // Baud Rate (register 0x100C, offset 9)
+    if (this->baud_rate_select_ != nullptr) {
+      uint16_t baud_val = get_setting(9);
+      const char* baud_str = "9600";
+      switch (baud_val) {
+        case 0: baud_str = "9600"; break;
+        case 1: baud_str = "19200"; break;
+        case 2: baud_str = "38400"; break;
+        case 3: baud_str = "115200"; break;
+      }
+      this->baud_rate_select_->publish_state(baud_str);
+    }
+    
+    // Parity (register 0x100D, offset 10)
+    if (this->parity_select_ != nullptr) {
+      uint16_t parity_val = get_setting(10);
+      const char* parity_str = "None";
+      switch (parity_val) {
+        case 0: parity_str = "None"; break;
+        case 1: parity_str = "Odd"; break;
+        case 2: parity_str = "Even"; break;
+      }
+      this->parity_select_->publish_state(parity_str);
+    }
+    
+    // Stop Bits (register 0x100E, offset 11)
+    if (this->stop_bits_select_ != nullptr) {
+      uint16_t stop_val = get_setting(11);
+      const char* stop_str = (stop_val == 0) ? "1" : "2";
+      this->stop_bits_select_->publish_state(stop_str);
+    }
 
   } else if (data.size() == livedata_size) {
     // Process livedata response
