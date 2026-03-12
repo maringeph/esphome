@@ -552,14 +552,15 @@ void DS100Meter::on_modbus_data(const std::vector<uint8_t> &data) {  // Helper f
     ESP_LOGV(TAG, "Processing statistics (%zu bytes)", data.size());
 
     // Total energy values (always present) - use helper function
-    this->read_energy_sensors(data.data(), 0, this->total_energy_sensors_, 0.01f);
+    this->read_energy_sensors(data.data(), 0, this->total_energy_sensors_, 0.01f, statistics_size);
 
 #ifdef USE_DS100_TARIFFS
     // Tariff energy values - each tariff is offset by 4 bytes from base
     const uint16_t tariff_offsets[] = {4, 8, 12, 16};  // T1, T2, T3, T4 offsets from base
     for (uint8_t i = 0; i < 4; i++) {
       // Each tariff follows the same energy pattern, just offset by tariff_offsets[i]
-      this->read_energy_sensors(data.data(), tariff_offsets[i], this->tariff_energy_sensors_[i], 0.01f);
+      this->read_energy_sensors(data.data(), tariff_offsets[i], this->tariff_energy_sensors_[i], 0.01f,
+                                statistics_size);
     }
 #endif
 
@@ -624,11 +625,11 @@ void DS100Meter::on_modbus_data(const std::vector<uint8_t> &data) {  // Helper f
 
     // Resettable statistics pattern: Total (6 values) + Phase A (6 values) + Phase B (6 values) + Phase C (6 values)
     // Total: bytes 0-119
-    this->read_energy_sensors(data.data(), 0, this->resettable_total_energy_sensors_, 0.01f);
+    this->read_energy_sensors(data.data(), 0, this->resettable_total_energy_sensors_, 0.01f, resettable_statistics_size);
 
     // Per-phase resettable statistics: A, B, C (each 120 bytes)
     for (uint8_t phase = 0; phase < 3; phase++) {
-      this->read_energy_sensors(data.data(), 120 * (phase + 1), this->resettable_phase_energy_sensors_[phase], 0.01f);
+      this->read_energy_sensors(data.data(), 120 * (phase + 1), this->resettable_phase_energy_sensors_[phase], 0.01f, resettable_statistics_size);
     }
 #endif
 
@@ -640,7 +641,7 @@ void DS100Meter::on_modbus_data(const std::vector<uint8_t> &data) {  // Helper f
     ESP_LOGV(TAG, "Processing phase L%d statistics (%zu bytes)", phase_idx + 1, data.size());
 
     // Read phase statistics using helper function for the correct phase
-    this->read_energy_sensors(data.data(), 0, this->phase_energy_sensors_[phase_idx], 0.01f);
+    this->read_energy_sensors(data.data(), 0, this->phase_energy_sensors_[phase_idx], 0.01f, data.size());
 #endif
 
   } else {
@@ -863,18 +864,22 @@ void DS100Meter::dump_config() {
 #endif
 }
 
-void DS100Meter::read_energy_sensors(const uint8_t *data, uint16_t base_offset, EnergySensors &sensors, float scale) {
+void DS100Meter::read_energy_sensors(const uint8_t *data, uint16_t base_offset, EnergySensors &sensors, float scale,
+                                     uint16_t max_data_len) {
   // DS100 energy statistics pattern (all statistics follow this layout):
-  // Offset +0:  Import Active Energy (2 regs)
-  // Offset +20: Export Active Energy (2 regs)
-  // Offset +40: Total Active Energy (2 regs)
-  // Offset +60: Import Reactive Energy (2 regs)
-  // Offset +80: Export Reactive Energy (2 regs)
-  // Offset +100: Total Reactive Energy (2 regs)
-  // Each value is 2 registers (4 bytes) as IEEE754 float
+  // Offset +0:   Import Active Energy (2 regs = bytes 0-3)
+  // Offset +20:  Export Active Energy (2 regs = bytes 20-23) - 10 registers gap
+  // Offset +40:  Total Active Energy (2 regs = bytes 40-43) - 10 registers gap
+  // Offset +60:  Import Reactive Energy (2 regs = bytes 60-63) - 10 registers gap
+  // Offset +80:  Export Reactive Energy (2 regs = bytes 80-83) - 10 registers gap
+  // Offset +100: Total Reactive Energy (2 regs = bytes 100-103) - 10 registers gap
+  // Each value is 2 registers (4 bytes) as 32-bit signed integer
 
   auto get_int32 = [&](uint16_t offset) -> float {
     uint16_t pos = base_offset + offset;
+    if (pos + 3 >= max_data_len) {
+      return NAN;
+    }
     int32_t raw = (static_cast<int32_t>(data[pos]) << 24) | (static_cast<int32_t>(data[pos + 1]) << 16) |
                   (static_cast<int32_t>(data[pos + 2]) << 8) | static_cast<int32_t>(data[pos + 3]);
     return static_cast<float>(raw) * scale;
