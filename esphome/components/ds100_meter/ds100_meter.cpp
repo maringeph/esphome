@@ -78,15 +78,15 @@ static const uint16_t OFFSET_FIRMWARE_CHECKSUM = 12;  // (0x1006 - 0x1000) * 2 =
 static const uint16_t DS100_TERMINAL_SIGNAL_ADDR = 0x101D;
 static const uint16_t DS100_TERMINAL_SIGNAL_LEN = 1;  // 1 register
 
-// Settings are Input Registers (Function 0x04), same as Device Info
-// Register addresses for settings:
-static const uint16_t REG_MODBUS_ADDRESS = 0x1003;  // 1 register
-static const uint16_t REG_BAUD_RATE = 0x100C;       // 1 register
-static const uint16_t REG_PARITY = 0x100D;          // 1 register
-static const uint16_t REG_STOP_BITS = 0x100E;       // 1 register
-static const uint16_t REG_SCROLLING_TIME = 0x100B;  // 1 register
-static const uint16_t REG_DEMAND_PERIOD = 0x1011;   // 1 register
-static const uint16_t REG_PASSWORD = 0x1016;        // 1 register
+// Settings are Holding Registers (Function 0x03), R/W
+// Register addresses for settings (all 1 register, HEX format):
+static const uint16_t REG_MODBUS_ADDRESS = 0x1003;  // 1-247
+static const uint16_t REG_SCROLLING_TIME = 0x100B;  // 5-99 seconds (0 = disabled)
+static const uint16_t REG_BAUD_RATE = 0x100C;       // 6=9600, 7=19200, 8=38400, 9=115200
+static const uint16_t REG_PARITY = 0x100D;          // 0=None, 1=Odd, 2=Even
+static const uint16_t REG_STOP_BITS = 0x100E;       // 1=1bit, 2=2bits
+static const uint16_t REG_DEMAND_PERIOD = 0x1011;   // 1-30 minutes, default 15
+static const uint16_t REG_PASSWORD = 0x1016;        // 0000-9999
 
 // Settings block: read from 0x1003 to 0x1016 (20 registers covers all settings)
 static const uint16_t DS100_SETTINGS_ADDR = 0x1003;
@@ -394,7 +394,8 @@ void DS100Meter::process_next_request() {
       this->pending_requests_ &= ~PENDING_SETTINGS;
       this->request_in_progress_ = true;
       // Read holding registers for settings
-      this->send(MODBUS_CMD_READ_IN_REGISTERS, DS100_SETTINGS_ADDR, DS100_SETTINGS_LEN);
+      // Read holding registers (Function 0x03) for settings
+      this->send(0x03, DS100_SETTINGS_ADDR, DS100_SETTINGS_LEN);
       break;
 
     case RequestType::DEVICE_INFO:
@@ -544,20 +545,21 @@ void DS100Meter::on_modbus_data(const std::vector<uint8_t> &data) {  // Helper f
     }
 
     // Baud Rate (register 0x100C, offset 9)
+    // Values: 6=9600, 7=19200, 8=38400, 9=115200
     if (this->baud_rate_select_ != nullptr) {
       uint16_t baud_val = get_setting(9);
       const char *baud_str = "9600";
       switch (baud_val) {
-        case 0:
+        case 6:
           baud_str = "9600";
           break;
-        case 1:
+        case 7:
           baud_str = "19200";
           break;
-        case 2:
+        case 8:
           baud_str = "38400";
           break;
-        case 3:
+        case 9:
           baud_str = "115200";
           break;
       }
@@ -583,9 +585,10 @@ void DS100Meter::on_modbus_data(const std::vector<uint8_t> &data) {  // Helper f
     }
 
     // Stop Bits (register 0x100E, offset 11)
+    // Values: 1=1 bit, 2=2 bits
     if (this->stop_bits_select_ != nullptr) {
       uint16_t stop_val = get_setting(11);
-      const char *stop_str = (stop_val == 0) ? "1" : "2";
+      const char *stop_str = (stop_val == 1) ? "1" : "2";
       this->stop_bits_select_->publish_state(stop_str);
     }
 
