@@ -2,7 +2,7 @@
 
 #ifdef USE_BUTTON
 
-#include "../ds100_meter.h"
+#include "ds100_meter.h"
 #include "esphome/core/log.h"
 
 namespace esphome {
