@@ -16,10 +16,12 @@
 #ifdef USE_BINARY_SENSOR
 #include "esphome/components/binary_sensor/binary_sensor.h"
 #endif
-
-// Always include select and number for settings
+#ifdef USE_SELECT
 #include "esphome/components/select/select.h"
+#endif
+#ifdef USE_NUMBER
 #include "esphome/components/number/number.h"
+#endif
 
 #include <array>
 #include <vector>
@@ -28,11 +30,14 @@ namespace esphome {
 namespace ds100_meter {
 
 // Forward declarations for settings classes (defined in separate headers)
+#ifdef USE_SELECT
 class DS100BaudRateSelect;
 class DS100ParitySelect;
 class DS100StopBitsSelect;
 class DS100CombinedCodeSelect;
 class DS100DemandModeSelect;
+#endif
+#ifdef USE_NUMBER
 class DS100ModbusAddressNumber;
 class DS100ScrollingTimeNumber;
 class DS100DemandPeriodNumber;
@@ -41,6 +46,7 @@ class DS100SOOutputNumber;
 class DS100MeterRunningTimeNumber;
 class DS100TimingCurrentNumber;
 class DS100AutoScrollNumber;
+#endif
 #ifdef USE_BUTTON
 class DS100ResetMaximumDemandButton;
 class DS100ResetStatisticsButton;
@@ -303,19 +309,22 @@ class DS100Meter : public PollingComponent, public modbus::ModbusDevice {
 #endif
 
 #ifdef USE_BINARY_SENSOR
-  // Binary sensor - Terminal Signal
+  // Binary sensor - Terminal Signal (register 0x101D)
   void set_terminal_signal_binary_sensor(binary_sensor::BinarySensor *sensor) {
     this->terminal_signal_binary_sensor_ = sensor;
   }
 #endif
 
+#ifdef USE_SELECT
   // Select components for settings
   void set_baud_rate_select(select::Select *select) { this->baud_rate_select_ = select; }
   void set_parity_select(select::Select *select) { this->parity_select_ = select; }
   void set_stop_bits_select(select::Select *select) { this->stop_bits_select_ = select; }
   void set_combined_code_select(select::Select *select) { this->combined_code_select_ = select; }
   void set_demand_mode_select(select::Select *select) { this->demand_mode_select_ = select; }
+#endif
 
+#ifdef USE_NUMBER
   // Number components for settings
   void set_address_number(number::Number *number) { this->address_number_ = number; }
   void set_scrolling_time_number(number::Number *number) { this->scrolling_time_number_ = number; }
@@ -325,6 +334,7 @@ class DS100Meter : public PollingComponent, public modbus::ModbusDevice {
   void set_meter_running_time_number(number::Number *number) { this->meter_running_time_number_ = number; }
   void set_timing_current_number(number::Number *number) { this->timing_current_number_ = number; }
   void set_auto_scroll_number(number::Number *number) { this->auto_scroll_number_ = number; }
+#endif
 
   // Update interval setters for different data categories
   void set_update_interval_livedata(uint32_t interval) { this->update_interval_livedata_ = interval; }
@@ -490,13 +500,16 @@ class DS100Meter : public PollingComponent, public modbus::ModbusDevice {
   binary_sensor::BinarySensor *terminal_signal_binary_sensor_{nullptr};
 #endif
 
+#ifdef USE_SELECT
   // Select components for settings (configuration)
   select::Select *baud_rate_select_{nullptr};
   select::Select *parity_select_{nullptr};
   select::Select *stop_bits_select_{nullptr};
   select::Select *combined_code_select_{nullptr};
   select::Select *demand_mode_select_{nullptr};
+#endif
 
+#ifdef USE_NUMBER
   // Number components for settings (configuration)
   number::Number *address_number_{nullptr};
   number::Number *scrolling_time_number_{nullptr};
@@ -506,6 +519,7 @@ class DS100Meter : public PollingComponent, public modbus::ModbusDevice {
   number::Number *meter_running_time_number_{nullptr};
   number::Number *timing_current_number_{nullptr};
   number::Number *auto_scroll_number_{nullptr};
+#endif
 
   // Update intervals for different data categories (in milliseconds)
   uint32_t update_interval_livedata_{10000};        // 10s default
