@@ -915,7 +915,6 @@ async def to_code(config):
             var, config[CONF_EXPORT_REACTIVE_ENERGY], device_id
         )
         cg.add(var.set_export_reactive_energy_sensor(sens))
-        cg.add(var.set_export_reactive_energy_sensor(sens))
 
     # Quadrants - total
     for i, quadrant in enumerate(
@@ -997,7 +996,11 @@ async def to_code(config):
                 sens = await _register_sensor_with_device(
                     var, phase_config[sensor_type], device_id
                 )
-                cg.add(getattr(var, f"set_{sensor_type}_sensor")(i, sens))
+                # Use set_phase_frequency_sensor for phase frequency, set_{type}_sensor for others
+                if sensor_type == CONF_FREQUENCY:
+                    cg.add(var.set_phase_frequency_sensor(i, sens))
+                else:
+                    cg.add(getattr(var, f"set_{sensor_type}_sensor")(i, sens))
 
     # Demand sensors - per phase or total
     if CONF_DEMAND in config:
