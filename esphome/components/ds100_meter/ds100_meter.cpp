@@ -64,6 +64,15 @@ static const uint16_t DS100_PHASE_STATISTICS_LEN = 30;  // 30 active only
 static const uint16_t DS100_SERIAL_NUMBER_ADDR = 0x1000;
 static const uint16_t DS100_SERIAL_NUMBER_LEN = 3;  // 3 registers = 6 bytes
 
+static const uint16_t DS100_SOFTWARE_VERSION_ADDR = 0x1003;   // 3 registers = 6 bytes
+static const uint16_t DS100_HARDWARE_VERSION_ADDR = 0x1006;   // 3 registers = 6 bytes
+static const uint16_t DS100_FIRMWARE_CHECKSUM_ADDR = 0x1009;  // 1 register = 2 bytes
+
+// Byte offsets for device info fields (relative to start at 0x1000)
+static const uint16_t OFFSET_SOFTWARE_VERSION = 6;    // 0x1003 - 0x1000 = 3 registers = 6 bytes
+static const uint16_t OFFSET_HARDWARE_VERSION = 12;   // 0x1006 - 0x1000 = 6 registers = 12 bytes
+static const uint16_t OFFSET_FIRMWARE_CHECKSUM = 18;  // 0x1009 - 0x1000 = 9 registers = 18 bytes
+
 static const uint16_t DS100_TERMINAL_SIGNAL_ADDR = 0x101D;
 static const uint16_t DS100_TERMINAL_SIGNAL_LEN = 1;  // 1 register
 
@@ -420,26 +429,29 @@ void DS100Meter::on_modbus_data(const std::vector<uint8_t> &data) {  // Helper f
       this->serial_number_text_sensor_->publish_state(serial_str);
     }
 
-    // Software Version at register 0x1004 (offset = (0x1004 - 0x1000) * 2 = 4 * 2 = 8)
+    // Software Version at register 0x1003 (offset = 6 bytes)
     if (this->software_version_text_sensor_ != nullptr) {
-      uint16_t version = encode_uint16(data[8], data[9]);
-      char version_str[8];
-      // Format as decimal (e.g., 301 -> "301")
-      snprintf(version_str, sizeof(version_str), "%u", version);
+      char version_str[13];
+      // 3 registers = 6 bytes, format as hex
+      snprintf(version_str, sizeof(version_str), "%02X%02X%02X%02X%02X%02X", data[OFFSET_SOFTWARE_VERSION],
+               data[OFFSET_SOFTWARE_VERSION + 1], data[OFFSET_SOFTWARE_VERSION + 2], data[OFFSET_SOFTWARE_VERSION + 3],
+               data[OFFSET_SOFTWARE_VERSION + 4], data[OFFSET_SOFTWARE_VERSION + 5]);
       this->software_version_text_sensor_->publish_state(version_str);
     }
 
-    // Hardware Version at register 0x1005 (offset = (0x1005 - 0x1000) * 2 = 5 * 2 = 10)
+    // Hardware Version at register 0x1006 (offset = 12 bytes)
     if (this->hardware_version_text_sensor_ != nullptr) {
-      uint16_t version = encode_uint16(data[10], data[11]);
-      char version_str[8];
-      snprintf(version_str, sizeof(version_str), "%u", version);
+      char version_str[13];
+      // 3 registers = 6 bytes, format as hex
+      snprintf(version_str, sizeof(version_str), "%02X%02X%02X%02X%02X%02X", data[OFFSET_HARDWARE_VERSION],
+               data[OFFSET_HARDWARE_VERSION + 1], data[OFFSET_HARDWARE_VERSION + 2], data[OFFSET_HARDWARE_VERSION + 3],
+               data[OFFSET_HARDWARE_VERSION + 4], data[OFFSET_HARDWARE_VERSION + 5]);
       this->hardware_version_text_sensor_->publish_state(version_str);
     }
 
-    // Firmware Checksum at register 0x1006 (offset = (0x1006 - 0x1000) * 2 = 6 * 2 = 12)
+    // Firmware Checksum at register 0x1009 (offset = 18 bytes)
     if (this->firmware_checksum_text_sensor_ != nullptr) {
-      uint16_t checksum = encode_uint16(data[12], data[13]);
+      uint16_t checksum = encode_uint16(data[OFFSET_FIRMWARE_CHECKSUM], data[OFFSET_FIRMWARE_CHECKSUM + 1]);
       char checksum_str[5];
       // Format as hex (e.g., 0x5B61 -> "5B61")
       snprintf(checksum_str, sizeof(checksum_str), "%04X", checksum);
@@ -625,11 +637,13 @@ void DS100Meter::on_modbus_data(const std::vector<uint8_t> &data) {  // Helper f
 
     // Resettable statistics pattern: Total (6 values) + Phase A (6 values) + Phase B (6 values) + Phase C (6 values)
     // Total: bytes 0-119
-    this->read_energy_sensors(data.data(), 0, this->resettable_total_energy_sensors_, 0.01f, resettable_statistics_size);
+    this->read_energy_sensors(data.data(), 0, this->resettable_total_energy_sensors_, 0.01f,
+                              resettable_statistics_size);
 
     // Per-phase resettable statistics: A, B, C (each 120 bytes)
     for (uint8_t phase = 0; phase < 3; phase++) {
-      this->read_energy_sensors(data.data(), 120 * (phase + 1), this->resettable_phase_energy_sensors_[phase], 0.01f, resettable_statistics_size);
+      this->read_energy_sensors(data.data(), 120 * (phase + 1), this->resettable_phase_energy_sensors_[phase], 0.01f,
+                                resettable_statistics_size);
     }
 #endif
 
