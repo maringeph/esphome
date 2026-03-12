@@ -78,18 +78,19 @@ static const uint16_t OFFSET_FIRMWARE_CHECKSUM = 12;  // (0x1006 - 0x1000) * 2 =
 static const uint16_t DS100_TERMINAL_SIGNAL_ADDR = 0x101D;
 static const uint16_t DS100_TERMINAL_SIGNAL_LEN = 1;  // 1 register
 
-// Settings registers (Holding Registers)
-static const uint16_t DS100_SETTINGS_ADDR = 0x1003;  // Start address
-static const uint16_t DS100_SETTINGS_LEN = 20;       // Read 20 registers to cover all settings
+// Settings are Input Registers (Function 0x04), same as Device Info
+// Register addresses for settings:
+static const uint16_t REG_MODBUS_ADDRESS = 0x1003;  // 1 register
+static const uint16_t REG_BAUD_RATE = 0x100C;       // 1 register
+static const uint16_t REG_PARITY = 0x100D;          // 1 register
+static const uint16_t REG_STOP_BITS = 0x100E;       // 1 register
+static const uint16_t REG_SCROLLING_TIME = 0x100B;  // 1 register
+static const uint16_t REG_DEMAND_PERIOD = 0x1011;   // 1 register
+static const uint16_t REG_PASSWORD = 0x1016;        // 1 register
 
-// Settings register addresses (for write operations)
-static const uint16_t REG_MODBUS_ADDRESS = 0x1003;
-static const uint16_t REG_SCROLLING_TIME = 0x100B;
-static const uint16_t REG_DEMAND_PERIOD = 0x1011;
-static const uint16_t REG_PASSWORD = 0x1016;
-static const uint16_t REG_BAUD_RATE = 0x100C;
-static const uint16_t REG_PARITY = 0x100D;
-static const uint16_t REG_STOP_BITS = 0x100E;
+// Settings block: read from 0x1003 to 0x1016 (20 registers covers all settings)
+static const uint16_t DS100_SETTINGS_ADDR = 0x1003;
+static const uint16_t DS100_SETTINGS_LEN = 20;
 
 // Calculate statistics length based on enabled features
 #if defined(USE_DS100_QUADRANTS)
@@ -393,7 +394,7 @@ void DS100Meter::process_next_request() {
       this->pending_requests_ &= ~PENDING_SETTINGS;
       this->request_in_progress_ = true;
       // Read holding registers for settings
-      this->send(0x03, DS100_SETTINGS_ADDR, DS100_SETTINGS_LEN);
+      this->send(MODBUS_CMD_READ_IN_REGISTERS, DS100_SETTINGS_ADDR, DS100_SETTINGS_LEN);
       break;
 
     case RequestType::DEVICE_INFO:
