@@ -109,112 +109,113 @@ static const uint16_t DS100_STATISTICS_LEN = 30;  // Basic statistics only
 #endif
 
 // Byte offsets within livedata response (each register = 2 bytes)
-static const uint16_t REG_VOLTAGE_L1_N = 0;           // Register 0x0400
-static const uint16_t REG_VOLTAGE_L2_N = 4;           // Register 0x0402
-static const uint16_t REG_VOLTAGE_L3_N = 8;           // Register 0x0404
-static const uint16_t REG_VOLTAGE_L1_L2 = 12;         // Register 0x0406
-static const uint16_t REG_VOLTAGE_L2_L3 = 16;         // Register 0x0408
-static const uint16_t REG_VOLTAGE_L3_L1 = 20;         // Register 0x040A
-static const uint16_t REG_VOLTAGE_L_N_AVG = 24;       // Register 0x040C
-static const uint16_t REG_VOLTAGE_L_L_AVG = 28;       // Register 0x040E
-static const uint16_t REG_CURRENT_L1 = 32;            // Register 0x0410
-static const uint16_t REG_CURRENT_L2 = 36;            // Register 0x0412
-static const uint16_t REG_CURRENT_L3 = 40;            // Register 0x0414
-static const uint16_t REG_CURRENT_N = 44;             // Register 0x0416
-static const uint16_t REG_CURRENT_AVG = 48;           // Register 0x0418
-static const uint16_t REG_ACTIVE_POWER_L1 = 52;       // Register 0x041A
-static const uint16_t REG_ACTIVE_POWER_L2 = 56;       // Register 0x041C
-static const uint16_t REG_ACTIVE_POWER_L3 = 60;       // Register 0x041E
-static const uint16_t REG_ACTIVE_POWER_TOTAL = 64;    // Register 0x0420
-static const uint16_t REG_APPARENT_POWER_L1 = 68;     // Register 0x0422
-static const uint16_t REG_APPARENT_POWER_L2 = 72;     // Register 0x0424
-static const uint16_t REG_APPARENT_POWER_L3 = 76;     // Register 0x0426
-static const uint16_t REG_APPARENT_POWER_TOTAL = 80;  // Register 0x0428
-static const uint16_t REG_REACTIVE_POWER_L1 = 84;     // Register 0x042A
-static const uint16_t REG_REACTIVE_POWER_L2 = 88;     // Register 0x042C
-static const uint16_t REG_REACTIVE_POWER_L3 = 92;     // Register 0x042E
-static const uint16_t REG_REACTIVE_POWER_TOTAL = 96;  // Register 0x0430
-static const uint16_t REG_FREQUENCY_L1 = 100;         // Register 0x0432
-static const uint16_t REG_FREQUENCY_L2 = 102;         // Register 0x0433
-static const uint16_t REG_FREQUENCY_L3 = 104;         // Register 0x0434
-static const uint16_t REG_FREQUENCY_AVG = 106;        // Register 0x0435
-static const uint16_t REG_POWER_FACTOR_L1 = 108;      // Register 0x0436
-static const uint16_t REG_POWER_FACTOR_L2 = 110;      // Register 0x0437
-static const uint16_t REG_POWER_FACTOR_L3 = 112;      // Register 0x0438
-static const uint16_t REG_POWER_FACTOR_AVG = 114;     // Register 0x0439
+static const uint16_t REG_VOLTAGE_L1_N = 0;          // Register 0x0400
+static const uint16_t REG_VOLTAGE_L2_N = 4;          // Register 0x0402
+static const uint16_t REG_VOLTAGE_L3_N = 8;          // Register 0x0404
+static const uint16_t REG_VOLTAGE_L1_L2 = 12;        // Register 0x0406
+static const uint16_t REG_VOLTAGE_L2_L3 = 16;        // Register 0x0408
+static const uint16_t REG_VOLTAGE_L3_L1 = 20;        // Register 0x040A
+static const uint16_t REG_VOLTAGE_L_N_AVG = 24;      // Register 0x040C
+static const uint16_t REG_VOLTAGE_L_L_AVG = 28;      // Register 0x040E
+static const uint16_t REG_CURRENT_L1 = 32;           // Register 0x0410
+static const uint16_t REG_CURRENT_L2 = 36;           // Register 0x0412
+static const uint16_t REG_CURRENT_L3 = 40;           // Register 0x0414
+static const uint16_t REG_CURRENT_N = 44;            // Register 0x0416
+static const uint16_t REG_CURRENT_AVG = 48;          // Register 0x0418
+static const uint16_t REG_ACTIVE_POWER_L1 = 52;      // Register 0x041A
+static const uint16_t REG_ACTIVE_POWER_L2 = 56;      // Register 0x041C
+static const uint16_t REG_ACTIVE_POWER_L3 = 60;      // Register 0x041E
+static const uint16_t REG_APPARENT_POWER_L1 = 64;    // Register 0x0420
+static const uint16_t REG_APPARENT_POWER_L2 = 68;    // Register 0x0422
+static const uint16_t REG_APPARENT_POWER_L3 = 72;    // Register 0x0424
+static const uint16_t REG_REACTIVE_POWER_L1 = 76;    // Register 0x0426
+static const uint16_t REG_REACTIVE_POWER_L2 = 80;    // Register 0x0428
+static const uint16_t REG_REACTIVE_POWER_L3 = 84;    // Register 0x042A
+static const uint16_t REG_POWER_FACTOR_L1 = 88;      // Register 0x042C
+static const uint16_t REG_POWER_FACTOR_L2 = 92;      // Register 0x042E
+static const uint16_t REG_POWER_FACTOR_L3 = 96;      // Register 0x0430
+static const uint16_t REG_FREQUENCY_L1 = 100;        // Register 0x0432
+static const uint16_t REG_FREQUENCY_L2 = 104;        // Register 0x0434
+static const uint16_t REG_FREQUENCY_L3 = 108;        // Register 0x0436
+static const uint16_t REG_ACTIVE_POWER_TOTAL = 112;  // Register 0x0438
 
-// Register offsets within statistics block (byte offsets, relative to start of statistics data)
-// Base statistics (always present)
-static const uint16_t STAT_IMPORT_ACTIVE_ENERGY = 0;     // 0x010E, 2 regs = bytes 0-3
-static const uint16_t STAT_EXPORT_ACTIVE_ENERGY = 20;    // 0x0118, 2 regs = bytes 20-23
-static const uint16_t STAT_ACTIVE_ENERGY = 40;           // 0x0122, 2 regs = bytes 40-43
-static const uint16_t STAT_IMPORT_REACTIVE_ENERGY = 60;  // 0x012C, 2 regs = bytes 60-63
-static const uint16_t STAT_EXPORT_REACTIVE_ENERGY = 80;  // 0x0136, 2 regs = bytes 80-83
-static const uint16_t STAT_REACTIVE_ENERGY = 100;        // 0x0140, 2 regs = bytes 100-103
+// Statistics byte offsets
+static const uint16_t STAT_ACTIVE_ENERGY = 0;
+static const uint16_t STAT_IMPORT_ACTIVE_ENERGY = 4;
+static const uint16_t STAT_EXPORT_ACTIVE_ENERGY = 8;
+static const uint16_t STAT_REACTIVE_ENERGY = 12;
+static const uint16_t STAT_IMPORT_REACTIVE_ENERGY = 16;
+static const uint16_t STAT_EXPORT_REACTIVE_ENERGY = 20;
+static const uint16_t STAT_REACTIVE_ENERGY_Q1 = 24;
+static const uint16_t STAT_REACTIVE_ENERGY_Q2 = 28;
+static const uint16_t STAT_REACTIVE_ENERGY_Q3 = 32;
+static const uint16_t STAT_REACTIVE_ENERGY_Q4 = 36;
 
-#ifdef USE_DS100_TARIFFS
-// Tariff offsets (each tariff is 2 registers = 4 bytes)
-static const uint16_t STAT_IMPORT_ACTIVE_ENERGY_T1 = 4;
-static const uint16_t STAT_IMPORT_ACTIVE_ENERGY_T2 = 8;
-static const uint16_t STAT_IMPORT_ACTIVE_ENERGY_T3 = 12;
-static const uint16_t STAT_IMPORT_ACTIVE_ENERGY_T4 = 16;
+// Tariff byte offsets (each tariff is offset by 4 bytes from the previous)
+static const uint16_t STAT_ACTIVE_ENERGY_T1 = 40;
+static const uint16_t STAT_ACTIVE_ENERGY_T2 = 44;
+static const uint16_t STAT_ACTIVE_ENERGY_T3 = 48;
+static const uint16_t STAT_ACTIVE_ENERGY_T4 = 52;
 
-static const uint16_t STAT_EXPORT_ACTIVE_ENERGY_T1 = 24;
-static const uint16_t STAT_EXPORT_ACTIVE_ENERGY_T2 = 28;
-static const uint16_t STAT_EXPORT_ACTIVE_ENERGY_T3 = 32;
-static const uint16_t STAT_EXPORT_ACTIVE_ENERGY_T4 = 36;
+// Quadrant + Tariff offsets
+static const uint16_t STAT_REACTIVE_ENERGY_Q1_T1 = 56;
+static const uint16_t STAT_REACTIVE_ENERGY_Q1_T2 = 60;
+static const uint16_t STAT_REACTIVE_ENERGY_Q1_T3 = 64;
+static const uint16_t STAT_REACTIVE_ENERGY_Q1_T4 = 68;
+static const uint16_t STAT_REACTIVE_ENERGY_Q2_T1 = 72;
+static const uint16_t STAT_REACTIVE_ENERGY_Q2_T2 = 76;
+static const uint16_t STAT_REACTIVE_ENERGY_Q2_T3 = 80;
+static const uint16_t STAT_REACTIVE_ENERGY_Q2_T4 = 84;
+static const uint16_t STAT_REACTIVE_ENERGY_Q3_T1 = 88;
+static const uint16_t STAT_REACTIVE_ENERGY_Q3_T2 = 92;
+static const uint16_t STAT_REACTIVE_ENERGY_Q3_T3 = 96;
+static const uint16_t STAT_REACTIVE_ENERGY_Q3_T4 = 100;
+static const uint16_t STAT_REACTIVE_ENERGY_Q4_T1 = 104;
+static const uint16_t STAT_REACTIVE_ENERGY_Q4_T2 = 108;
+static const uint16_t STAT_REACTIVE_ENERGY_Q4_T3 = 112;
+static const uint16_t STAT_REACTIVE_ENERGY_Q4_T4 = 116;
 
-static const uint16_t STAT_ACTIVE_ENERGY_T1 = 44;
-static const uint16_t STAT_ACTIVE_ENERGY_T2 = 48;
-static const uint16_t STAT_ACTIVE_ENERGY_T3 = 52;
-static const uint16_t STAT_ACTIVE_ENERGY_T4 = 56;
+// Helper function to decode 32-bit signed integer from two consecutive registers
+// DS100 uses big-endian format: [high_reg_msb, high_reg_lsb, low_reg_msb, low_reg_lsb]
+static float get_int32_helper(const std::vector<uint8_t> &data, size_t byte_offset, float scale = 1.0f) {
+  if (byte_offset + 3 >= data.size()) {
+    return NAN;
+  }
+  // Combine registers: high_reg << 16 | low_reg
+  int32_t raw = (static_cast<int32_t>(data[byte_offset]) << 24) | (static_cast<int32_t>(data[byte_offset + 1]) << 16) |
+                (static_cast<int32_t>(data[byte_offset + 2]) << 8) | static_cast<int32_t>(data[byte_offset + 3]);
+  return static_cast<float>(raw) * scale;
+}
 
-static const uint16_t STAT_IMPORT_REACTIVE_ENERGY_T1 = 64;
-static const uint16_t STAT_IMPORT_REACTIVE_ENERGY_T2 = 68;
-static const uint16_t STAT_IMPORT_REACTIVE_ENERGY_T3 = 72;
-static const uint16_t STAT_IMPORT_REACTIVE_ENERGY_T4 = 76;
+// Helper to get 16-bit unsigned value (for frequency, power factor)
+static uint16_t get_uint16_helper(const std::vector<uint8_t> &data, size_t byte_offset) {
+  if (byte_offset + 1 >= data.size()) {
+    return 0;
+  }
+  return encode_uint16(data[byte_offset], data[byte_offset + 1]);
+}
 
-static const uint16_t STAT_EXPORT_REACTIVE_ENERGY_T1 = 84;
-static const uint16_t STAT_EXPORT_REACTIVE_ENERGY_T2 = 88;
-static const uint16_t STAT_EXPORT_REACTIVE_ENERGY_T3 = 92;
-static const uint16_t STAT_EXPORT_REACTIVE_ENERGY_T4 = 96;
+// Helper to get register value for frequency (16-bit integer scaled by 10)
+static float get_frequency_helper(const std::vector<uint8_t> &data, size_t byte_offset) {
+  uint16_t raw = get_uint16_helper(data, byte_offset);
+  return raw / 10.0f;
+}
 
-static const uint16_t STAT_REACTIVE_ENERGY_T1 = 104;
-static const uint16_t STAT_REACTIVE_ENERGY_T2 = 108;
-static const uint16_t STAT_REACTIVE_ENERGY_T3 = 112;
-static const uint16_t STAT_REACTIVE_ENERGY_T4 = 116;
-#endif
+// Helper to get register value for power factor (16-bit integer scaled by 1000)
+static float get_power_factor_helper(const std::vector<uint8_t> &data, size_t byte_offset) {
+  uint16_t raw = get_uint16_helper(data, byte_offset);
+  return raw / 1000.0f;
+}
 
-#ifdef USE_DS100_QUADRANTS
-// Quadrant offsets
-static const uint16_t STAT_REACTIVE_ENERGY_Q1 = 120;  // 0x014A
-static const uint16_t STAT_REACTIVE_ENERGY_Q2 = 140;  // 0x0154
-static const uint16_t STAT_REACTIVE_ENERGY_Q3 = 160;  // 0x015E
-static const uint16_t STAT_REACTIVE_ENERGY_Q4 = 180;  // 0x0168
+void DS100Meter::setup() {
+  ESP_LOGCONFIG(TAG, "Setting up DS100 Meter...");
+  // Parent class setup is called automatically
+}
 
-#ifdef USE_DS100_TARIFFS
-// Quadrant + tariff offsets
-static const uint16_t STAT_REACTIVE_ENERGY_Q1_T1 = 124;
-static const uint16_t STAT_REACTIVE_ENERGY_Q1_T2 = 128;
-static const uint16_t STAT_REACTIVE_ENERGY_Q1_T3 = 132;
-static const uint16_t STAT_REACTIVE_ENERGY_Q1_T4 = 136;
-
-static const uint16_t STAT_REACTIVE_ENERGY_Q2_T1 = 144;
-static const uint16_t STAT_REACTIVE_ENERGY_Q2_T2 = 148;
-static const uint16_t STAT_REACTIVE_ENERGY_Q2_T3 = 152;
-static const uint16_t STAT_REACTIVE_ENERGY_Q2_T4 = 156;
-
-static const uint16_t STAT_REACTIVE_ENERGY_Q3_T1 = 164;
-static const uint16_t STAT_REACTIVE_ENERGY_Q3_T2 = 168;
-static const uint16_t STAT_REACTIVE_ENERGY_Q3_T3 = 172;
-static const uint16_t STAT_REACTIVE_ENERGY_Q3_T4 = 176;
-
-static const uint16_t STAT_REACTIVE_ENERGY_Q4_T1 = 184;
-static const uint16_t STAT_REACTIVE_ENERGY_Q4_T2 = 188;
-static const uint16_t STAT_REACTIVE_ENERGY_Q4_T3 = 192;
-static const uint16_t STAT_REACTIVE_ENERGY_Q4_T4 = 196;
-#endif
-#endif
+void DS100Meter::loop() {
+  // Parent class loop handles Modbus communication
+  // We don't need to do anything here as update() handles our polling
+}
 
 void DS100Meter::update() {
   uint32_t now = millis();
@@ -377,7 +378,6 @@ void DS100Meter::queue_request(RequestType type) {
 }
 
 DS100Meter::RequestType DS100Meter::get_highest_priority_pending() {
-  // Check in priority order (lower number = higher priority)
   if (this->pending_requests_ & PENDING_LIVEDATA)
     return RequestType::LIVEDATA;
   if (this->pending_requests_ & PENDING_DEMAND)
@@ -392,8 +392,7 @@ DS100Meter::RequestType DS100Meter::get_highest_priority_pending() {
     return RequestType::SETTINGS;
   if (this->pending_requests_ & PENDING_DEVICE_INFO)
     return RequestType::DEVICE_INFO;
-  return RequestType::DEVICE_INFO;  // Should never reach here if
-                                    // pending_requests_ != 0
+  return RequestType::LIVEDATA;  // Should never reach here if pending_requests_ != 0
 }
 
 void DS100Meter::process_next_request() {
@@ -402,25 +401,34 @@ void DS100Meter::process_next_request() {
 
   RequestType next = this->get_highest_priority_pending();
   uint32_t now = millis();
-  this->last_request_time_ = now;  // Track request time for timeout handling
+  this->last_request_time_ = now;
+  this->request_in_progress_ = true;
 
   switch (next) {
-    case RequestType::LIVEDATA:
-      ESP_LOGD(TAG, "Processing request: livedata");
+    case RequestType::LIVEDATA: {
+      ESP_LOGD(TAG, "Queueing request: livedata");
       this->last_update_livedata_ = now;
       this->pending_requests_ &= ~PENDING_LIVEDATA;
-      this->request_in_progress_ = true;
-      this->send(MODBUS_CMD_READ_IN_REGISTERS, DS100_LIVEDATA_ADDR, DS100_LIVEDATA_LEN);
+      auto cmd = modbus_controller::ModbusCommandItem::create_read_command(
+          this, modbus_controller::ModbusRegisterType::READ, DS100_LIVEDATA_ADDR, DS100_LIVEDATA_LEN);
+      cmd.on_data_func = [this](modbus_controller::ModbusRegisterType rt, uint16_t addr,
+                                const std::vector<uint8_t> &data) { this->handle_livedata_response(data); };
+      this->queue_command(cmd);
       break;
+    }
 
 #ifdef USE_DS100_DEMAND
-    case RequestType::DEMAND:
-      ESP_LOGD(TAG, "Processing request: demand");
+    case RequestType::DEMAND: {
+      ESP_LOGD(TAG, "Queueing request: demand");
       this->last_update_demand_ = now;
       this->pending_requests_ &= ~PENDING_DEMAND;
-      this->request_in_progress_ = true;
-      this->send(MODBUS_CMD_READ_IN_REGISTERS, DS100_DEMAND_ADDR, DS100_DEMAND_LEN);
+      auto cmd = modbus_controller::ModbusCommandItem::create_read_command(
+          this, modbus_controller::ModbusRegisterType::READ, DS100_DEMAND_ADDR, DS100_DEMAND_LEN);
+      cmd.on_data_func = [this](modbus_controller::ModbusRegisterType rt, uint16_t addr,
+                                const std::vector<uint8_t> &data) { this->handle_demand_response(data); };
+      this->queue_command(cmd);
       break;
+    }
 #endif
 
 #ifdef USE_DS100_STATISTICS
@@ -430,10 +438,17 @@ void DS100Meter::process_next_request() {
         const uint16_t phase_addrs[] = {DS100_PHASE_L1_STATISTICS_ADDR, DS100_PHASE_L2_STATISTICS_ADDR,
                                         DS100_PHASE_L3_STATISTICS_ADDR};
         uint8_t phase_idx = this->statistics_cycle_state_ - 1;
-        ESP_LOGD(TAG, "Processing request: statistics L%d", this->statistics_cycle_state_);
-        this->last_statistics_request_ = this->statistics_cycle_state_;
-        this->request_in_progress_ = true;
-        this->send(MODBUS_CMD_READ_IN_REGISTERS, phase_addrs[phase_idx], DS100_PHASE_STATISTICS_LEN);
+        uint8_t current_phase = this->statistics_cycle_state_;
+        ESP_LOGD(TAG, "Queueing request: statistics L%d", current_phase);
+        this->last_statistics_request_ = current_phase;
+        auto cmd = modbus_controller::ModbusCommandItem::create_read_command(
+            this, modbus_controller::ModbusRegisterType::READ, phase_addrs[phase_idx], DS100_PHASE_STATISTICS_LEN);
+        cmd.on_data_func = [this, current_phase](modbus_controller::ModbusRegisterType rt, uint16_t addr,
+                                                 const std::vector<uint8_t> &data) {
+          this->handle_phase_statistics_response(data, current_phase);
+          // Chain management is handled in the response handler
+        };
+        this->queue_command(cmd);
 
         if (this->statistics_cycle_state_ < 3) {
           this->statistics_cycle_state_++;
@@ -444,57 +459,81 @@ void DS100Meter::process_next_request() {
         }
       } else {
         // Start new chain with Total
-        ESP_LOGD(TAG, "Processing request: statistics total");
+        ESP_LOGD(TAG, "Queueing request: statistics total");
         this->last_statistics_request_ = 0;
-        this->request_in_progress_ = true;
-        this->send(MODBUS_CMD_READ_IN_REGISTERS, DS100_STATISTICS_ADDR, DS100_STATISTICS_LEN);
+        auto cmd = modbus_controller::ModbusCommandItem::create_read_command(
+            this, modbus_controller::ModbusRegisterType::READ, DS100_STATISTICS_ADDR, DS100_STATISTICS_LEN);
+        cmd.on_data_func = [this](modbus_controller::ModbusRegisterType rt, uint16_t addr,
+                                  const std::vector<uint8_t> &data) {
+          this->handle_total_statistics_response(data);
+          // Chain will continue in next update cycle
+        };
+        this->queue_command(cmd);
         this->statistics_cycle_state_ = 1;
       }
       break;
 #endif
 
 #ifdef USE_DS100_MAXIMUM_DEMAND
-    case RequestType::MAXIMUM_DEMAND:
-      ESP_LOGD(TAG, "Processing request: maximum demand");
+    case RequestType::MAXIMUM_DEMAND: {
+      ESP_LOGD(TAG, "Queueing request: maximum demand");
       this->last_update_maximum_demand_ = now;
       this->pending_requests_ &= ~PENDING_MAXIMUM_DEMAND;
-      this->request_in_progress_ = true;
-      this->send(MODBUS_CMD_READ_IN_REGISTERS, DS100_MAXIMUM_DEMAND_ADDR, DS100_MAXIMUM_DEMAND_LEN);
+      auto cmd = modbus_controller::ModbusCommandItem::create_read_command(
+          this, modbus_controller::ModbusRegisterType::READ, DS100_MAXIMUM_DEMAND_ADDR, DS100_MAXIMUM_DEMAND_LEN);
+      cmd.on_data_func = [this](modbus_controller::ModbusRegisterType rt, uint16_t addr,
+                                const std::vector<uint8_t> &data) { this->handle_maximum_demand_response(data); };
+      this->queue_command(cmd);
       break;
+    }
 #endif
 
 #ifdef USE_DS100_RESETTABLE_STATISTICS
-    case RequestType::RESETTABLE_STATISTICS:
-      ESP_LOGD(TAG, "Processing request: resettable statistics");
+    case RequestType::RESETTABLE_STATISTICS: {
+      ESP_LOGD(TAG, "Queueing request: resettable statistics");
       this->last_update_resettable_statistics_ = now;
       this->pending_requests_ &= ~PENDING_RESETTABLE_STATISTICS;
-      this->request_in_progress_ = true;
-      this->send(MODBUS_CMD_READ_IN_REGISTERS, DS100_RESETTABLE_STATISTICS_ADDR, DS100_RESETTABLE_STATISTICS_LEN);
+      auto cmd = modbus_controller::ModbusCommandItem::create_read_command(
+          this, modbus_controller::ModbusRegisterType::READ, DS100_RESETTABLE_STATISTICS_ADDR,
+          DS100_RESETTABLE_STATISTICS_LEN);
+      cmd.on_data_func = [this](modbus_controller::ModbusRegisterType rt, uint16_t addr,
+                                const std::vector<uint8_t> &data) {
+        this->handle_resettable_statistics_response(data);
+      };
+      this->queue_command(cmd);
       break;
+    }
 #endif
 
-    case RequestType::SETTINGS:
-      ESP_LOGD(TAG, "Processing request: settings");
+    case RequestType::SETTINGS: {
+      ESP_LOGD(TAG, "Queueing request: settings");
       this->last_update_settings_ = now;
       this->pending_requests_ &= ~PENDING_SETTINGS;
-      this->request_in_progress_ = true;
-      // Read holding registers for settings
-      // Read holding registers (Function 0x03) for settings
-      this->send(0x03, DS100_SETTINGS_ADDR, DS100_SETTINGS_LEN);
+      // Settings use holding registers (FC 0x03)
+      auto cmd = modbus_controller::ModbusCommandItem::create_read_command(
+          this, modbus_controller::ModbusRegisterType::HOLDING, DS100_SETTINGS_ADDR, DS100_SETTINGS_LEN);
+      cmd.on_data_func = [this](modbus_controller::ModbusRegisterType rt, uint16_t addr,
+                                const std::vector<uint8_t> &data) { this->handle_settings_response(data); };
+      this->queue_command(cmd);
       break;
+    }
 
-    case RequestType::DEVICE_INFO:
-      ESP_LOGD(TAG, "Processing request: device info");
+    case RequestType::DEVICE_INFO: {
+      ESP_LOGD(TAG, "Queueing request: device info");
       this->last_update_device_info_ = now;
       this->pending_requests_ &= ~PENDING_DEVICE_INFO;
-      this->request_in_progress_ = true;
-      this->send(MODBUS_CMD_READ_IN_REGISTERS, DS100_SERIAL_NUMBER_ADDR, 30);
+      auto cmd = modbus_controller::ModbusCommandItem::create_read_command(
+          this, modbus_controller::ModbusRegisterType::READ, DS100_SERIAL_NUMBER_ADDR, 30);
+      cmd.on_data_func = [this](modbus_controller::ModbusRegisterType rt, uint16_t addr,
+                                const std::vector<uint8_t> &data) { this->handle_device_info_response(data); };
+      this->queue_command(cmd);
       break;
+    }
   }
 }
 
-void DS100Meter::on_modbus_data(const std::vector<uint8_t> &data) {
-  ESP_LOGV(TAG, "Received Modbus data: %zu bytes", data.size());
+void DS100Meter::handle_device_info_response(const std::vector<uint8_t> &data) {
+  ESP_LOGV(TAG, "Received device info response: %zu bytes", data.size());
 
   // Reset consecutive timeouts counter on successful response
   if (this->consecutive_timeouts_ > 0) {
@@ -502,483 +541,543 @@ void DS100Meter::on_modbus_data(const std::vector<uint8_t> &data) {
     this->consecutive_timeouts_ = 0;
   }
 
-  // Helper function to decode 32-bit signed integer from two consecutive registers
-  // DS100 uses big-endian format: [high_reg_msb, high_reg_lsb, low_reg_msb, low_reg_lsb]
-  auto get_int32 = [&](size_t byte_offset, float scale = 1.0f) -> float {
-    if (byte_offset + 3 >= data.size()) {
-      return NAN;
-    }
-    // Combine registers: high_reg << 16 | low_reg
-    int32_t raw = (static_cast<int32_t>(data[byte_offset]) << 24) |
-                  (static_cast<int32_t>(data[byte_offset + 1]) << 16) |
-                  (static_cast<int32_t>(data[byte_offset + 2]) << 8) | static_cast<int32_t>(data[byte_offset + 3]);
-    return static_cast<float>(raw) * scale;
-  };
+  this->request_in_progress_ = false;
 
-  // Helper to get 16-bit unsigned value (for frequency, power factor)
-  auto get_uint16 = [&](size_t byte_offset) -> uint16_t {
-    if (byte_offset + 1 >= data.size()) {
-      return 0;
-    }
-    return encode_uint16(data[byte_offset], data[byte_offset + 1]);
-  };
+  if (data.size() != 60) {
+    ESP_LOGW(TAG, "Unexpected device info size: %zu bytes (expected 60)", data.size());
+    return;
+  }
 
-  // Helper to get register value for frequency (16-bit integer scaled by 10)
-  auto get_frequency = [&](size_t byte_offset) -> float {
-    uint16_t raw = get_uint16(byte_offset);
-    return raw / 10.0f;
-  };
-
-  // Helper to get register value for power factor (16-bit integer scaled by 1000)
-  auto get_power_factor = [&](size_t byte_offset) -> float {
-    uint16_t raw = get_uint16(byte_offset);
-    return raw / 1000.0f;
-  };
-
-  // Determine what type of data we received based on size
-  const size_t livedata_size = DS100_LIVEDATA_LEN * 2;
-  const size_t statistics_size = DS100_STATISTICS_LEN * 2;
-#ifdef USE_DS100_DEMAND
-  const size_t demand_size = DS100_DEMAND_LEN * 2;
-#endif
-#ifdef USE_DS100_MAXIMUM_DEMAND
-  const size_t maximum_demand_size = DS100_MAXIMUM_DEMAND_LEN * 2;
-#endif
-#ifdef USE_DS100_RESETTABLE_STATISTICS
-  const size_t resettable_statistics_size = DS100_RESETTABLE_STATISTICS_LEN * 2;
-#endif
-#ifdef USE_DS100_PHASE_STATISTICS
-  const size_t phase_statistics_size = DS100_PHASE_STATISTICS_LEN * 2;
-#endif
-
-  // Device info (serial number + terminal signal) = 30 registers
-  const size_t device_info_size = 30 * 2;
-
-  if (data.size() == device_info_size) {
 #ifdef USE_TEXT_SENSOR
-    // Process device info response (serial number, versions, and terminal signal)
-    ESP_LOGV(TAG, "Processing device info (%zu bytes), last_stats_req=%d", data.size(), this->last_statistics_request_);
-    ESP_LOGVV(TAG,
-              "  Raw bytes [0-15]: %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X",
-              data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7], data[8], data[9], data[10],
-              data[11], data[12], data[13], data[14], data[15]);
+  // Process device info response (serial number, versions, and terminal signal)
+  ESP_LOGV(TAG, "Processing device info (%zu bytes), last_stats_req=%d", data.size(), this->last_statistics_request_);
+  ESP_LOGVV(TAG, "  Raw bytes [0-15]: %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X",
+            data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7], data[8], data[9], data[10],
+            data[11], data[12], data[13], data[14], data[15]);
 
-    // Serial number is at offset 0 (registers 0x1000-0x1002 = 6 bytes)
-    if (this->serial_number_text_sensor_ != nullptr) {
-      // Format serial number as hex string: XX XX XX XX XX XX
-      char serial_str[13];
-      snprintf(serial_str, sizeof(serial_str), "%02X%02X%02X%02X%02X%02X", data[0], data[1], data[2], data[3], data[4],
-               data[5]);
-      this->serial_number_text_sensor_->publish_state(serial_str);
-    }
+  // Serial number is at offset 0 (registers 0x1000-0x1002 = 6 bytes)
+  if (this->serial_number_text_sensor_ != nullptr) {
+    // Format serial number as hex string: XX XX XX XX XX XX
+    char serial_str[13];
+    snprintf(serial_str, sizeof(serial_str), "%02X%02X%02X%02X%02X%02X", data[0], data[1], data[2], data[3], data[4],
+             data[5]);
+    this->serial_number_text_sensor_->publish_state(serial_str);
+  }
 
-    // Software Version at register 0x1004 (offset = 8 bytes) - 1 register, HEX format
-    if (this->software_version_text_sensor_ != nullptr) {
-      uint16_t version = encode_uint16(data[OFFSET_SOFTWARE_VERSION], data[OFFSET_SOFTWARE_VERSION + 1]);
-      char version_str[8];
-      // Format as HEX (e.g., 0x012D -> "012D" = 301 decimal)
-      snprintf(version_str, sizeof(version_str), "%04X", version);
-      this->software_version_text_sensor_->publish_state(version_str);
-    }
+  // Software Version at register 0x1004 (offset = 8 bytes) - 1 register, HEX format
+  if (this->software_version_text_sensor_ != nullptr) {
+    uint16_t version = encode_uint16(data[OFFSET_SOFTWARE_VERSION], data[OFFSET_SOFTWARE_VERSION + 1]);
+    char version_str[8];
+    // Format as HEX (e.g., 0x012D -> "012D" = 301 decimal)
+    snprintf(version_str, sizeof(version_str), "%04X", version);
+    this->software_version_text_sensor_->publish_state(version_str);
+  }
 
-    // Hardware Version at register 0x1005 (offset = 10 bytes) - 1 register, HEX format
-    if (this->hardware_version_text_sensor_ != nullptr) {
-      uint16_t version = encode_uint16(data[OFFSET_HARDWARE_VERSION], data[OFFSET_HARDWARE_VERSION + 1]);
-      char version_str[8];
-      // Format as HEX (e.g., 0x012D -> "012D" = 301 decimal)
-      snprintf(version_str, sizeof(version_str), "%04X", version);
-      this->hardware_version_text_sensor_->publish_state(version_str);
-    }
+  // Hardware Version at register 0x1005 (offset = 10 bytes) - 1 register, HEX format
+  if (this->hardware_version_text_sensor_ != nullptr) {
+    uint16_t version = encode_uint16(data[OFFSET_HARDWARE_VERSION], data[OFFSET_HARDWARE_VERSION + 1]);
+    char version_str[8];
+    // Format as HEX (e.g., 0x012D -> "012D" = 301 decimal)
+    snprintf(version_str, sizeof(version_str), "%04X", version);
+    this->hardware_version_text_sensor_->publish_state(version_str);
+  }
 
-    // Firmware Checksum at register 0x1006 (offset = 12 bytes) - 1 register
-    if (this->firmware_checksum_text_sensor_ != nullptr) {
-      uint16_t checksum = encode_uint16(data[OFFSET_FIRMWARE_CHECKSUM], data[OFFSET_FIRMWARE_CHECKSUM + 1]);
-      char checksum_str[5];
-      snprintf(checksum_str, sizeof(checksum_str), "%04X", checksum);
-      this->firmware_checksum_text_sensor_->publish_state(checksum_str);
-    }
+  // Firmware Checksum at register 0x1006 (offset = 12 bytes) - 1 register
+  if (this->firmware_checksum_text_sensor_ != nullptr) {
+    uint16_t checksum = encode_uint16(data[OFFSET_FIRMWARE_CHECKSUM], data[OFFSET_FIRMWARE_CHECKSUM + 1]);
+    char checksum_str[5];
+    snprintf(checksum_str, sizeof(checksum_str), "%04X", checksum);
+    this->firmware_checksum_text_sensor_->publish_state(checksum_str);
+  }
 #endif
 
 #ifdef USE_BINARY_SENSOR
-    // Terminal signal is at register 0x101D (offset = (0x101D - 0x1000) * 2 = 29 * 2 = 58)
-    if (this->terminal_signal_binary_sensor_ != nullptr) {
-      bool terminal_signal = (data[58] != 0);
-      this->terminal_signal_binary_sensor_->publish_state(terminal_signal);
-    }
+  // Terminal signal is at register 0x101D (offset = (0x101D - 0x1000) * 2 = 29 * 2 = 58)
+  if (this->terminal_signal_binary_sensor_ != nullptr) {
+    bool terminal_signal = (data[58] != 0);
+    this->terminal_signal_binary_sensor_->publish_state(terminal_signal);
+  }
 #endif
+}
 
-  } else if (data.size() == DS100_SETTINGS_LEN * 2) {
-    // Process settings response (20 holding registers starting at 0x1003)
-    ESP_LOGV(TAG, "Processing settings (%zu bytes)", data.size());
-    ESP_LOGVV(
-        TAG,
-        "  Settings raw bytes [0-15]: %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X",
-        data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7], data[8], data[9], data[10], data[11],
-        data[12], data[13], data[14], data[15]);
+void DS100Meter::handle_settings_response(const std::vector<uint8_t> &data) {
+  ESP_LOGV(TAG, "Received settings response: %zu bytes", data.size());
 
-    // Helper to read 16-bit value from settings data
-    auto get_setting = [&](uint16_t reg_offset) -> uint16_t {
-      uint16_t byte_offset = reg_offset * 2;
-      if (byte_offset + 1 >= data.size())
-        return 0;
-      return encode_uint16(data[byte_offset], data[byte_offset + 1]);
-    };
+  // Reset consecutive timeouts counter on successful response
+  if (this->consecutive_timeouts_ > 0) {
+    ESP_LOGV(TAG, "Resetting consecutive timeouts (was %d)", this->consecutive_timeouts_);
+    this->consecutive_timeouts_ = 0;
+  }
 
-    // Modbus Address (register 0x1003, offset 0)
-    if (this->address_number_ != nullptr) {
-      uint16_t addr = get_setting(0);
-      ESP_LOGV(TAG, "  Settings: address=%u", addr);
-      this->address_number_->publish_state(static_cast<float>(addr));
+  this->request_in_progress_ = false;
+
+  const size_t settings_size = DS100_SETTINGS_LEN * 2;
+  if (data.size() != settings_size) {
+    ESP_LOGW(TAG, "Unexpected settings size: %zu bytes (expected %zu)", data.size(), settings_size);
+    return;
+  }
+
+  // Process settings response (33 holding registers starting at 0x1003)
+  ESP_LOGV(TAG, "Processing settings (%zu bytes)", data.size());
+  ESP_LOGVV(
+      TAG,
+      "  Settings raw bytes [0-15]: %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X",
+      data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7], data[8], data[9], data[10], data[11],
+      data[12], data[13], data[14], data[15]);
+
+  // Helper to read 16-bit value from settings data
+  auto get_setting = [&](uint16_t reg_offset) -> uint16_t {
+    uint16_t byte_offset = reg_offset * 2;
+    if (byte_offset + 1 >= data.size())
+      return 0;
+    return encode_uint16(data[byte_offset], data[byte_offset + 1]);
+  };
+
+  // Modbus Address (register 0x1003, offset 0)
+  if (this->address_number_ != nullptr) {
+    uint16_t addr = get_setting(0);
+    ESP_LOGV(TAG, "  Settings: address=%u", addr);
+    this->address_number_->publish_state(static_cast<float>(addr));
+  }
+
+  // Log all settings values for debugging
+  ESP_LOGVV(TAG,
+            "  Settings values: addr=%u, baud=%u, parity=%u, stop_bits=%u, combined=%u, demand_mode=%u, "
+            "scrolling=%u, demand_period=%u, pwd=%u, so=%u",
+            get_setting(0), get_setting(9), get_setting(10), get_setting(11), get_setting(12), get_setting(13),
+            get_setting(8), get_setting(14), get_setting(19), get_setting(20));
+
+  // Scrolling Time (register 0x100B, offset 8)
+  if (this->scrolling_time_number_ != nullptr) {
+    uint16_t time = get_setting(8);
+    this->scrolling_time_number_->publish_state(static_cast<float>(time));
+  }
+
+  // Demand Period (register 0x1011, offset 14)
+  if (this->demand_period_number_ != nullptr) {
+    uint16_t period = get_setting(14);
+    this->demand_period_number_->publish_state(static_cast<float>(period));
+  }
+
+  // Password (register 0x1016, offset 19)
+  if (this->password_number_ != nullptr) {
+    uint16_t pwd = get_setting(19);
+    this->password_number_->publish_state(static_cast<float>(pwd));
+  }
+
+  // Baud Rate (register 0x100C, offset 9)
+  // Values: 6=9600, 7=19200, 8=38400, 9=115200
+  if (this->baud_rate_select_ != nullptr) {
+    uint16_t baud_val = get_setting(9);
+    const char *baud_str = "9600";
+    switch (baud_val) {
+      case 6:
+        baud_str = "9600";
+        break;
+      case 7:
+        baud_str = "19200";
+        break;
+      case 8:
+        baud_str = "38400";
+        break;
+      case 9:
+        baud_str = "115200";
+        break;
+    }
+    this->baud_rate_select_->publish_state(baud_str);
+  }
+
+  // Parity (register 0x100D, offset 10)
+  if (this->parity_select_ != nullptr) {
+    uint16_t parity_val = get_setting(10);
+    const char *parity_str = "None";
+    switch (parity_val) {
+      case 0:
+        parity_str = "None";
+        break;
+      case 1:
+        parity_str = "Odd";
+        break;
+      case 2:
+        parity_str = "Even";
+        break;
+    }
+    this->parity_select_->publish_state(parity_str);
+  }
+
+  // Stop Bits (register 0x100E, offset 11)
+  // Values: 1=1 bit, 2=2 bits
+  if (this->stop_bits_select_ != nullptr) {
+    uint16_t stop_val = get_setting(11);
+    const char *stop_str = (stop_val == 1) ? "1" : "2";
+    this->stop_bits_select_->publish_state(stop_str);
+  }
+
+  // Combined Code (register 0x100F, offset 12)
+  // Values: 1=forward, 2=reverse, 3=forward+reverse, 4=positive-negative, 5=remaining energy
+  if (this->combined_code_select_ != nullptr) {
+    uint16_t code_val = get_setting(12);
+    const char *code_str = "forward";
+    switch (code_val) {
+      case 1:
+        code_str = "forward";
+        break;
+      case 2:
+        code_str = "reverse";
+        break;
+      case 3:
+        code_str = "forward+reverse";
+        break;
+      case 4:
+        code_str = "positive-negative";
+        break;
+      case 5:
+        code_str = "remaining energy";
+        break;
+    }
+    this->combined_code_select_->publish_state(code_str);
+  }
+
+  // Demand Mode (register 0x1010, offset 13)
+  // Values: 0=interval, 1=slip
+  if (this->demand_mode_select_ != nullptr) {
+    uint16_t mode_val = get_setting(13);
+    const char *mode_str = (mode_val == 0) ? "interval" : "slip";
+    this->demand_mode_select_->publish_state(mode_str);
+  }
+
+  // SO Output (register 0x1017, offset 20)
+  // Constant 100-2500, divisible by 10000
+  if (this->so_output_number_ != nullptr) {
+    uint16_t so_val = get_setting(20);
+    this->so_output_number_->publish_state(static_cast<float>(so_val));
+  }
+
+  // Meter Running Time (register 0x1018, offset 21-22, 2 registers)
+  if (this->meter_running_time_number_ != nullptr) {
+    uint32_t running_time = (static_cast<uint32_t>(get_setting(21)) << 16) | get_setting(22);
+    this->meter_running_time_number_->publish_state(static_cast<float>(running_time));
+  }
+
+  // Timing Current (register 0x101A, offset 23-24, 2 registers, unit mA)
+  if (this->timing_current_number_ != nullptr) {
+    uint32_t current = (static_cast<uint32_t>(get_setting(23)) << 16) | get_setting(24);
+    this->timing_current_number_->publish_state(static_cast<float>(current));
+  }
+
+  // Auto Scroll Display (register 0x1020, offset 29-33, 5 registers)
+  // Bit-wise mark for display content
+  if (this->auto_scroll_number_ != nullptr) {
+    // Read first register as representative value
+    uint16_t scroll_val = get_setting(29);
+    this->auto_scroll_number_->publish_state(static_cast<float>(scroll_val));
+  }
+}
+
+void DS100Meter::handle_livedata_response(const std::vector<uint8_t> &data) {
+  ESP_LOGV(TAG, "Received livedata response: %zu bytes", data.size());
+
+  // Reset consecutive timeouts counter on successful response
+  if (this->consecutive_timeouts_ > 0) {
+    ESP_LOGV(TAG, "Resetting consecutive timeouts (was %d)", this->consecutive_timeouts_);
+    this->consecutive_timeouts_ = 0;
+  }
+
+  this->request_in_progress_ = false;
+
+  const size_t livedata_size = DS100_LIVEDATA_LEN * 2;
+  if (data.size() != livedata_size) {
+    ESP_LOGW(TAG, "Unexpected livedata size: %zu bytes (expected %zu)", data.size(), livedata_size);
+    return;
+  }
+
+  // Process livedata response
+  ESP_LOGV(TAG, "Processing livedata (%zu bytes)", data.size());
+
+  // Read phase data
+  for (uint8_t i = 0; i < 3; i++) {
+    if (!this->phases_[i].setup_) {
+      continue;
     }
 
-    // Log all settings values for debugging
-    ESP_LOGVV(TAG,
-              "  Settings values: addr=%u, baud=%u, parity=%u, stop_bits=%u, combined=%u, demand_mode=%u, "
-              "scrolling=%u, demand_period=%u, pwd=%u, so=%u",
-              get_setting(0), get_setting(9), get_setting(10), get_setting(11), get_setting(12), get_setting(13),
-              get_setting(8), get_setting(14), get_setting(19), get_setting(20));
+    // Phase offsets: L1=0, L2=1, L3=2 (each value is 2 registers = 4 bytes apart)
+    const size_t voltage_offset = i * 4;
+    const size_t current_offset = i * 4;
+    const size_t power_offset = i * 4;
 
-    // Scrolling Time (register 0x100B, offset 8)
-    if (this->scrolling_time_number_ != nullptr) {
-      uint16_t time = get_setting(8);
-      this->scrolling_time_number_->publish_state(static_cast<float>(time));
+    if (this->phases_[i].voltage_sensor_ != nullptr) {
+      float voltage = get_int32_helper(data, REG_VOLTAGE_L1_N + voltage_offset, 0.001f);  // mV -> V
+      this->phases_[i].voltage_sensor_->publish_state(voltage);
     }
-
-    // Demand Period (register 0x1011, offset 14)
-    if (this->demand_period_number_ != nullptr) {
-      uint16_t period = get_setting(14);
-      this->demand_period_number_->publish_state(static_cast<float>(period));
+    if (this->phases_[i].current_sensor_ != nullptr) {
+      float current = get_int32_helper(data, REG_CURRENT_L1 + current_offset, 0.001f);  // mA -> A
+      this->phases_[i].current_sensor_->publish_state(current);
     }
-
-    // Password (register 0x1016, offset 19)
-    if (this->password_number_ != nullptr) {
-      uint16_t pwd = get_setting(19);
-      this->password_number_->publish_state(static_cast<float>(pwd));
+    if (this->phases_[i].active_power_sensor_ != nullptr) {
+      float active_power = get_int32_helper(data, REG_ACTIVE_POWER_L1 + power_offset, 1.0f);  // unit: W (direct)
+      this->phases_[i].active_power_sensor_->publish_state(active_power);
     }
-
-    // Baud Rate (register 0x100C, offset 9)
-    // Values: 6=9600, 7=19200, 8=38400, 9=115200
-    if (this->baud_rate_select_ != nullptr) {
-      uint16_t baud_val = get_setting(9);
-      const char *baud_str = "9600";
-      switch (baud_val) {
-        case 6:
-          baud_str = "9600";
-          break;
-        case 7:
-          baud_str = "19200";
-          break;
-        case 8:
-          baud_str = "38400";
-          break;
-        case 9:
-          baud_str = "115200";
-          break;
-      }
-      this->baud_rate_select_->publish_state(baud_str);
+    if (this->phases_[i].apparent_power_sensor_ != nullptr) {
+      float apparent_power = get_int32_helper(data, REG_APPARENT_POWER_L1 + power_offset, 1.0f);  // unit: VA (direct)
+      this->phases_[i].apparent_power_sensor_->publish_state(apparent_power);
     }
-
-    // Parity (register 0x100D, offset 10)
-    if (this->parity_select_ != nullptr) {
-      uint16_t parity_val = get_setting(10);
-      const char *parity_str = "None";
-      switch (parity_val) {
-        case 0:
-          parity_str = "None";
-          break;
-        case 1:
-          parity_str = "Odd";
-          break;
-        case 2:
-          parity_str = "Even";
-          break;
-      }
-      this->parity_select_->publish_state(parity_str);
+    if (this->phases_[i].reactive_power_sensor_ != nullptr) {
+      float reactive_power = get_int32_helper(data, REG_REACTIVE_POWER_L1 + power_offset, 1.0f);  // unit: var (direct)
+      this->phases_[i].reactive_power_sensor_->publish_state(reactive_power);
     }
-
-    // Stop Bits (register 0x100E, offset 11)
-    // Values: 1=1 bit, 2=2 bits
-    if (this->stop_bits_select_ != nullptr) {
-      uint16_t stop_val = get_setting(11);
-      const char *stop_str = (stop_val == 1) ? "1" : "2";
-      this->stop_bits_select_->publish_state(stop_str);
+    if (this->phases_[i].power_factor_sensor_ != nullptr) {
+      float power_factor = get_power_factor_helper(data, REG_POWER_FACTOR_L1 + (i * 2));
+      this->phases_[i].power_factor_sensor_->publish_state(power_factor);
     }
-
-    // Combined Code (register 0x100F, offset 12)
-    // Values: 1=forward, 2=reverse, 3=forward+reverse, 4=positive-negative, 5=remaining energy
-    if (this->combined_code_select_ != nullptr) {
-      uint16_t code_val = get_setting(12);
-      const char *code_str = "forward";
-      switch (code_val) {
-        case 1:
-          code_str = "forward";
-          break;
-        case 2:
-          code_str = "reverse";
-          break;
-        case 3:
-          code_str = "forward+reverse";
-          break;
-        case 4:
-          code_str = "positive-negative";
-          break;
-        case 5:
-          code_str = "remaining energy";
-          break;
-      }
-      this->combined_code_select_->publish_state(code_str);
+    if (this->phases_[i].frequency_sensor_ != nullptr) {
+      float frequency = get_frequency_helper(data, REG_FREQUENCY_L1 + (i * 2));
+      this->phases_[i].frequency_sensor_->publish_state(frequency);
     }
+  }
 
-    // Demand Mode (register 0x1010, offset 13)
-    // Values: 0=interval, 1=slip
-    if (this->demand_mode_select_ != nullptr) {
-      uint16_t mode_val = get_setting(13);
-      const char *mode_str = (mode_val == 0) ? "interval" : "slip";
-      this->demand_mode_select_->publish_state(mode_str);
-    }
+  // Read neutral current
+  if (this->current_n_sensor_ != nullptr) {
+    float current_n = get_int32_helper(data, REG_CURRENT_N, 0.001f);  // mA -> A
+    this->current_n_sensor_->publish_state(current_n);
+  }
 
-    // SO Output (register 0x1017, offset 20)
-    // Constant 100-2500, divisible by 10000
-    if (this->so_output_number_ != nullptr) {
-      uint16_t so_val = get_setting(20);
-      this->so_output_number_->publish_state(static_cast<float>(so_val));
-    }
+  // Read line-to-line voltages
+  if (this->voltage_l1_l2_sensor_ != nullptr) {
+    float voltage = get_int32_helper(data, REG_VOLTAGE_L1_L2, 0.001f);  // mV -> V
+    this->voltage_l1_l2_sensor_->publish_state(voltage);
+  }
+  if (this->voltage_l2_l3_sensor_ != nullptr) {
+    float voltage = get_int32_helper(data, REG_VOLTAGE_L2_L3, 0.001f);  // mV -> V
+    this->voltage_l2_l3_sensor_->publish_state(voltage);
+  }
+  if (this->voltage_l3_l1_sensor_ != nullptr) {
+    float voltage = get_int32_helper(data, REG_VOLTAGE_L3_L1, 0.001f);  // mV -> V
+    this->voltage_l3_l1_sensor_->publish_state(voltage);
+  }
 
-    // Meter Running Time (register 0x1018, offset 21-22, 2 registers)
-    if (this->meter_running_time_number_ != nullptr) {
-      uint32_t running_time = (static_cast<uint32_t>(get_setting(21)) << 16) | get_setting(22);
-      this->meter_running_time_number_->publish_state(static_cast<float>(running_time));
-    }
+  // Read average voltages
+  if (this->voltage_l_n_avg_sensor_ != nullptr) {
+    float voltage = get_int32_helper(data, REG_VOLTAGE_L_N_AVG, 0.001f);  // mV -> V
+    this->voltage_l_n_avg_sensor_->publish_state(voltage);
+  }
+  if (this->voltage_l_l_avg_sensor_ != nullptr) {
+    float voltage = get_int32_helper(data, REG_VOLTAGE_L_L_AVG, 0.001f);  // mV -> V
+    this->voltage_l_l_avg_sensor_->publish_state(voltage);
+  }
 
-    // Timing Current (register 0x101A, offset 23-24, 2 registers, unit mA)
-    if (this->timing_current_number_ != nullptr) {
-      uint32_t current = (static_cast<uint32_t>(get_setting(23)) << 16) | get_setting(24);
-      this->timing_current_number_->publish_state(static_cast<float>(current));
-    }
+  // Read average current
+  if (this->current_avg_sensor_ != nullptr) {
+    float current = get_int32_helper(data, REG_CURRENT_AVG, 0.001f);  // mA -> A
+    this->current_avg_sensor_->publish_state(current);
+  }
 
-    // Auto Scroll Display (register 0x1020, offset 29-33, 5 registers)
-    // Bit-wise mark for display content
-    if (this->auto_scroll_number_ != nullptr) {
-      // Read first register as representative value
-      uint16_t scroll_val = get_setting(29);
-      this->auto_scroll_number_->publish_state(static_cast<float>(scroll_val));
-    }
+  // Read total/combined values
+  if (this->total_power_sensor_ != nullptr) {
+    float total_power = get_int32_helper(data, REG_ACTIVE_POWER_TOTAL, 1.0f);  // unit: W (direct)
+    this->total_power_sensor_->publish_state(total_power);
+  }
 
-  } else if (data.size() == livedata_size) {
-    // Process livedata response
-    ESP_LOGV(TAG, "Processing livedata (%zu bytes)", data.size());
+  // Total apparent power (first 3 registers after total active power)
+  if (this->apparent_power_total_sensor_ != nullptr) {
+    float apparent_power = get_int32_helper(data, REG_ACTIVE_POWER_TOTAL + 4, 1.0f);  // unit: VA
+    this->apparent_power_total_sensor_->publish_state(apparent_power);
+  }
 
-    // Read phase data
-    for (uint8_t i = 0; i < 3; i++) {
-      if (!this->phases_[i].setup_) {
-        continue;
-      }
+  // Total reactive power (next 3 registers after apparent power)
+  if (this->reactive_power_total_sensor_ != nullptr) {
+    float reactive_power = get_int32_helper(data, REG_ACTIVE_POWER_TOTAL + 8, 1.0f);  // unit: var
+    this->reactive_power_total_sensor_->publish_state(reactive_power);
+  }
 
-      // Phase offsets: L1=0, L2=1, L3=2 (each value is 2 registers = 4 bytes apart)
-      const size_t voltage_offset = i * 4;
-      const size_t current_offset = i * 4;
-      const size_t power_offset = i * 4;
+  // Total power factor (1 register after reactive power)
+  if (this->power_factor_avg_sensor_ != nullptr) {
+    float power_factor = get_power_factor_helper(data, REG_ACTIVE_POWER_TOTAL + 12);
+    this->power_factor_avg_sensor_->publish_state(power_factor);
+  }
 
-      if (this->phases_[i].voltage_sensor_ != nullptr) {
-        float voltage = get_int32(REG_VOLTAGE_L1_N + voltage_offset, 0.001f);  // mV -> V
-        this->phases_[i].voltage_sensor_->publish_state(voltage);
-      }
-      if (this->phases_[i].current_sensor_ != nullptr) {
-        float current = get_int32(REG_CURRENT_L1 + current_offset, 0.001f);  // mA -> A
-        this->phases_[i].current_sensor_->publish_state(current);
-      }
-      if (this->phases_[i].active_power_sensor_ != nullptr) {
-        float active_power = get_int32(REG_ACTIVE_POWER_L1 + power_offset, 1.0f);  // unit: W (direct)
-        this->phases_[i].active_power_sensor_->publish_state(active_power);
-      }
-      if (this->phases_[i].apparent_power_sensor_ != nullptr) {
-        float apparent_power = get_int32(REG_APPARENT_POWER_L1 + power_offset, 1.0f);  // unit: VA (direct)
-        this->phases_[i].apparent_power_sensor_->publish_state(apparent_power);
-      }
-      if (this->phases_[i].reactive_power_sensor_ != nullptr) {
-        float reactive_power = get_int32(REG_REACTIVE_POWER_L1 + power_offset, 1.0f);  // unit: var (direct)
-        this->phases_[i].reactive_power_sensor_->publish_state(reactive_power);
-      }
-      if (this->phases_[i].power_factor_sensor_ != nullptr) {
-        float power_factor = get_power_factor(REG_POWER_FACTOR_L1 + (i * 2));
-        this->phases_[i].power_factor_sensor_->publish_state(power_factor);
-      }
-      if (this->phases_[i].frequency_sensor_ != nullptr) {
-        float frequency = get_frequency(REG_FREQUENCY_L1 + (i * 2));
-        this->phases_[i].frequency_sensor_->publish_state(frequency);
-      }
-    }
-
-    // Read neutral current
-    if (this->current_n_sensor_ != nullptr) {
-      float current_n = get_int32(REG_CURRENT_N, 0.001f);  // mA -> A
-      this->current_n_sensor_->publish_state(current_n);
-    }
-
-    // Read line-to-line voltages
-    if (this->voltage_l1_l2_sensor_ != nullptr) {
-      float voltage = get_int32(REG_VOLTAGE_L1_L2, 0.001f);  // mV -> V
-      this->voltage_l1_l2_sensor_->publish_state(voltage);
-    }
-    if (this->voltage_l2_l3_sensor_ != nullptr) {
-      float voltage = get_int32(REG_VOLTAGE_L2_L3, 0.001f);  // mV -> V
-      this->voltage_l2_l3_sensor_->publish_state(voltage);
-    }
-    if (this->voltage_l3_l1_sensor_ != nullptr) {
-      float voltage = get_int32(REG_VOLTAGE_L3_L1, 0.001f);  // mV -> V
-      this->voltage_l3_l1_sensor_->publish_state(voltage);
-    }
-
-    // Read average voltages
-    if (this->voltage_l_n_avg_sensor_ != nullptr) {
-      float voltage = get_int32(REG_VOLTAGE_L_N_AVG, 0.001f);  // mV -> V
-      this->voltage_l_n_avg_sensor_->publish_state(voltage);
-    }
-    if (this->voltage_l_l_avg_sensor_ != nullptr) {
-      float voltage = get_int32(REG_VOLTAGE_L_L_AVG, 0.001f);  // mV -> V
-      this->voltage_l_l_avg_sensor_->publish_state(voltage);
-    }
-
-    // Read average current
-    if (this->current_avg_sensor_ != nullptr) {
-      float current = get_int32(REG_CURRENT_AVG, 0.001f);  // mA -> A
-      this->current_avg_sensor_->publish_state(current);
-    }
-
-    // Read total/combined values
-    if (this->total_power_sensor_ != nullptr) {
-      float total_power = get_int32(REG_ACTIVE_POWER_TOTAL, 1.0f);  // unit: W (direct)
-      this->total_power_sensor_->publish_state(total_power);
-    }
-
-    if (this->frequency_sensor_ != nullptr) {
-      float frequency = get_frequency(REG_FREQUENCY_L1);
-      this->frequency_sensor_->publish_state(frequency);
-    }
-
-  } else if (data.size() == statistics_size) {
-    // Process statistics response
-    ESP_LOGV(TAG, "Processing statistics (%zu bytes)", data.size());
-
-    // Total energy values (always present) - use helper function
-    this->read_energy_sensors(data.data(), 0, this->total_energy_sensors_, 0.01f, statistics_size);
-
-#ifdef USE_DS100_TARIFFS
-    // Tariff energy values - each tariff is offset by 4 bytes from base
-    const uint16_t tariff_offsets[] = {4, 8, 12, 16};  // T1, T2, T3, T4 offsets from base
-    for (uint8_t i = 0; i < 4; i++) {
-      // Each tariff follows the same energy pattern, just offset by tariff_offsets[i]
-      this->read_energy_sensors(data.data(), tariff_offsets[i], this->tariff_energy_sensors_[i], 0.01f,
-                                statistics_size);
-    }
-#endif
-
-#ifdef USE_DS100_QUADRANTS
-    // Quadrant reactive energy values
-    const uint16_t quadrant_offsets[] = {STAT_REACTIVE_ENERGY_Q1, STAT_REACTIVE_ENERGY_Q2, STAT_REACTIVE_ENERGY_Q3,
-                                         STAT_REACTIVE_ENERGY_Q4};
-
-    for (uint8_t i = 0; i < 4; i++) {
-      if (this->reactive_energy_quadrant_sensors_[i] != nullptr) {
-        float value = get_int32(quadrant_offsets[i], 0.01f);
-        this->reactive_energy_quadrant_sensors_[i]->publish_state(value);
-      }
-    }
-
-#ifdef USE_DS100_TARIFFS
-    // Tariff + quadrant combinations
-    const uint16_t tariff_quadrant_offsets[4][4] = {
-        {STAT_REACTIVE_ENERGY_Q1_T1, STAT_REACTIVE_ENERGY_Q1_T2, STAT_REACTIVE_ENERGY_Q1_T3,
-         STAT_REACTIVE_ENERGY_Q1_T4},
-        {STAT_REACTIVE_ENERGY_Q2_T1, STAT_REACTIVE_ENERGY_Q2_T2, STAT_REACTIVE_ENERGY_Q2_T3,
-         STAT_REACTIVE_ENERGY_Q2_T4},
-        {STAT_REACTIVE_ENERGY_Q3_T1, STAT_REACTIVE_ENERGY_Q3_T2, STAT_REACTIVE_ENERGY_Q3_T3,
-         STAT_REACTIVE_ENERGY_Q3_T4},
-        {STAT_REACTIVE_ENERGY_Q4_T1, STAT_REACTIVE_ENERGY_Q4_T2, STAT_REACTIVE_ENERGY_Q4_T3,
-         STAT_REACTIVE_ENERGY_Q4_T4},
-    };
-
-    for (uint8_t q = 0; q < 4; q++) {
-      for (uint8_t t = 0; t < 4; t++) {
-        if (this->tariff_reactive_energy_quadrant_sensors_[t][q] != nullptr) {
-          float value = get_int32(tariff_quadrant_offsets[q][t], 0.01f);
-          this->tariff_reactive_energy_quadrant_sensors_[t][q]->publish_state(value);
-        }
-      }
-    }
-#endif
-#endif
+  // Frequency (use L1 frequency as total)
+  if (this->frequency_sensor_ != nullptr) {
+    float frequency = get_frequency_helper(data, REG_FREQUENCY_L1);
+    this->frequency_sensor_->publish_state(frequency);
+  }
+}
 
 #ifdef USE_DS100_DEMAND
-  } else if (data.size() == demand_size) {
-    // Process demand response
-    ESP_LOGV(TAG, "Processing demand (%zu bytes)", data.size());
+void DS100Meter::handle_demand_response(const std::vector<uint8_t> &data) {
+  ESP_LOGV(TAG, "Received demand response: %zu bytes", data.size());
 
-    // Read demand sensors using helper function (0.1W resolution)
-    this->read_power_demand_sensors(data.data(), 0, this->demand_sensors_, 0.1f);
+  if (this->consecutive_timeouts_ > 0) {
+    ESP_LOGV(TAG, "Resetting consecutive timeouts (was %d)", this->consecutive_timeouts_);
+    this->consecutive_timeouts_ = 0;
+  }
+
+  this->request_in_progress_ = false;
+
+  const size_t demand_size = DS100_DEMAND_LEN * 2;
+  if (data.size() != demand_size) {
+    ESP_LOGW(TAG, "Unexpected demand size: %zu bytes (expected %zu)", data.size(), demand_size);
+    return;
+  }
+
+  ESP_LOGV(TAG, "Processing demand (%zu bytes)", data.size());
+  // Read demand sensors using helper function (0.1W resolution)
+  this->read_power_demand_sensors(data.data(), 0, this->demand_sensors_, 0.1f);
+}
 #endif
 
 #ifdef USE_DS100_MAXIMUM_DEMAND
-  } else if (data.size() == maximum_demand_size) {
-    // Process maximum demand response
-    ESP_LOGV(TAG, "Processing maximum demand (%zu bytes)", data.size());
+void DS100Meter::handle_maximum_demand_response(const std::vector<uint8_t> &data) {
+  ESP_LOGV(TAG, "Received maximum demand response: %zu bytes", data.size());
 
-    // Read maximum demand sensors using helper function (0.1W resolution)
-    this->read_power_demand_sensors(data.data(), 0, this->maximum_demand_sensors_, 0.1f);
+  if (this->consecutive_timeouts_ > 0) {
+    ESP_LOGV(TAG, "Resetting consecutive timeouts (was %d)", this->consecutive_timeouts_);
+    this->consecutive_timeouts_ = 0;
+  }
+
+  this->request_in_progress_ = false;
+
+  const size_t maximum_demand_size = DS100_MAXIMUM_DEMAND_LEN * 2;
+  if (data.size() != maximum_demand_size) {
+    ESP_LOGW(TAG, "Unexpected maximum demand size: %zu bytes (expected %zu)", data.size(), maximum_demand_size);
+    return;
+  }
+
+  ESP_LOGV(TAG, "Processing maximum demand (%zu bytes)", data.size());
+  // Read maximum demand sensors using helper function (0.1W resolution)
+  this->read_power_demand_sensors(data.data(), 0, this->maximum_demand_sensors_, 0.1f);
+}
 #endif
 
 #ifdef USE_DS100_RESETTABLE_STATISTICS
-  } else if (data.size() == resettable_statistics_size) {
-    // Process resettable statistics response
-    ESP_LOGV(TAG, "Processing resettable statistics (%zu bytes)", data.size());
+void DS100Meter::handle_resettable_statistics_response(const std::vector<uint8_t> &data) {
+  ESP_LOGV(TAG, "Received resettable statistics response: %zu bytes", data.size());
 
-    // Resettable statistics pattern: Total (6 values) + Phase A (6 values) + Phase B (6 values) + Phase C (6 values)
-    // Total: bytes 0-119
-    this->read_energy_sensors(data.data(), 0, this->resettable_total_energy_sensors_, 0.01f,
-                              resettable_statistics_size);
-
-    // Per-phase resettable statistics: A, B, C (each 120 bytes)
-    for (uint8_t phase = 0; phase < 3; phase++) {
-      this->read_energy_sensors(data.data(), 120 * (phase + 1), this->resettable_phase_energy_sensors_[phase], 0.01f,
-                                resettable_statistics_size);
-    }
-#endif
-
-#ifdef USE_DS100_PHASE_STATISTICS
-  } else if (data.size() == phase_statistics_size) {
-    // Process per-phase statistics response
-    // last_statistics_request_ is 1, 2, or 3 for L1, L2, L3 (0 would be total statistics)
-    uint8_t phase_idx = this->last_statistics_request_ - 1;  // Convert to 0, 1, 2
-    ESP_LOGV(TAG, "Processing phase L%d statistics (%zu bytes, last_stats_req=%d)", phase_idx + 1, data.size(),
-             this->last_statistics_request_);
-    ESP_LOGVV(TAG,
-              "  Phase stats raw bytes [0-15]: %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X "
-              "%02X %02X",
-              data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7], data[8], data[9], data[10],
-              data[11], data[12], data[13], data[14], data[15]);
-
-    // Read phase statistics using helper function for the correct phase
-    this->read_energy_sensors(data.data(), 0, this->phase_energy_sensors_[phase_idx], 0.01f, data.size());
-#endif
-
-  } else {
-    ESP_LOGW(TAG, "Unexpected data size: %zu bytes", data.size());
+  if (this->consecutive_timeouts_ > 0) {
+    ESP_LOGV(TAG, "Resetting consecutive timeouts (was %d)", this->consecutive_timeouts_);
+    this->consecutive_timeouts_ = 0;
   }
 
-  // Mark request as completed
   this->request_in_progress_ = false;
 
-  // Process next pending request if queue not empty
-  // Skip if bus is overloaded (consecutive timeouts) to give other devices a chance
-  if (this->pending_requests_ != 0) {
-    if (this->consecutive_timeouts_ >= MAX_CONSECUTIVE_TIMEOUTS) {
-      ESP_LOGV(TAG, "Deferring next request due to bus overload (timeouts: %d)", this->consecutive_timeouts_);
-      // Don't clear pending_requests_ here - let update() handle prioritization
-    } else {
-      this->process_next_request();
+  const size_t resettable_statistics_size = DS100_RESETTABLE_STATISTICS_LEN * 2;
+  if (data.size() != resettable_statistics_size) {
+    ESP_LOGW(TAG, "Unexpected resettable statistics size: %zu bytes (expected %zu)", data.size(),
+             resettable_statistics_size);
+    return;
+  }
+
+  ESP_LOGV(TAG, "Processing resettable statistics (%zu bytes)", data.size());
+
+  // Resettable statistics pattern: Total (6 values) + Phase A (6 values) + Phase B (6 values) + Phase C (6 values)
+  // Total: bytes 0-119
+  this->read_energy_sensors(data.data(), 0, this->resettable_total_energy_sensors_, 0.01f, resettable_statistics_size);
+
+  // Phase A: bytes 120-239 (if reactive enabled)
+  this->read_energy_sensors(data.data(), 120, this->resettable_phase_energy_sensors_[0], 0.01f,
+                            resettable_statistics_size);
+
+  // Phase B: bytes 240-359
+  this->read_energy_sensors(data.data(), 240, this->resettable_phase_energy_sensors_[1], 0.01f,
+                            resettable_statistics_size);
+
+  // Phase C: bytes 360-479
+  this->read_energy_sensors(data.data(), 360, this->resettable_phase_energy_sensors_[2], 0.01f,
+                            resettable_statistics_size);
+}
+#endif
+
+#ifdef USE_DS100_STATISTICS
+void DS100Meter::handle_total_statistics_response(const std::vector<uint8_t> &data) {
+  ESP_LOGV(TAG, "Received total statistics response: %zu bytes", data.size());
+
+  if (this->consecutive_timeouts_ > 0) {
+    ESP_LOGV(TAG, "Resetting consecutive timeouts (was %d)", this->consecutive_timeouts_);
+    this->consecutive_timeouts_ = 0;
+  }
+
+  this->request_in_progress_ = false;
+
+  const size_t statistics_size = DS100_STATISTICS_LEN * 2;
+  if (data.size() != statistics_size) {
+    ESP_LOGW(TAG, "Unexpected statistics size: %zu bytes (expected %zu)", data.size(), statistics_size);
+    return;
+  }
+
+  ESP_LOGV(TAG, "Processing statistics (%zu bytes)", data.size());
+
+  // Total energy values (always present) - use helper function
+  this->read_energy_sensors(data.data(), 0, this->total_energy_sensors_, 0.01f, statistics_size);
+
+#ifdef USE_DS100_TARIFFS
+  // Tariff energy values - each tariff is offset by 4 bytes from base
+  const uint16_t tariff_offsets[] = {4, 8, 12, 16};  // T1, T2, T3, T4 offsets from base
+  for (uint8_t i = 0; i < 4; i++) {
+    // Each tariff follows the same energy pattern, just offset by tariff_offsets[i]
+    this->read_energy_sensors(data.data(), tariff_offsets[i], this->tariff_energy_sensors_[i], 0.01f, statistics_size);
+  }
+#endif
+
+#ifdef USE_DS100_QUADRANTS
+  // Quadrant reactive energy values
+  const uint16_t quadrant_offsets[] = {STAT_REACTIVE_ENERGY_Q1, STAT_REACTIVE_ENERGY_Q2, STAT_REACTIVE_ENERGY_Q3,
+                                       STAT_REACTIVE_ENERGY_Q4};
+
+  for (uint8_t i = 0; i < 4; i++) {
+    if (this->reactive_energy_quadrant_sensors_[i] != nullptr) {
+      float value = get_int32_helper(data, quadrant_offsets[i], 0.01f);
+      this->reactive_energy_quadrant_sensors_[i]->publish_state(value);
     }
   }
+
+#ifdef USE_DS100_TARIFFS
+  // Tariff + quadrant combinations
+  const uint16_t tariff_quadrant_offsets[4][4] = {
+      {STAT_REACTIVE_ENERGY_Q1_T1, STAT_REACTIVE_ENERGY_Q1_T2, STAT_REACTIVE_ENERGY_Q1_T3, STAT_REACTIVE_ENERGY_Q1_T4},
+      {STAT_REACTIVE_ENERGY_Q2_T1, STAT_REACTIVE_ENERGY_Q2_T2, STAT_REACTIVE_ENERGY_Q2_T3, STAT_REACTIVE_ENERGY_Q2_T4},
+      {STAT_REACTIVE_ENERGY_Q3_T1, STAT_REACTIVE_ENERGY_Q3_T2, STAT_REACTIVE_ENERGY_Q3_T3, STAT_REACTIVE_ENERGY_Q3_T4},
+      {STAT_REACTIVE_ENERGY_Q4_T1, STAT_REACTIVE_ENERGY_Q4_T2, STAT_REACTIVE_ENERGY_Q4_T3, STAT_REACTIVE_ENERGY_Q4_T4},
+  };
+
+  for (uint8_t q = 0; q < 4; q++) {
+    for (uint8_t t = 0; t < 4; t++) {
+      if (this->tariff_reactive_energy_quadrant_sensors_[t][q] != nullptr) {
+        float value = get_int32_helper(data, tariff_quadrant_offsets[q][t], 0.01f);
+        this->tariff_reactive_energy_quadrant_sensors_[t][q]->publish_state(value);
+      }
+    }
+  }
+#endif
+#endif
 }
+
+void DS100Meter::handle_phase_statistics_response(const std::vector<uint8_t> &data, uint8_t phase) {
+  ESP_LOGV(TAG, "Received phase %d statistics response: %zu bytes", phase, data.size());
+
+  if (this->consecutive_timeouts_ > 0) {
+    ESP_LOGV(TAG, "Resetting consecutive timeouts (was %d)", this->consecutive_timeouts_);
+    this->consecutive_timeouts_ = 0;
+  }
+
+  this->request_in_progress_ = false;
+
+  const size_t phase_statistics_size = DS100_PHASE_STATISTICS_LEN * 2;
+  if (data.size() != phase_statistics_size) {
+    ESP_LOGW(TAG, "Unexpected phase statistics size: %zu bytes (expected %zu)", data.size(), phase_statistics_size);
+    return;
+  }
+
+  uint8_t phase_idx = phase - 1;  // Convert 1-3 to 0-2
+  if (phase_idx > 2) {
+    ESP_LOGW(TAG, "Invalid phase: %d", phase);
+    return;
+  }
+
+  ESP_LOGV(TAG, "Processing statistics (%zu bytes) for phase %d", data.size(), phase);
+
+  // Read phase statistics using helper function for the correct phase
+  this->read_energy_sensors(data.data(), 0, this->phase_energy_sensors_[phase_idx], 0.01f, data.size());
+}
+#endif
 
 void DS100Meter::dump_config() {
   ESP_LOGCONFIG(TAG, "DS100 Meter:");
@@ -1009,6 +1108,9 @@ void DS100Meter::dump_config() {
   LOG_SENSOR("  ", "Voltage L-N Avg", this->voltage_l_n_avg_sensor_);
   LOG_SENSOR("  ", "Voltage L-L Avg", this->voltage_l_l_avg_sensor_);
   LOG_SENSOR("  ", "Current Avg", this->current_avg_sensor_);
+  LOG_SENSOR("  ", "Apparent Power Total", this->apparent_power_total_sensor_);
+  LOG_SENSOR("  ", "Reactive Power Total", this->reactive_power_total_sensor_);
+  LOG_SENSOR("  ", "Power Factor Avg", this->power_factor_avg_sensor_);
 
   // Log energy sensors
   LOG_SENSOR("  ", "Active Energy", this->total_energy_sensors_.active_);
@@ -1018,343 +1120,176 @@ void DS100Meter::dump_config() {
   LOG_SENSOR("  ", "Import Reactive Energy", this->total_energy_sensors_.import_reactive_);
   LOG_SENSOR("  ", "Export Reactive Energy", this->total_energy_sensors_.export_reactive_);
 
-#ifdef USE_DS100_QUADRANTS
-  // Log quadrant sensors
-  for (uint8_t i = 0; i < 4; i++) {
-    if (this->reactive_energy_quadrant_sensors_[i] != nullptr) {
-      ESP_LOGCONFIG(TAG, "  Quadrant %d:", i + 1);
-      LOG_SENSOR("    ", "Reactive Energy", this->reactive_energy_quadrant_sensors_[i]);
-    }
-  }
-#endif
-
-#ifdef USE_DS100_TARIFFS
-  // Log tariff sensors
-  for (uint8_t i = 0; i < 4; i++) {
-    bool has_tariff = false;
-    has_tariff |= this->tariff_energy_sensors_[i].active_ != nullptr;
-    has_tariff |= this->tariff_energy_sensors_[i].import_active_ != nullptr;
-    has_tariff |= this->tariff_energy_sensors_[i].export_active_ != nullptr;
-    has_tariff |= this->tariff_energy_sensors_[i].reactive_ != nullptr;
-    has_tariff |= this->tariff_energy_sensors_[i].import_reactive_ != nullptr;
-    has_tariff |= this->tariff_energy_sensors_[i].export_reactive_ != nullptr;
-
-    if (has_tariff) {
-      ESP_LOGCONFIG(TAG, "  Tariff %d:", i + 1);
-      LOG_SENSOR("    ", "Active Energy", this->tariff_energy_sensors_[i].active_);
-      LOG_SENSOR("    ", "Import Active Energy", this->tariff_energy_sensors_[i].import_active_);
-      LOG_SENSOR("    ", "Export Active Energy", this->tariff_energy_sensors_[i].export_active_);
-      LOG_SENSOR("    ", "Reactive Energy", this->tariff_energy_sensors_[i].reactive_);
-      LOG_SENSOR("    ", "Import Reactive Energy", this->tariff_energy_sensors_[i].import_reactive_);
-      LOG_SENSOR("    ", "Export Reactive Energy", this->tariff_energy_sensors_[i].export_reactive_);
-
-#ifdef USE_DS100_QUADRANTS
-      // Log tariff + quadrant combinations
-      for (uint8_t q = 0; q < 4; q++) {
-        if (this->tariff_reactive_energy_quadrant_sensors_[i][q] != nullptr) {
-          ESP_LOGCONFIG(TAG, "    Quadrant %d:", q + 1);
-          LOG_SENSOR("      ", "Reactive Energy", this->tariff_reactive_energy_quadrant_sensors_[i][q]);
-        }
-      }
-#endif
-    }
-  }
-#endif
-
-#if defined(USE_DS100_DEMAND) || defined(USE_DS100_MAXIMUM_DEMAND)
-  // Phase names for demand/maximum demand logging
-  const char *phase_names[] = {"Total", "Phase A", "Phase B", "Phase C"};
-#endif
-
-#ifdef USE_DS100_DEMAND
-  // Log demand sensors
-  ESP_LOGCONFIG(TAG, "  Demand:");
-  for (uint8_t phase = 0; phase <= 3; phase++) {
-    bool has_demand = false;
-    has_demand |= this->demand_sensors_.import_active_[phase] != nullptr;
-    has_demand |= this->demand_sensors_.export_active_[phase] != nullptr;
-    has_demand |= this->demand_sensors_.total_active_[phase] != nullptr;
-    has_demand |= this->demand_sensors_.import_reactive_[phase] != nullptr;
-    has_demand |= this->demand_sensors_.export_reactive_[phase] != nullptr;
-    has_demand |= this->demand_sensors_.total_reactive_[phase] != nullptr;
-
-    if (has_demand) {
-      ESP_LOGCONFIG(TAG, "    %s:", phase_names[phase]);
-      LOG_SENSOR("      ", "Import Active", this->demand_sensors_.import_active_[phase]);
-      LOG_SENSOR("      ", "Export Active", this->demand_sensors_.export_active_[phase]);
-      LOG_SENSOR("      ", "Total Active", this->demand_sensors_.total_active_[phase]);
-      LOG_SENSOR("      ", "Import Reactive", this->demand_sensors_.import_reactive_[phase]);
-      LOG_SENSOR("      ", "Export Reactive", this->demand_sensors_.export_reactive_[phase]);
-      LOG_SENSOR("      ", "Total Reactive", this->demand_sensors_.total_reactive_[phase]);
-    }
-  }
-#endif
-
-#ifdef USE_DS100_MAXIMUM_DEMAND
-  // Log maximum demand sensors
-  ESP_LOGCONFIG(TAG, "  Maximum Demand:");
-  for (uint8_t phase = 0; phase <= 3; phase++) {
-    bool has_max_demand = false;
-    has_max_demand |= this->maximum_demand_sensors_.import_active_[phase] != nullptr;
-    has_max_demand |= this->maximum_demand_sensors_.export_active_[phase] != nullptr;
-    has_max_demand |= this->maximum_demand_sensors_.total_active_[phase] != nullptr;
-    has_max_demand |= this->maximum_demand_sensors_.import_reactive_[phase] != nullptr;
-    has_max_demand |= this->maximum_demand_sensors_.export_reactive_[phase] != nullptr;
-    has_max_demand |= this->maximum_demand_sensors_.total_reactive_[phase] != nullptr;
-
-    if (has_max_demand) {
-      ESP_LOGCONFIG(TAG, "    %s:", phase_names[phase]);
-      LOG_SENSOR("      ", "Import Active", this->maximum_demand_sensors_.import_active_[phase]);
-      LOG_SENSOR("      ", "Export Active", this->maximum_demand_sensors_.export_active_[phase]);
-      LOG_SENSOR("      ", "Total Active", this->maximum_demand_sensors_.total_active_[phase]);
-      LOG_SENSOR("      ", "Import Reactive", this->maximum_demand_sensors_.import_reactive_[phase]);
-      LOG_SENSOR("      ", "Export Reactive", this->maximum_demand_sensors_.export_reactive_[phase]);
-      LOG_SENSOR("      ", "Total Reactive", this->maximum_demand_sensors_.total_reactive_[phase]);
-    }
-  }
-#endif
-
-#ifdef USE_DS100_RESETTABLE_STATISTICS
-  // Log resettable statistics sensors
-  ESP_LOGCONFIG(TAG, "  Resettable Statistics:");
-  ESP_LOGCONFIG(TAG, "    Total:");
-  LOG_SENSOR("      ", "Active Energy", this->resettable_total_energy_sensors_.active_);
-  LOG_SENSOR("      ", "Import Active Energy", this->resettable_total_energy_sensors_.import_active_);
-  LOG_SENSOR("      ", "Export Active Energy", this->resettable_total_energy_sensors_.export_active_);
-  LOG_SENSOR("      ", "Reactive Energy", this->resettable_total_energy_sensors_.reactive_);
-  LOG_SENSOR("      ", "Import Reactive Energy", this->resettable_total_energy_sensors_.import_reactive_);
-  LOG_SENSOR("      ", "Export Reactive Energy", this->resettable_total_energy_sensors_.export_reactive_);
-
-  const char *phase_labels[] = {"A", "B", "C"};
-  for (uint8_t phase = 0; phase < 3; phase++) {
-    bool has_resettable = false;
-    has_resettable |= this->resettable_phase_energy_sensors_[phase].active_ != nullptr;
-    has_resettable |= this->resettable_phase_energy_sensors_[phase].import_active_ != nullptr;
-    has_resettable |= this->resettable_phase_energy_sensors_[phase].export_active_ != nullptr;
-    has_resettable |= this->resettable_phase_energy_sensors_[phase].reactive_ != nullptr;
-    has_resettable |= this->resettable_phase_energy_sensors_[phase].import_reactive_ != nullptr;
-    has_resettable |= this->resettable_phase_energy_sensors_[phase].export_reactive_ != nullptr;
-
-    if (has_resettable) {
-      ESP_LOGCONFIG(TAG, "    Phase %s:", phase_labels[phase]);
-      LOG_SENSOR("      ", "Active Energy", this->resettable_phase_energy_sensors_[phase].active_);
-      LOG_SENSOR("      ", "Import Active Energy", this->resettable_phase_energy_sensors_[phase].import_active_);
-      LOG_SENSOR("      ", "Export Active Energy", this->resettable_phase_energy_sensors_[phase].export_active_);
-      LOG_SENSOR("      ", "Reactive Energy", this->resettable_phase_energy_sensors_[phase].reactive_);
-      LOG_SENSOR("      ", "Import Reactive Energy", this->resettable_phase_energy_sensors_[phase].import_reactive_);
-      LOG_SENSOR("      ", "Export Reactive Energy", this->resettable_phase_energy_sensors_[phase].export_reactive_);
-    }
-  }
-#endif
-
-#ifdef USE_DS100_PHASE_STATISTICS
-  // Log per-phase statistics sensors
-  ESP_LOGCONFIG(TAG, "  Phase Statistics:");
-  for (uint8_t phase = 0; phase < 3; phase++) {
-    bool has_phase_stats = false;
-    has_phase_stats |= this->phase_energy_sensors_[phase].active_ != nullptr;
-    has_phase_stats |= this->phase_energy_sensors_[phase].import_active_ != nullptr;
-    has_phase_stats |= this->phase_energy_sensors_[phase].export_active_ != nullptr;
-    has_phase_stats |= this->phase_energy_sensors_[phase].reactive_ != nullptr;
-    has_phase_stats |= this->phase_energy_sensors_[phase].import_reactive_ != nullptr;
-    has_phase_stats |= this->phase_energy_sensors_[phase].export_reactive_ != nullptr;
-
-    if (has_phase_stats) {
-      ESP_LOGCONFIG(TAG, "    L%d:", phase + 1);
-      LOG_SENSOR("      ", "Active Energy", this->phase_energy_sensors_[phase].active_);
-      LOG_SENSOR("      ", "Import Active Energy", this->phase_energy_sensors_[phase].import_active_);
-      LOG_SENSOR("      ", "Export Active Energy", this->phase_energy_sensors_[phase].export_active_);
-      LOG_SENSOR("      ", "Reactive Energy", this->phase_energy_sensors_[phase].reactive_);
-      LOG_SENSOR("      ", "Import Reactive Energy", this->phase_energy_sensors_[phase].import_reactive_);
-      LOG_SENSOR("      ", "Export Reactive Energy", this->phase_energy_sensors_[phase].export_reactive_);
-    }
-  }
-#endif
-
+  // Log text sensors
 #ifdef USE_TEXT_SENSOR
-  // Device info sensors
-  ESP_LOGCONFIG(TAG, "  Device Info:");
-  if (this->serial_number_text_sensor_ != nullptr)
-    ESP_LOGCONFIG(TAG, "    Serial Number: %s", this->serial_number_text_sensor_);
-  if (this->software_version_text_sensor_ != nullptr)
-    ESP_LOGCONFIG(TAG, "    Software Version: %s", this->software_version_text_sensor_);
-  if (this->hardware_version_text_sensor_ != nullptr)
-    ESP_LOGCONFIG(TAG, "    Hardware Version: %s", this->hardware_version_text_sensor_);
-  if (this->firmware_checksum_text_sensor_ != nullptr)
-    ESP_LOGCONFIG(TAG, "    Firmware Checksum: %s", this->firmware_checksum_text_sensor_);
+  LOG_TEXT_SENSOR("  ", "Serial Number", this->serial_number_text_sensor_);
+  LOG_TEXT_SENSOR("  ", "Software Version", this->software_version_text_sensor_);
+  LOG_TEXT_SENSOR("  ", "Hardware Version", this->hardware_version_text_sensor_);
+  LOG_TEXT_SENSOR("  ", "Firmware Checksum", this->firmware_checksum_text_sensor_);
 #endif
+
 #ifdef USE_BINARY_SENSOR
-  if (this->terminal_signal_binary_sensor_ != nullptr)
-    ESP_LOGCONFIG(TAG, "    Terminal Signal: %s", this->terminal_signal_binary_sensor_);
+  LOG_BINARY_SENSOR("  ", "Terminal Signal", this->terminal_signal_binary_sensor_);
 #endif
 }
 
 void DS100Meter::read_energy_sensors(const uint8_t *data, uint16_t base_offset, EnergySensors &sensors, float scale,
                                      uint16_t max_data_len) {
-  // DS100 energy statistics pattern (all statistics follow this layout):
-  // Offset +0:   Import Active Energy (2 regs = bytes 0-3)
-  // Offset +20:  Export Active Energy (2 regs = bytes 20-23) - 10 registers gap
-  // Offset +40:  Total Active Energy (2 regs = bytes 40-43) - 10 registers gap
-  // Offset +60:  Import Reactive Energy (2 regs = bytes 60-63) - 10 registers gap
-  // Offset +80:  Export Reactive Energy (2 regs = bytes 80-83) - 10 registers gap
-  // Offset +100: Total Reactive Energy (2 regs = bytes 100-103) - 10 registers gap
-  // Each value is 2 registers (4 bytes) as 32-bit signed integer
-
-  auto get_int32 = [&](uint16_t offset) -> float {
-    uint16_t pos = base_offset + offset;
-    if (pos + 3 >= max_data_len) {
-      return NAN;
-    }
-    int32_t raw = (static_cast<int32_t>(data[pos]) << 24) | (static_cast<int32_t>(data[pos + 1]) << 16) |
-                  (static_cast<int32_t>(data[pos + 2]) << 8) | static_cast<int32_t>(data[pos + 3]);
-    return static_cast<float>(raw) * scale;
-  };
-
-  if (sensors.import_active_ != nullptr) {
-    sensors.import_active_->publish_state(get_int32(0));
+  // Ensure we don't read past the end of data
+  if (base_offset + 24 > max_data_len) {
+    ESP_LOGW(TAG, "Energy sensor read would exceed data bounds: offset=%u, max=%u", base_offset, max_data_len);
+    return;
   }
-  if (sensors.export_active_ != nullptr) {
-    sensors.export_active_->publish_state(get_int32(20));
-  }
+
+  // Read active energy (4 bytes = 2 registers)
   if (sensors.active_ != nullptr) {
-    sensors.active_->publish_state(get_int32(40));
+    int32_t raw = (static_cast<int32_t>(data[base_offset + 0]) << 24) |
+                  (static_cast<int32_t>(data[base_offset + 1]) << 16) |
+                  (static_cast<int32_t>(data[base_offset + 2]) << 8) | static_cast<int32_t>(data[base_offset + 3]);
+    sensors.active_->publish_state(static_cast<float>(raw) * scale);
   }
-  if (sensors.import_reactive_ != nullptr) {
-    sensors.import_reactive_->publish_state(get_int32(60));
+
+  // Read import active energy
+  if (sensors.import_active_ != nullptr) {
+    int32_t raw = (static_cast<int32_t>(data[base_offset + 4]) << 24) |
+                  (static_cast<int32_t>(data[base_offset + 5]) << 16) |
+                  (static_cast<int32_t>(data[base_offset + 6]) << 8) | static_cast<int32_t>(data[base_offset + 7]);
+    sensors.import_active_->publish_state(static_cast<float>(raw) * scale);
   }
-  if (sensors.export_reactive_ != nullptr) {
-    sensors.export_reactive_->publish_state(get_int32(80));
+
+  // Read export active energy
+  if (sensors.export_active_ != nullptr) {
+    int32_t raw = (static_cast<int32_t>(data[base_offset + 8]) << 24) |
+                  (static_cast<int32_t>(data[base_offset + 9]) << 16) |
+                  (static_cast<int32_t>(data[base_offset + 10]) << 8) | static_cast<int32_t>(data[base_offset + 11]);
+    sensors.export_active_->publish_state(static_cast<float>(raw) * scale);
   }
+
+  // Read reactive energy
   if (sensors.reactive_ != nullptr) {
-    sensors.reactive_->publish_state(get_int32(100));
+    int32_t raw = (static_cast<int32_t>(data[base_offset + 12]) << 24) |
+                  (static_cast<int32_t>(data[base_offset + 13]) << 16) |
+                  (static_cast<int32_t>(data[base_offset + 14]) << 8) | static_cast<int32_t>(data[base_offset + 15]);
+    sensors.reactive_->publish_state(static_cast<float>(raw) * scale);
+  }
+
+  // Read import reactive energy
+  if (sensors.import_reactive_ != nullptr) {
+    int32_t raw = (static_cast<int32_t>(data[base_offset + 16]) << 24) |
+                  (static_cast<int32_t>(data[base_offset + 17]) << 16) |
+                  (static_cast<int32_t>(data[base_offset + 18]) << 8) | static_cast<int32_t>(data[base_offset + 19]);
+    sensors.import_reactive_->publish_state(static_cast<float>(raw) * scale);
+  }
+
+  // Read export reactive energy
+  if (sensors.export_reactive_ != nullptr) {
+    int32_t raw = (static_cast<int32_t>(data[base_offset + 20]) << 24) |
+                  (static_cast<int32_t>(data[base_offset + 21]) << 16) |
+                  (static_cast<int32_t>(data[base_offset + 22]) << 8) | static_cast<int32_t>(data[base_offset + 23]);
+    sensors.export_reactive_->publish_state(static_cast<float>(raw) * scale);
   }
 }
 
 void DS100Meter::read_power_demand_sensors(const uint8_t *data, uint16_t base_offset, PowerDemandSensors &sensors,
                                            float scale) {
-  // DS100 power demand pattern (demand/maximum demand follow same layout):
-  // 6 types × 4 phases (Total, A, B, C) = 24 values
-  // Each type has 4 consecutive registers (one per phase), each value is 2 registers (4 bytes)
-  // Layout: [Import_Active_Total, Import_Active_A, Import_Active_B, Import_Active_C,
-  //          Export_Active_Total, Export_Active_A, ...]
+  // Power demand layout: 6 types × 4 phases = 24 registers = 48 bytes
+  // Each value is 4 bytes (2 registers)
+  // Order: import_active[4], export_active[4], total_active[4], import_reactive[4], export_reactive[4],
+  // total_reactive[4]
 
-  auto get_int32 = [&](uint16_t offset) -> float {
-    uint16_t pos = base_offset + offset;
-    int32_t raw = (static_cast<int32_t>(data[pos]) << 24) | (static_cast<int32_t>(data[pos + 1]) << 16) |
-                  (static_cast<int32_t>(data[pos + 2]) << 8) | static_cast<int32_t>(data[pos + 3]);
-    return static_cast<float>(raw) * scale;
-  };
+  // Import active power demand (phases 0-3)
+  for (uint8_t i = 0; i < 4; i++) {
+    if (sensors.import_active_[i] != nullptr) {
+      int32_t raw = (static_cast<int32_t>(data[base_offset + 0 + i * 4]) << 24) |
+                    (static_cast<int32_t>(data[base_offset + 1 + i * 4]) << 16) |
+                    (static_cast<int32_t>(data[base_offset + 2 + i * 4]) << 8) |
+                    static_cast<int32_t>(data[base_offset + 3 + i * 4]);
+      sensors.import_active_[i]->publish_state(static_cast<float>(raw) * scale);
+    }
+  }
 
-  // Each type occupies 8 bytes (4 phases × 2 bytes/reg)
-  for (uint8_t phase = 0; phase <= 3; phase++) {
-    uint16_t phase_offset = phase * 4;  // Each phase offset by 4 bytes (2 registers)
+  // Export active power demand (phases 0-3)
+  for (uint8_t i = 0; i < 4; i++) {
+    if (sensors.export_active_[i] != nullptr) {
+      int32_t raw = (static_cast<int32_t>(data[base_offset + 16 + i * 4]) << 24) |
+                    (static_cast<int32_t>(data[base_offset + 17 + i * 4]) << 16) |
+                    (static_cast<int32_t>(data[base_offset + 18 + i * 4]) << 8) |
+                    static_cast<int32_t>(data[base_offset + 19 + i * 4]);
+      sensors.export_active_[i]->publish_state(static_cast<float>(raw) * scale);
+    }
+  }
 
-    if (sensors.import_active_[phase] != nullptr) {
-      sensors.import_active_[phase]->publish_state(get_int32(0 + phase_offset));
+  // Total active power demand (phases 0-3)
+  for (uint8_t i = 0; i < 4; i++) {
+    if (sensors.total_active_[i] != nullptr) {
+      int32_t raw = (static_cast<int32_t>(data[base_offset + 32 + i * 4]) << 24) |
+                    (static_cast<int32_t>(data[base_offset + 33 + i * 4]) << 16) |
+                    (static_cast<int32_t>(data[base_offset + 34 + i * 4]) << 8) |
+                    static_cast<int32_t>(data[base_offset + 35 + i * 4]);
+      sensors.total_active_[i]->publish_state(static_cast<float>(raw) * scale);
     }
-    if (sensors.export_active_[phase] != nullptr) {
-      sensors.export_active_[phase]->publish_state(get_int32(8 + phase_offset));
+  }
+
+  // Import reactive power demand (phases 0-3)
+  for (uint8_t i = 0; i < 4; i++) {
+    if (sensors.import_reactive_[i] != nullptr) {
+      int32_t raw = (static_cast<int32_t>(data[base_offset + 48 + i * 4]) << 24) |
+                    (static_cast<int32_t>(data[base_offset + 49 + i * 4]) << 16) |
+                    (static_cast<int32_t>(data[base_offset + 50 + i * 4]) << 8) |
+                    static_cast<int32_t>(data[base_offset + 51 + i * 4]);
+      sensors.import_reactive_[i]->publish_state(static_cast<float>(raw) * scale);
     }
-    if (sensors.total_active_[phase] != nullptr) {
-      sensors.total_active_[phase]->publish_state(get_int32(16 + phase_offset));
+  }
+
+  // Export reactive power demand (phases 0-3)
+  for (uint8_t i = 0; i < 4; i++) {
+    if (sensors.export_reactive_[i] != nullptr) {
+      int32_t raw = (static_cast<int32_t>(data[base_offset + 64 + i * 4]) << 24) |
+                    (static_cast<int32_t>(data[base_offset + 65 + i * 4]) << 16) |
+                    (static_cast<int32_t>(data[base_offset + 66 + i * 4]) << 8) |
+                    static_cast<int32_t>(data[base_offset + 67 + i * 4]);
+      sensors.export_reactive_[i]->publish_state(static_cast<float>(raw) * scale);
     }
-    if (sensors.import_reactive_[phase] != nullptr) {
-      sensors.import_reactive_[phase]->publish_state(get_int32(24 + phase_offset));
-    }
-    if (sensors.export_reactive_[phase] != nullptr) {
-      sensors.export_reactive_[phase]->publish_state(get_int32(32 + phase_offset));
-    }
-    if (sensors.total_reactive_[phase] != nullptr) {
-      sensors.total_reactive_[phase]->publish_state(get_int32(40 + phase_offset));
+  }
+
+  // Total reactive power demand (phases 0-3)
+  for (uint8_t i = 0; i < 4; i++) {
+    if (sensors.total_reactive_[i] != nullptr) {
+      int32_t raw = (static_cast<int32_t>(data[base_offset + 80 + i * 4]) << 24) |
+                    (static_cast<int32_t>(data[base_offset + 81 + i * 4]) << 16) |
+                    (static_cast<int32_t>(data[base_offset + 82 + i * 4]) << 8) |
+                    static_cast<int32_t>(data[base_offset + 83 + i * 4]);
+      sensors.total_reactive_[i]->publish_state(static_cast<float>(raw) * scale);
     }
   }
 }
 
 void DS100Meter::reset_maximum_demand() {
-#ifdef USE_DS100_MAXIMUM_DEMAND
-  // Reset all maximum demand values (0x3F = all types, all phases)
-  // Bit 0-5: Import/Export/Total Active/Reactive
-  // Bit 6-7: Phase selection (00=all, 01=A, 10=B, 11=C)
-  const uint16_t DS100_RESET_MAXIMUM_DEMAND_ADDR = 0x2002;
-  const uint16_t reset_value = 0x003F;  // Reset all demand types for all phases
-
-  ESP_LOGD(TAG, "Resetting maximum demand registers");
-
-  // Build Modbus WRITE_SINGLE_REGISTER (0x06) command - single allocation with initializer list
-  const std::vector<uint8_t> cmd = {
-      this->address_,                                                // Slave address
-      0x06,                                                          // Function code
-      static_cast<uint8_t>(DS100_RESET_MAXIMUM_DEMAND_ADDR >> 8),    // Register high byte
-      static_cast<uint8_t>(DS100_RESET_MAXIMUM_DEMAND_ADDR & 0xFF),  // Register low byte
-      static_cast<uint8_t>(reset_value >> 8),                        // Value high byte
-      static_cast<uint8_t>(reset_value & 0xFF),                      // Value low byte
-  };  // CRC is automatically appended by send_raw()
-
-  this->send_raw(cmd);
-#else
-  ESP_LOGW(TAG, "Maximum demand not enabled, cannot reset");
-#endif
+  ESP_LOGI(TAG, "Resetting maximum demand");
+  this->send_reset_command(0x0421);
 }
 
 void DS100Meter::reset_statistics() {
-#ifdef USE_DS100_RESETTABLE_STATISTICS
-  // Reset all resettable statistics (0x3FFF = all types)
-  // Bits 0-13: Different energy types per phase
-  const uint16_t DS100_RESET_STATISTICS_ADDR = 0x2001;
-  const uint16_t reset_value = 0x3FFF;  // Reset all resettable statistics
+  ESP_LOGI(TAG, "Resetting statistics");
+  this->send_reset_command(0x0422);
+}
 
-  ESP_LOGD(TAG, "Resetting statistics registers");
+void DS100Meter::send_reset_command(uint16_t address) {
+  // Create custom command to write single register
+  std::vector<uint16_t> payload;
+  payload.push_back(address);  // Register address
+  payload.push_back(0x0001);   // Value to write (1 = reset)
 
-  // Build Modbus WRITE_SINGLE_REGISTER (0x06) command - single allocation with initializer list
-  const std::vector<uint8_t> cmd = {
-      this->address_,                                            // Slave address
-      0x06,                                                      // Function code
-      static_cast<uint8_t>(DS100_RESET_STATISTICS_ADDR >> 8),    // Register high byte
-      static_cast<uint8_t>(DS100_RESET_STATISTICS_ADDR & 0xFF),  // Register low byte
-      static_cast<uint8_t>(reset_value >> 8),                    // Value high byte
-      static_cast<uint8_t>(reset_value & 0xFF),                  // Value low byte
-  };  // CRC is automatically appended by send_raw()
-
-  this->send_raw(cmd);
-#else
-  ESP_LOGW(TAG, "Resettable statistics not enabled, cannot reset");
-#endif
+  auto cmd = modbus_controller::ModbusCommandItem::create_write_multiple_command(this, address, 1, payload);
+  this->queue_command(cmd);
 }
 
 void DS100Meter::write_register(uint16_t address, uint16_t value) {
-  ESP_LOGD(TAG, "Writing register 0x%04X = 0x%04X", address, value);
+  ESP_LOGI(TAG, "Writing register 0x%04X = 0x%04X", address, value);
 
-  // Build Modbus WRITE_SINGLE_REGISTER (0x06) command - single allocation with initializer list
-  const std::vector<uint8_t> cmd = {
-      this->address_,                        // Slave address
-      0x06,                                  // Function code
-      static_cast<uint8_t>(address >> 8),    // Register high byte
-      static_cast<uint8_t>(address & 0xFF),  // Register low byte
-      static_cast<uint8_t>(value >> 8),      // Value high byte
-      static_cast<uint8_t>(value & 0xFF),    // Value low byte
-  };  // CRC is automatically appended by send_raw()
-
-  this->send_raw(cmd);
+  auto cmd = modbus_controller::ModbusCommandItem::create_write_single_command(this, address, value);
+  this->queue_command(cmd);
 }
-
-#ifdef USE_BUTTON
-// Button implementations - moved here to ensure they're compiled with USE_BUTTON defined
-static const char *const TAG_BUTTON = "ds100_meter.button";
-
-void DS100ResetMaximumDemandButton::press_action() {
-  if (this->parent_ != nullptr) {
-    ESP_LOGI(TAG_BUTTON, "Resetting maximum demand");
-    this->parent_->reset_maximum_demand();
-  }
-}
-
-void DS100ResetStatisticsButton::press_action() {
-  if (this->parent_ != nullptr) {
-    ESP_LOGI(TAG_BUTTON, "Resetting statistics");
-    this->parent_->reset_statistics();
-  }
-}
-#endif  // USE_BUTTON
 
 }  // namespace ds100_meter
 }  // namespace esphome

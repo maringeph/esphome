@@ -2,7 +2,7 @@
 
 #include "esphome/core/automation.h"
 #include "esphome/core/component.h"
-#include "esphome/components/modbus/modbus.h"
+#include "esphome/components/modbus_controller/modbus_controller.h"
 
 #ifdef USE_BUTTON
 #include "esphome/components/button/button.h"
@@ -53,7 +53,7 @@ class DS100ResetStatisticsButton;
 #endif
 
 /// DS100 Meter - 3-phase energy meter with Modbus interface
-class DS100Meter : public PollingComponent, public modbus::ModbusDevice {
+class DS100Meter : public modbus_controller::ModbusController {
  public:
   void set_voltage_sensor(uint8_t phase, sensor::Sensor *voltage_sensor) {
     this->phases_[phase].setup_ = true;
@@ -345,8 +345,17 @@ class DS100Meter : public PollingComponent, public modbus::ModbusDevice {
   void set_update_interval_device_info(uint32_t interval) { this->update_interval_device_info_ = interval; }
 
   void update() override;
-  void on_modbus_data(const std::vector<uint8_t> &data) override;
   void dump_config() override;
+
+  // Response handlers for ModbusCommandItem callbacks
+  void handle_livedata_response(const std::vector<uint8_t> &data);
+  void handle_demand_response(const std::vector<uint8_t> &data);
+  void handle_phase_statistics_response(const std::vector<uint8_t> &data, uint8_t phase);
+  void handle_total_statistics_response(const std::vector<uint8_t> &data);
+  void handle_maximum_demand_response(const std::vector<uint8_t> &data);
+  void handle_resettable_statistics_response(const std::vector<uint8_t> &data);
+  void handle_settings_response(const std::vector<uint8_t> &data);
+  void handle_device_info_response(const std::vector<uint8_t> &data);
 
   // Automation actions - manual read triggers
   void read_livedata() { this->queue_request(RequestType::LIVEDATA); }
