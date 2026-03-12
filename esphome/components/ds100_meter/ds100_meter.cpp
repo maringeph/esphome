@@ -64,14 +64,16 @@ static const uint16_t DS100_PHASE_STATISTICS_LEN = 30;  // 30 active only
 static const uint16_t DS100_SERIAL_NUMBER_ADDR = 0x1000;
 static const uint16_t DS100_SERIAL_NUMBER_LEN = 3;  // 3 registers = 6 bytes
 
-static const uint16_t DS100_SOFTWARE_VERSION_ADDR = 0x1003;   // 3 registers = 6 bytes
-static const uint16_t DS100_HARDWARE_VERSION_ADDR = 0x1006;   // 3 registers = 6 bytes
-static const uint16_t DS100_FIRMWARE_CHECKSUM_ADDR = 0x1009;  // 1 register = 2 bytes
+// Device info addresses (relative to 0x1000 base)
+// All read as single 16-bit values from Input Registers
+static const uint16_t ADDR_SOFTWARE_VERSION = 0x1004;   // 1 register
+static const uint16_t ADDR_HARDWARE_VERSION = 0x1005;   // 1 register
+static const uint16_t ADDR_FIRMWARE_CHECKSUM = 0x1006;  // 1 register
 
-// Byte offsets for device info fields (relative to start at 0x1000)
-static const uint16_t OFFSET_SOFTWARE_VERSION = 6;    // 0x1003 - 0x1000 = 3 registers = 6 bytes
-static const uint16_t OFFSET_HARDWARE_VERSION = 12;   // 0x1006 - 0x1000 = 6 registers = 12 bytes
-static const uint16_t OFFSET_FIRMWARE_CHECKSUM = 18;  // 0x1009 - 0x1000 = 9 registers = 18 bytes
+// Byte offsets within the 30-register device info block (each register = 2 bytes)
+static const uint16_t OFFSET_SOFTWARE_VERSION = 8;    // (0x1004 - 0x1000) * 2 = 8 bytes
+static const uint16_t OFFSET_HARDWARE_VERSION = 10;   // (0x1005 - 0x1000) * 2 = 10 bytes
+static const uint16_t OFFSET_FIRMWARE_CHECKSUM = 12;  // (0x1006 - 0x1000) * 2 = 12 bytes
 
 static const uint16_t DS100_TERMINAL_SIGNAL_ADDR = 0x101D;
 static const uint16_t DS100_TERMINAL_SIGNAL_LEN = 1;  // 1 register
@@ -471,31 +473,26 @@ void DS100Meter::on_modbus_data(const std::vector<uint8_t> &data) {  // Helper f
       this->serial_number_text_sensor_->publish_state(serial_str);
     }
 
-    // Software Version at register 0x1003 (offset = 6 bytes)
+    // Software Version at register 0x1004 (offset = 8 bytes) - 1 register
     if (this->software_version_text_sensor_ != nullptr) {
-      char version_str[13];
-      // 3 registers = 6 bytes, format as hex
-      snprintf(version_str, sizeof(version_str), "%02X%02X%02X%02X%02X%02X", data[OFFSET_SOFTWARE_VERSION],
-               data[OFFSET_SOFTWARE_VERSION + 1], data[OFFSET_SOFTWARE_VERSION + 2], data[OFFSET_SOFTWARE_VERSION + 3],
-               data[OFFSET_SOFTWARE_VERSION + 4], data[OFFSET_SOFTWARE_VERSION + 5]);
+      uint16_t version = encode_uint16(data[OFFSET_SOFTWARE_VERSION], data[OFFSET_SOFTWARE_VERSION + 1]);
+      char version_str[8];
+      snprintf(version_str, sizeof(version_str), "%u", version);
       this->software_version_text_sensor_->publish_state(version_str);
     }
 
-    // Hardware Version at register 0x1006 (offset = 12 bytes)
+    // Hardware Version at register 0x1005 (offset = 10 bytes) - 1 register
     if (this->hardware_version_text_sensor_ != nullptr) {
-      char version_str[13];
-      // 3 registers = 6 bytes, format as hex
-      snprintf(version_str, sizeof(version_str), "%02X%02X%02X%02X%02X%02X", data[OFFSET_HARDWARE_VERSION],
-               data[OFFSET_HARDWARE_VERSION + 1], data[OFFSET_HARDWARE_VERSION + 2], data[OFFSET_HARDWARE_VERSION + 3],
-               data[OFFSET_HARDWARE_VERSION + 4], data[OFFSET_HARDWARE_VERSION + 5]);
+      uint16_t version = encode_uint16(data[OFFSET_HARDWARE_VERSION], data[OFFSET_HARDWARE_VERSION + 1]);
+      char version_str[8];
+      snprintf(version_str, sizeof(version_str), "%u", version);
       this->hardware_version_text_sensor_->publish_state(version_str);
     }
 
-    // Firmware Checksum at register 0x1009 (offset = 18 bytes)
+    // Firmware Checksum at register 0x1006 (offset = 12 bytes) - 1 register
     if (this->firmware_checksum_text_sensor_ != nullptr) {
       uint16_t checksum = encode_uint16(data[OFFSET_FIRMWARE_CHECKSUM], data[OFFSET_FIRMWARE_CHECKSUM + 1]);
       char checksum_str[5];
-      // Format as hex (e.g., 0x5B61 -> "5B61")
       snprintf(checksum_str, sizeof(checksum_str), "%04X", checksum);
       this->firmware_checksum_text_sensor_->publish_state(checksum_str);
     }
@@ -512,67 +509,82 @@ void DS100Meter::on_modbus_data(const std::vector<uint8_t> &data) {  // Helper f
   } else if (data.size() == DS100_SETTINGS_LEN * 2) {
     // Process settings response (20 holding registers starting at 0x1003)
     ESP_LOGV(TAG, "Processing settings (%zu bytes)", data.size());
-    
+
     // Helper to read 16-bit value from settings data
     auto get_setting = [&](uint16_t reg_offset) -> uint16_t {
       uint16_t byte_offset = reg_offset * 2;
-      if (byte_offset + 1 >= data.size()) return 0;
+      if (byte_offset + 1 >= data.size())
+        return 0;
       return encode_uint16(data[byte_offset], data[byte_offset + 1]);
     };
-    
+
     // Modbus Address (register 0x1003, offset 0)
     if (this->address_number_ != nullptr) {
       uint16_t addr = get_setting(0);
       this->address_number_->publish_state(static_cast<float>(addr));
     }
-    
+
     // Scrolling Time (register 0x100B, offset 8)
     if (this->scrolling_time_number_ != nullptr) {
       uint16_t time = get_setting(8);
       this->scrolling_time_number_->publish_state(static_cast<float>(time));
     }
-    
+
     // Demand Period (register 0x1011, offset 14)
     if (this->demand_period_number_ != nullptr) {
       uint16_t period = get_setting(14);
       this->demand_period_number_->publish_state(static_cast<float>(period));
     }
-    
+
     // Password (register 0x1016, offset 19)
     if (this->password_number_ != nullptr) {
       uint16_t pwd = get_setting(19);
       this->password_number_->publish_state(static_cast<float>(pwd));
     }
-    
+
     // Baud Rate (register 0x100C, offset 9)
     if (this->baud_rate_select_ != nullptr) {
       uint16_t baud_val = get_setting(9);
-      const char* baud_str = "9600";
+      const char *baud_str = "9600";
       switch (baud_val) {
-        case 0: baud_str = "9600"; break;
-        case 1: baud_str = "19200"; break;
-        case 2: baud_str = "38400"; break;
-        case 3: baud_str = "115200"; break;
+        case 0:
+          baud_str = "9600";
+          break;
+        case 1:
+          baud_str = "19200";
+          break;
+        case 2:
+          baud_str = "38400";
+          break;
+        case 3:
+          baud_str = "115200";
+          break;
       }
       this->baud_rate_select_->publish_state(baud_str);
     }
-    
+
     // Parity (register 0x100D, offset 10)
     if (this->parity_select_ != nullptr) {
       uint16_t parity_val = get_setting(10);
-      const char* parity_str = "None";
+      const char *parity_str = "None";
       switch (parity_val) {
-        case 0: parity_str = "None"; break;
-        case 1: parity_str = "Odd"; break;
-        case 2: parity_str = "Even"; break;
+        case 0:
+          parity_str = "None";
+          break;
+        case 1:
+          parity_str = "Odd";
+          break;
+        case 2:
+          parity_str = "Even";
+          break;
       }
       this->parity_select_->publish_state(parity_str);
     }
-    
+
     // Stop Bits (register 0x100E, offset 11)
     if (this->stop_bits_select_ != nullptr) {
       uint16_t stop_val = get_setting(11);
-      const char* stop_str = (stop_val == 0) ? "1" : "2";
+      const char *stop_str = (stop_val == 0) ? "1" : "2";
       this->stop_bits_select_->publish_state(stop_str);
     }
 
