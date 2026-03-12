@@ -239,6 +239,8 @@ void DS100Meter::update() {
 
 #ifdef USE_DS100_STATISTICS
   if (this->statistics_cycle_state_ > 0 || now - this->last_update_statistics_ >= this->update_interval_statistics_) {
+    ESP_LOGV(TAG, "Queueing statistics request (cycle_state=%d, last_update=%u, now=%u, interval=%u)",
+             this->statistics_cycle_state_, this->last_update_statistics_, now, this->update_interval_statistics_);
     this->queue_request(RequestType::STATISTICS);
   }
 #endif
@@ -283,7 +285,10 @@ void DS100Meter::update() {
     }
 #endif
     if (needs_settings) {
+      ESP_LOGV(TAG, "Settings check: needs_settings=true, queueing SETTINGS request");
       this->queue_request(RequestType::SETTINGS);
+    } else {
+      ESP_LOGVV(TAG, "Settings check: needs_settings=false (no settings components registered)");
     }
   }
 #endif
@@ -439,8 +444,10 @@ void DS100Meter::process_next_request() {
   }
 }
 
-void DS100Meter::on_modbus_data(const std::vector<uint8_t> &data) {  // Helper function to decode 32-bit signed integer
-                                                                     // from two consecutive registers
+void DS100Meter::on_modbus_data(const std::vector<uint8_t> &data) {
+  ESP_LOGV(TAG, "Received Modbus data: %zu bytes", data.size());
+
+  // Helper function to decode 32-bit signed integer from two consecutive registers
   // DS100 uses big-endian format: [high_reg_msb, high_reg_lsb, low_reg_msb, low_reg_lsb]
   auto get_int32 = [&](size_t byte_offset, float scale = 1.0f) -> float {
     if (byte_offset + 3 >= data.size()) {
@@ -495,7 +502,11 @@ void DS100Meter::on_modbus_data(const std::vector<uint8_t> &data) {  // Helper f
   if (data.size() == device_info_size) {
 #ifdef USE_TEXT_SENSOR
     // Process device info response (serial number, versions, and terminal signal)
-    ESP_LOGV(TAG, "Processing device info (%zu bytes)", data.size());
+    ESP_LOGV(TAG, "Processing device info (%zu bytes), last_stats_req=%d", data.size(), this->last_statistics_request_);
+    ESP_LOGVV(TAG,
+              "  Raw bytes [0-15]: %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X",
+              data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7], data[8], data[9], data[10],
+              data[11], data[12], data[13], data[14], data[15]);
 
     // Serial number is at offset 0 (registers 0x1000-0x1002 = 6 bytes)
     if (this->serial_number_text_sensor_ != nullptr) {
@@ -542,6 +553,11 @@ void DS100Meter::on_modbus_data(const std::vector<uint8_t> &data) {  // Helper f
   } else if (data.size() == DS100_SETTINGS_LEN * 2) {
     // Process settings response (20 holding registers starting at 0x1003)
     ESP_LOGV(TAG, "Processing settings (%zu bytes)", data.size());
+    ESP_LOGVV(
+        TAG,
+        "  Settings raw bytes [0-15]: %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X",
+        data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7], data[8], data[9], data[10], data[11],
+        data[12], data[13], data[14], data[15]);
 
     // Helper to read 16-bit value from settings data
     auto get_setting = [&](uint16_t reg_offset) -> uint16_t {
@@ -554,8 +570,16 @@ void DS100Meter::on_modbus_data(const std::vector<uint8_t> &data) {  // Helper f
     // Modbus Address (register 0x1003, offset 0)
     if (this->address_number_ != nullptr) {
       uint16_t addr = get_setting(0);
+      ESP_LOGV(TAG, "  Settings: address=%u", addr);
       this->address_number_->publish_state(static_cast<float>(addr));
     }
+
+    // Log all settings values for debugging
+    ESP_LOGVV(TAG,
+              "  Settings values: addr=%u, baud=%u, parity=%u, stop_bits=%u, combined=%u, demand_mode=%u, "
+              "scrolling=%u, demand_period=%u, pwd=%u, so=%u",
+              get_setting(0), get_setting(9), get_setting(10), get_setting(11), get_setting(12), get_setting(13),
+              get_setting(8), get_setting(14), get_setting(19), get_setting(20));
 
     // Scrolling Time (register 0x100B, offset 8)
     if (this->scrolling_time_number_ != nullptr) {
@@ -868,7 +892,13 @@ void DS100Meter::on_modbus_data(const std::vector<uint8_t> &data) {  // Helper f
     // Process per-phase statistics response
     // last_statistics_request_ is 1, 2, or 3 for L1, L2, L3 (0 would be total statistics)
     uint8_t phase_idx = this->last_statistics_request_ - 1;  // Convert to 0, 1, 2
-    ESP_LOGV(TAG, "Processing phase L%d statistics (%zu bytes)", phase_idx + 1, data.size());
+    ESP_LOGV(TAG, "Processing phase L%d statistics (%zu bytes, last_stats_req=%d)", phase_idx + 1, data.size(),
+             this->last_statistics_request_);
+    ESP_LOGVV(TAG,
+              "  Phase stats raw bytes [0-15]: %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X "
+              "%02X %02X",
+              data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7], data[8], data[9], data[10],
+              data[11], data[12], data[13], data[14], data[15]);
 
     // Read phase statistics using helper function for the correct phase
     this->read_energy_sensors(data.data(), 0, this->phase_energy_sensors_[phase_idx], 0.01f, data.size());
