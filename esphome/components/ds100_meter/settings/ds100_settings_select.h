@@ -3,16 +3,18 @@
 #include "esphome/components/select/select.h"
 #include "esphome/core/component.h"
 #include "esphome/core/log.h"
-#include "../ds100_meter.h"
+#include "esphome/core/optional.h"
 
 namespace esphome {
 namespace ds100_meter {
 
+// Forward declaration to avoid circular include
+class DS100Meter;
+
 /// Base class for DS100 register-based select controls
 /// Template parameters:
 ///   REG_ADDR: Modbus register address to write to
-template<uint16_t REG_ADDR>
-class DS100RegisterSelect : public select::Select, public Parented<DS100Meter> {
+template<uint16_t REG_ADDR> class DS100RegisterSelect : public select::Select, public Parented<DS100Meter> {
  public:
   DS100RegisterSelect() = default;
 

@@ -3,10 +3,13 @@
 #include "esphome/components/number/number.h"
 #include "esphome/core/component.h"
 #include "esphome/core/log.h"
-#include "../ds100_meter.h"
+#include "esphome/core/optional.h"
 
 namespace esphome {
 namespace ds100_meter {
+
+// Forward declaration to avoid circular include
+class DS100Meter;
 
 /// Base class for DS100 register-based number controls
 /// Template parameters:
