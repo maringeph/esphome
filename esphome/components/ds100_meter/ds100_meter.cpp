@@ -264,6 +264,30 @@ void DS100Meter::update() {
     }
   }
 
+#if defined(USE_SELECT) || defined(USE_NUMBER)
+  // Check if settings should be read
+  if (now - this->last_update_settings_ >= this->update_interval_settings_) {
+    bool needs_settings = false;
+#ifdef USE_SELECT
+    if (this->baud_rate_select_ != nullptr || this->parity_select_ != nullptr || this->stop_bits_select_ != nullptr ||
+        this->combined_code_select_ != nullptr || this->demand_mode_select_ != nullptr) {
+      needs_settings = true;
+    }
+#endif
+#ifdef USE_NUMBER
+    if (this->address_number_ != nullptr || this->scrolling_time_number_ != nullptr ||
+        this->demand_period_number_ != nullptr || this->password_number_ != nullptr ||
+        this->so_output_number_ != nullptr || this->meter_running_time_number_ != nullptr ||
+        this->timing_current_number_ != nullptr || this->auto_scroll_number_ != nullptr) {
+      needs_settings = true;
+    }
+#endif
+    if (needs_settings) {
+      this->queue_request(RequestType::SETTINGS);
+    }
+  }
+#endif
+
   ESP_LOGD(TAG, "Update check - pending: 0x%02X, in_progress: %d", this->pending_requests_, this->request_in_progress_);
 
   // Process the highest priority pending request if no request is currently in progress
@@ -605,11 +629,21 @@ void DS100Meter::on_modbus_data(const std::vector<uint8_t> &data) {  // Helper f
       uint16_t code_val = get_setting(12);
       const char *code_str = "forward";
       switch (code_val) {
-        case 1: code_str = "forward"; break;
-        case 2: code_str = "reverse"; break;
-        case 3: code_str = "forward+reverse"; break;
-        case 4: code_str = "positive-negative"; break;
-        case 5: code_str = "remaining energy"; break;
+        case 1:
+          code_str = "forward";
+          break;
+        case 2:
+          code_str = "reverse";
+          break;
+        case 3:
+          code_str = "forward+reverse";
+          break;
+        case 4:
+          code_str = "positive-negative";
+          break;
+        case 5:
+          code_str = "remaining energy";
+          break;
       }
       this->combined_code_select_->publish_state(code_str);
     }
