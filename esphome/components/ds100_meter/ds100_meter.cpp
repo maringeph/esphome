@@ -224,30 +224,54 @@ void DS100Meter::update() {
     ESP_LOGW(TAG, "Request timeout - resetting request_in_progress");
     this->request_in_progress_ = false;
     this->last_request_time_ = 0;
+    this->consecutive_timeouts_++;
+    ESP_LOGV(TAG, "Consecutive timeouts: %d", this->consecutive_timeouts_);
+  }
+
+  // Increment startup cycle counter (saturates at 255)
+  if (this->startup_cycle_ < 255) {
+    this->startup_cycle_++;
   }
 
   // Check which categories are due and add them to the request queue
+  // During startup, stagger requests to avoid bus overload
   if (now - this->last_update_livedata_ >= this->update_interval_livedata_) {
+    // LIVEDATA is always allowed - highest priority
     this->queue_request(RequestType::LIVEDATA);
   }
 
 #ifdef USE_DS100_DEMAND
   if (now - this->last_update_demand_ >= this->update_interval_demand_) {
-    this->queue_request(RequestType::DEMAND);
+    // Allow DEMAND after 1 cycle (startup phase 1)
+    if (this->startup_cycle_ >= 1) {
+      this->queue_request(RequestType::DEMAND);
+    } else {
+      ESP_LOGV(TAG, "Skipping DEMAND during startup (cycle %d)", this->startup_cycle_);
+    }
   }
 #endif
 
 #ifdef USE_DS100_STATISTICS
   if (this->statistics_cycle_state_ > 0 || now - this->last_update_statistics_ >= this->update_interval_statistics_) {
-    ESP_LOGV(TAG, "Queueing statistics request (cycle_state=%d, last_update=%u, now=%u, interval=%u)",
-             this->statistics_cycle_state_, this->last_update_statistics_, now, this->update_interval_statistics_);
-    this->queue_request(RequestType::STATISTICS);
+    // Allow STATISTICS after 2 cycles
+    if (this->startup_cycle_ >= 2) {
+      ESP_LOGV(TAG, "Queueing statistics request (cycle_state=%d, last_update=%u, now=%u, interval=%u)",
+               this->statistics_cycle_state_, this->last_update_statistics_, now, this->update_interval_statistics_);
+      this->queue_request(RequestType::STATISTICS);
+    } else {
+      ESP_LOGV(TAG, "Skipping STATISTICS during startup (cycle %d)", this->startup_cycle_);
+    }
   }
 #endif
 
 #ifdef USE_DS100_MAXIMUM_DEMAND
   if (now - this->last_update_maximum_demand_ >= this->update_interval_maximum_demand_) {
-    this->queue_request(RequestType::MAXIMUM_DEMAND);
+    // Allow MAXIMUM_DEMAND after 3 cycles
+    if (this->startup_cycle_ >= 3) {
+      this->queue_request(RequestType::MAXIMUM_DEMAND);
+    } else {
+      ESP_LOGV(TAG, "Skipping MAXIMUM_DEMAND during startup (cycle %d)", this->startup_cycle_);
+    }
   }
 #endif
 
@@ -262,7 +286,12 @@ void DS100Meter::update() {
     needs_device_info = needs_device_info || (this->terminal_signal_binary_sensor_ != nullptr);
 #endif
     if (needs_device_info) {
-      this->queue_request(RequestType::DEVICE_INFO);
+      // Allow DEVICE_INFO after 4 cycles (lowest priority)
+      if (this->startup_cycle_ >= 4) {
+        this->queue_request(RequestType::DEVICE_INFO);
+      } else {
+        ESP_LOGV(TAG, "Skipping DEVICE_INFO during startup (cycle %d)", this->startup_cycle_);
+      }
     }
   }
 
@@ -285,19 +314,39 @@ void DS100Meter::update() {
     }
 #endif
     if (needs_settings) {
-      ESP_LOGV(TAG, "Settings check: needs_settings=true, queueing SETTINGS request");
-      this->queue_request(RequestType::SETTINGS);
+      // Allow SETTINGS after 5 cycles (lowest priority, large payload)
+      if (this->startup_cycle_ >= 5) {
+        ESP_LOGV(TAG, "Settings check: needs_settings=true, queueing SETTINGS request");
+        this->queue_request(RequestType::SETTINGS);
+      } else {
+        ESP_LOGV(TAG, "Skipping SETTINGS during startup (cycle %d)", this->startup_cycle_);
+      }
     } else {
       ESP_LOGVV(TAG, "Settings check: needs_settings=false (no settings components registered)");
     }
   }
 #endif
 
-  ESP_LOGD(TAG, "Update check - pending: 0x%02X, in_progress: %d", this->pending_requests_, this->request_in_progress_);
+  ESP_LOGD(TAG, "Update check - pending: 0x%02X, in_progress: %d, startup_cycle: %d, timeouts: %d",
+           this->pending_requests_, this->request_in_progress_, this->startup_cycle_, this->consecutive_timeouts_);
 
   // Process the highest priority pending request if no request is currently in progress
   if (!this->request_in_progress_ && this->pending_requests_ != 0) {
-    this->process_next_request();
+    // If bus is overloaded (consecutive timeouts), skip low-priority requests
+    if (this->consecutive_timeouts_ >= MAX_CONSECUTIVE_TIMEOUTS) {
+      // Only process high-priority requests: LIVEDATA and DEMAND
+      if (this->pending_requests_ & PENDING_LIVEDATA) {
+        this->process_next_request();
+      } else if (this->pending_requests_ & PENDING_DEMAND) {
+        this->process_next_request();
+      } else {
+        ESP_LOGV(TAG, "Skipping low-priority requests due to bus overload (timeouts: %d)", this->consecutive_timeouts_);
+        // Clear pending low-priority requests to prevent queue buildup
+        this->pending_requests_ &= (PENDING_LIVEDATA | PENDING_DEMAND);
+      }
+    } else {
+      this->process_next_request();
+    }
   }
 }
 
@@ -446,6 +495,12 @@ void DS100Meter::process_next_request() {
 
 void DS100Meter::on_modbus_data(const std::vector<uint8_t> &data) {
   ESP_LOGV(TAG, "Received Modbus data: %zu bytes", data.size());
+
+  // Reset consecutive timeouts counter on successful response
+  if (this->consecutive_timeouts_ > 0) {
+    ESP_LOGV(TAG, "Resetting consecutive timeouts (was %d)", this->consecutive_timeouts_);
+    this->consecutive_timeouts_ = 0;
+  }
 
   // Helper function to decode 32-bit signed integer from two consecutive registers
   // DS100 uses big-endian format: [high_reg_msb, high_reg_lsb, low_reg_msb, low_reg_lsb]
@@ -910,10 +965,18 @@ void DS100Meter::on_modbus_data(const std::vector<uint8_t> &data) {
     ESP_LOGW(TAG, "Unexpected data size: %zu bytes", data.size());
   }
 
-  // Mark request as completed and process next pending request
+  // Mark request as completed
   this->request_in_progress_ = false;
+
+  // Process next pending request if queue not empty
+  // Skip if bus is overloaded (consecutive timeouts) to give other devices a chance
   if (this->pending_requests_ != 0) {
-    this->process_next_request();
+    if (this->consecutive_timeouts_ >= MAX_CONSECUTIVE_TIMEOUTS) {
+      ESP_LOGV(TAG, "Deferring next request due to bus overload (timeouts: %d)", this->consecutive_timeouts_);
+      // Don't clear pending_requests_ here - let update() handle prioritization
+    } else {
+      this->process_next_request();
+    }
   }
 }
 
