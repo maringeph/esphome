@@ -543,6 +543,7 @@ class DS100Meter : public modbus_controller::ModbusController {
   uint32_t last_update_demand_{0};
   uint32_t last_update_maximum_demand_{0};
   uint32_t last_update_statistics_{0};
+  uint32_t last_update_resettable_statistics_{0};
   uint32_t last_update_settings_{0};
   uint32_t last_update_device_info_{0};
 

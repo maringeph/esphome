@@ -109,35 +109,40 @@ static const uint16_t DS100_STATISTICS_LEN = 30;  // Basic statistics only
 #endif
 
 // Byte offsets within livedata response (each register = 2 bytes)
-static const uint16_t REG_VOLTAGE_L1_N = 0;          // Register 0x0400
-static const uint16_t REG_VOLTAGE_L2_N = 4;          // Register 0x0402
-static const uint16_t REG_VOLTAGE_L3_N = 8;          // Register 0x0404
-static const uint16_t REG_VOLTAGE_L1_L2 = 12;        // Register 0x0406
-static const uint16_t REG_VOLTAGE_L2_L3 = 16;        // Register 0x0408
-static const uint16_t REG_VOLTAGE_L3_L1 = 20;        // Register 0x040A
-static const uint16_t REG_VOLTAGE_L_N_AVG = 24;      // Register 0x040C
-static const uint16_t REG_VOLTAGE_L_L_AVG = 28;      // Register 0x040E
-static const uint16_t REG_CURRENT_L1 = 32;           // Register 0x0410
-static const uint16_t REG_CURRENT_L2 = 36;           // Register 0x0412
-static const uint16_t REG_CURRENT_L3 = 40;           // Register 0x0414
-static const uint16_t REG_CURRENT_N = 44;            // Register 0x0416
-static const uint16_t REG_CURRENT_AVG = 48;          // Register 0x0418
-static const uint16_t REG_ACTIVE_POWER_L1 = 52;      // Register 0x041A
-static const uint16_t REG_ACTIVE_POWER_L2 = 56;      // Register 0x041C
-static const uint16_t REG_ACTIVE_POWER_L3 = 60;      // Register 0x041E
-static const uint16_t REG_APPARENT_POWER_L1 = 64;    // Register 0x0420
-static const uint16_t REG_APPARENT_POWER_L2 = 68;    // Register 0x0422
-static const uint16_t REG_APPARENT_POWER_L3 = 72;    // Register 0x0424
-static const uint16_t REG_REACTIVE_POWER_L1 = 76;    // Register 0x0426
-static const uint16_t REG_REACTIVE_POWER_L2 = 80;    // Register 0x0428
-static const uint16_t REG_REACTIVE_POWER_L3 = 84;    // Register 0x042A
-static const uint16_t REG_POWER_FACTOR_L1 = 88;      // Register 0x042C
-static const uint16_t REG_POWER_FACTOR_L2 = 92;      // Register 0x042E
-static const uint16_t REG_POWER_FACTOR_L3 = 96;      // Register 0x0430
-static const uint16_t REG_FREQUENCY_L1 = 100;        // Register 0x0432
-static const uint16_t REG_FREQUENCY_L2 = 104;        // Register 0x0434
-static const uint16_t REG_FREQUENCY_L3 = 108;        // Register 0x0436
-static const uint16_t REG_ACTIVE_POWER_TOTAL = 112;  // Register 0x0438
+// Corrected according to DS100 datasheet
+static const uint16_t REG_VOLTAGE_L1_N = 0;           // Register 0x0400
+static const uint16_t REG_VOLTAGE_L2_N = 4;           // Register 0x0402
+static const uint16_t REG_VOLTAGE_L3_N = 8;           // Register 0x0404
+static const uint16_t REG_VOLTAGE_L1_L2 = 12;         // Register 0x0406
+static const uint16_t REG_VOLTAGE_L2_L3 = 16;         // Register 0x0408
+static const uint16_t REG_VOLTAGE_L3_L1 = 20;         // Register 0x040A
+static const uint16_t REG_VOLTAGE_L_N_AVG = 24;       // Register 0x040C
+static const uint16_t REG_VOLTAGE_L_L_AVG = 28;       // Register 0x040E
+static const uint16_t REG_CURRENT_L1 = 32;            // Register 0x0410
+static const uint16_t REG_CURRENT_L2 = 36;            // Register 0x0412
+static const uint16_t REG_CURRENT_L3 = 40;            // Register 0x0414
+static const uint16_t REG_CURRENT_N = 44;             // Register 0x0416
+static const uint16_t REG_CURRENT_AVG = 48;           // Register 0x0418
+static const uint16_t REG_ACTIVE_POWER_L1 = 52;       // Register 0x041A
+static const uint16_t REG_ACTIVE_POWER_L2 = 56;       // Register 0x041C
+static const uint16_t REG_ACTIVE_POWER_L3 = 60;       // Register 0x041E
+static const uint16_t REG_ACTIVE_POWER_TOTAL = 64;    // Register 0x0420 (Combined)
+static const uint16_t REG_APPARENT_POWER_L1 = 68;     // Register 0x0422
+static const uint16_t REG_APPARENT_POWER_L2 = 72;     // Register 0x0424
+static const uint16_t REG_APPARENT_POWER_L3 = 76;     // Register 0x0426
+static const uint16_t REG_APPARENT_POWER_TOTAL = 80;  // Register 0x0428 (Combined)
+static const uint16_t REG_REACTIVE_POWER_L1 = 84;     // Register 0x042A
+static const uint16_t REG_REACTIVE_POWER_L2 = 88;     // Register 0x042C
+static const uint16_t REG_REACTIVE_POWER_L3 = 92;     // Register 0x042E
+static const uint16_t REG_REACTIVE_POWER_TOTAL = 96;  // Register 0x0430 (Combined)
+static const uint16_t REG_FREQUENCY_L1 = 100;         // Register 0x0432
+static const uint16_t REG_FREQUENCY_L2 = 102;         // Register 0x0433 (single register!)
+static const uint16_t REG_FREQUENCY_L3 = 104;         // Register 0x0434
+static const uint16_t REG_FREQUENCY_TOTAL = 106;      // Register 0x0435 (Combined, single register)
+static const uint16_t REG_POWER_FACTOR_L1 = 108;      // Register 0x0436
+static const uint16_t REG_POWER_FACTOR_L2 = 110;      // Register 0x0437 (single register!)
+static const uint16_t REG_POWER_FACTOR_L3 = 112;      // Register 0x0438
+static const uint16_t REG_POWER_FACTOR_TOTAL = 114;   // Register 0x0439 (Combined, single register)
 
 // Statistics byte offsets
 static const uint16_t STAT_ACTIVE_ENERGY = 0;
@@ -205,16 +210,6 @@ static float get_frequency_helper(const std::vector<uint8_t> &data, size_t byte_
 static float get_power_factor_helper(const std::vector<uint8_t> &data, size_t byte_offset) {
   uint16_t raw = get_uint16_helper(data, byte_offset);
   return raw / 1000.0f;
-}
-
-void DS100Meter::setup() {
-  ESP_LOGCONFIG(TAG, "Setting up DS100 Meter...");
-  // Parent class setup is called automatically
-}
-
-void DS100Meter::loop() {
-  // Parent class loop handles Modbus communication
-  // We don't need to do anything here as update() handles our polling
 }
 
 void DS100Meter::update() {
