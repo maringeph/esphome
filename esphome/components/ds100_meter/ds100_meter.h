@@ -17,6 +17,10 @@
 #include "esphome/components/binary_sensor/binary_sensor.h"
 #endif
 
+// Always include select and number for settings
+#include "esphome/components/select/select.h"
+#include "esphome/components/number/number.h"
+
 #include <array>
 #include <vector>
 
@@ -27,10 +31,16 @@ namespace ds100_meter {
 class DS100BaudRateSelect;
 class DS100ParitySelect;
 class DS100StopBitsSelect;
+class DS100CombinedCodeSelect;
+class DS100DemandModeSelect;
 class DS100ModbusAddressNumber;
 class DS100ScrollingTimeNumber;
 class DS100DemandPeriodNumber;
 class DS100PasswordNumber;
+class DS100SOOutputNumber;
+class DS100MeterRunningTimeNumber;
+class DS100TimingCurrentNumber;
+class DS100AutoScrollNumber;
 #ifdef USE_BUTTON
 class DS100ResetMaximumDemandButton;
 class DS100ResetStatisticsButton;
