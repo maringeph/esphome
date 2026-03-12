@@ -55,6 +55,9 @@ async def to_code(config):
     parent = await cg.get_variable(config[CONF_DS100_METER_ID])
     device_id = config.get(CONF_DEVICE_ID)
 
+    # Define USE_BUTTON when any button is configured
+    cg.add_define("USE_BUTTON")
+
     if CONF_RESET_MAXIMUM_DEMAND in config:
         conf = config[CONF_RESET_MAXIMUM_DEMAND]
         btn = await _register_button_with_device(conf, device_id)

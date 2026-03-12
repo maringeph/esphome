@@ -17,7 +17,7 @@ class DS100ResetMaximumDemandButton : public button::Button, public Component {
 
  protected:
   void press_action() override;
-  DS100Meter *parent_;
+  DS100Meter *parent_{nullptr};
 };
 
 /// Button to reset resettable statistics (energy counters)
@@ -27,7 +27,7 @@ class DS100ResetStatisticsButton : public button::Button, public Component {
 
  protected:
   void press_action() override;
-  DS100Meter *parent_;
+  DS100Meter *parent_{nullptr};
 };
 
 }  // namespace ds100_meter
