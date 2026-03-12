@@ -1007,5 +1007,24 @@ void DS100Meter::write_register(uint16_t address, uint16_t value) {
   this->send_raw(cmd);
 }
 
+#ifdef USE_BUTTON
+// Button implementations - moved here to ensure they're compiled with USE_BUTTON defined
+static const char *const TAG_BUTTON = "ds100_meter.button";
+
+void DS100ResetMaximumDemandButton::press_action() {
+  if (this->parent_ != nullptr) {
+    ESP_LOGI(TAG_BUTTON, "Resetting maximum demand");
+    this->parent_->reset_maximum_demand();
+  }
+}
+
+void DS100ResetStatisticsButton::press_action() {
+  if (this->parent_ != nullptr) {
+    ESP_LOGI(TAG_BUTTON, "Resetting statistics");
+    this->parent_->reset_statistics();
+  }
+}
+#endif  // USE_BUTTON
+
 }  // namespace ds100_meter
 }  // namespace esphome

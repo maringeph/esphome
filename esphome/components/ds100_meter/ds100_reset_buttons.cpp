@@ -1,30 +1,4 @@
-#include "ds100_reset_buttons.h"
-
-#ifdef USE_BUTTON
-
-#include "ds100_meter.h"
-#include "esphome/core/log.h"
-
-namespace esphome {
-namespace ds100_meter {
-
-static const char *const TAG = "ds100_meter.button";
-
-void DS100ResetMaximumDemandButton::press_action() {
-  if (this->parent_ != nullptr) {
-    ESP_LOGI(TAG, "Resetting maximum demand");
-    this->parent_->reset_maximum_demand();
-  }
-}
-
-void DS100ResetStatisticsButton::press_action() {
-  if (this->parent_ != nullptr) {
-    ESP_LOGI(TAG, "Resetting statistics");
-    this->parent_->reset_statistics();
-  }
-}
-
-}  // namespace ds100_meter
-}  // namespace esphome
-
-#endif  // USE_BUTTON
+// Button implementations moved to ds100_meter.cpp
+// This file is kept for compatibility but is now empty
+// The implementations are compiled together with ds100_meter.cpp
+// to ensure USE_BUTTON is properly defined
