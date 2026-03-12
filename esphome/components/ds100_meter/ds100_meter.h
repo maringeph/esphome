@@ -303,12 +303,18 @@ class DS100Meter : public PollingComponent, public modbus::ModbusDevice {
   void set_baud_rate_select(select::Select *select) { this->baud_rate_select_ = select; }
   void set_parity_select(select::Select *select) { this->parity_select_ = select; }
   void set_stop_bits_select(select::Select *select) { this->stop_bits_select_ = select; }
+  void set_combined_code_select(select::Select *select) { this->combined_code_select_ = select; }
+  void set_demand_mode_select(select::Select *select) { this->demand_mode_select_ = select; }
 
   // Number components for settings
   void set_address_number(number::Number *number) { this->address_number_ = number; }
   void set_scrolling_time_number(number::Number *number) { this->scrolling_time_number_ = number; }
   void set_demand_period_number(number::Number *number) { this->demand_period_number_ = number; }
   void set_password_number(number::Number *number) { this->password_number_ = number; }
+  void set_so_output_number(number::Number *number) { this->so_output_number_ = number; }
+  void set_meter_running_time_number(number::Number *number) { this->meter_running_time_number_ = number; }
+  void set_timing_current_number(number::Number *number) { this->timing_current_number_ = number; }
+  void set_auto_scroll_number(number::Number *number) { this->auto_scroll_number_ = number; }
 
   // Update interval setters for different data categories
   void set_update_interval_livedata(uint32_t interval) { this->update_interval_livedata_ = interval; }
@@ -478,12 +484,18 @@ class DS100Meter : public PollingComponent, public modbus::ModbusDevice {
   select::Select *baud_rate_select_{nullptr};
   select::Select *parity_select_{nullptr};
   select::Select *stop_bits_select_{nullptr};
+  select::Select *combined_code_select_{nullptr};
+  select::Select *demand_mode_select_{nullptr};
 
   // Number components for settings (configuration)
   number::Number *address_number_{nullptr};
   number::Number *scrolling_time_number_{nullptr};
   number::Number *demand_period_number_{nullptr};
   number::Number *password_number_{nullptr};
+  number::Number *so_output_number_{nullptr};
+  number::Number *meter_running_time_number_{nullptr};
+  number::Number *timing_current_number_{nullptr};
+  number::Number *auto_scroll_number_{nullptr};
 
   // Update intervals for different data categories (in milliseconds)
   uint32_t update_interval_livedata_{10000};        // 10s default

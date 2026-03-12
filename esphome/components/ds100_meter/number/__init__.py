@@ -23,9 +23,21 @@ DS100DemandPeriodNumber = ds100_meter_ns.class_(
     "DS100DemandPeriodNumber", number.Number
 )
 DS100PasswordNumber = ds100_meter_ns.class_("DS100PasswordNumber", number.Number)
+DS100SOOutputNumber = ds100_meter_ns.class_("DS100SOOutputNumber", number.Number)
+DS100MeterRunningTimeNumber = ds100_meter_ns.class_(
+    "DS100MeterRunningTimeNumber", number.Number
+)
+DS100TimingCurrentNumber = ds100_meter_ns.class_(
+    "DS100TimingCurrentNumber", number.Number
+)
+DS100AutoScrollNumber = ds100_meter_ns.class_("DS100AutoScrollNumber", number.Number)
 
 CONF_SCROLLING_TIME = "scrolling_time"
 CONF_DEMAND_PERIOD = "demand_period"
+CONF_SO_OUTPUT = "so_output"
+CONF_METER_RUNNING_TIME = "meter_running_time"
+CONF_TIMING_CURRENT = "timing_current"
+CONF_AUTO_SCROLL = "auto_scroll"
 
 CONFIG_SCHEMA = {
     cv.GenerateID(CONF_ID): cv.declare_id(cg.EntityBase),
@@ -47,6 +59,23 @@ CONFIG_SCHEMA = {
     ),
     cv.Optional(CONF_PASSWORD): number.number_schema(
         DS100PasswordNumber,
+        entity_category=ENTITY_CATEGORY_CONFIG,
+    ),
+    cv.Optional(CONF_SO_OUTPUT): number.number_schema(
+        DS100SOOutputNumber,
+        entity_category=ENTITY_CATEGORY_CONFIG,
+    ),
+    cv.Optional(CONF_METER_RUNNING_TIME): number.number_schema(
+        DS100MeterRunningTimeNumber,
+        entity_category=ENTITY_CATEGORY_CONFIG,
+    ),
+    cv.Optional(CONF_TIMING_CURRENT): number.number_schema(
+        DS100TimingCurrentNumber,
+        unit_of_measurement="mA",
+        entity_category=ENTITY_CATEGORY_CONFIG,
+    ),
+    cv.Optional(CONF_AUTO_SCROLL): number.number_schema(
+        DS100AutoScrollNumber,
         entity_category=ENTITY_CATEGORY_CONFIG,
     ),
 }
@@ -92,3 +121,27 @@ async def to_code(config):
             password_config, device_obj, parent_id, 0, 9999, 1
         )
         cg.add(parent.set_password_number(num))
+
+    if so_output_config := config.get(CONF_SO_OUTPUT):
+        num = await _register_number_with_device(
+            so_output_config, device_obj, parent_id, 100, 2500, 100
+        )
+        cg.add(parent.set_so_output_number(num))
+
+    if meter_running_time_config := config.get(CONF_METER_RUNNING_TIME):
+        num = await _register_number_with_device(
+            meter_running_time_config, device_obj, parent_id, 0, 65535, 1
+        )
+        cg.add(parent.set_meter_running_time_number(num))
+
+    if timing_current_config := config.get(CONF_TIMING_CURRENT):
+        num = await _register_number_with_device(
+            timing_current_config, device_obj, parent_id, 0, 65535, 1
+        )
+        cg.add(parent.set_timing_current_number(num))
+
+    if auto_scroll_config := config.get(CONF_AUTO_SCROLL):
+        num = await _register_number_with_device(
+            auto_scroll_config, device_obj, parent_id, 0, 65535, 1
+        )
+        cg.add(parent.set_auto_scroll_number(num))

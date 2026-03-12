@@ -62,5 +62,21 @@ class DS100StopBitsSelect : public DS100RegisterSelect<0x100E> {
   const char *get_tag() const override { return "ds100_meter.select.stop_bits"; }
 };
 
+/// Select control for combined code configuration (register 0x100F)
+/// Options: forward, reverse, forward+reverse, positive-negative, remaining energy
+class DS100CombinedCodeSelect : public DS100RegisterSelect<0x100F> {
+ protected:
+  optional<uint16_t> map_value(const std::string &value) override;
+  const char *get_tag() const override { return "ds100_meter.select.combined_code"; }
+};
+
+/// Select control for demand mode configuration (register 0x1010)
+/// Options: interval, slip
+class DS100DemandModeSelect : public DS100RegisterSelect<0x1010> {
+ protected:
+  optional<uint16_t> map_value(const std::string &value) override;
+  const char *get_tag() const override { return "ds100_meter.select.demand_mode"; }
+};
+
 }  // namespace ds100_meter
 }  // namespace esphome

@@ -44,6 +44,34 @@ optional<uint16_t> DS100StopBitsSelect::map_value(const std::string &value) {
   return nullopt;
 }
 
+optional<uint16_t> DS100CombinedCodeSelect::map_value(const std::string &value) {
+  // Register 0x100F: Combined code (1=forward, 2=reverse, 3=forward+reverse, 4=positive-negative, 5=remaining energy)
+  if (value == "forward")
+    return 1;
+  if (value == "reverse")
+    return 2;
+  if (value == "forward+reverse")
+    return 3;
+  if (value == "positive-negative")
+    return 4;
+  if (value == "remaining energy")
+    return 5;
+
+  ESP_LOGW(this->get_tag(), "Invalid combined code value: %s", value.c_str());
+  return nullopt;
+}
+
+optional<uint16_t> DS100DemandModeSelect::map_value(const std::string &value) {
+  // Register 0x1010: Demand mode (0=interval, 1=slip)
+  if (value == "interval")
+    return 0;
+  if (value == "slip")
+    return 1;
+
+  ESP_LOGW(this->get_tag(), "Invalid demand mode value: %s", value.c_str());
+  return nullopt;
+}
+
 }  // namespace ds100_meter
 }  // namespace esphome
 
@@ -52,3 +80,5 @@ optional<uint16_t> DS100StopBitsSelect::map_value(const std::string &value) {
 template class esphome::ds100_meter::DS100RegisterSelect<0x100C>;
 template class esphome::ds100_meter::DS100RegisterSelect<0x100D>;
 template class esphome::ds100_meter::DS100RegisterSelect<0x100E>;
+template class esphome::ds100_meter::DS100RegisterSelect<0x100F>;
+template class esphome::ds100_meter::DS100RegisterSelect<0x1010>;

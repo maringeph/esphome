@@ -77,5 +77,38 @@ class DS100PasswordNumber : public DS100RegisterNumber<0x1016, 0, 9999> {
   const char *get_tag() const override { return "ds100_meter.number.password"; }
 };
 
+/// Number control for SO output constant (register 0x1017, range 100-2500)
+/// Must be divisible by 10000
+class DS100SOOutputNumber : public DS100RegisterNumber<0x1017, 100, 2500> {
+ protected:
+  const char *get_tag() const override { return "ds100_meter.number.so_output"; }
+  bool validate_value(uint16_t value) override {
+    if (value % 10000 != 0) {
+      ESP_LOGW(this->get_tag(), "Value must be divisible by 10000: %d", value);
+      return false;
+    }
+    return true;
+  }
+};
+
+/// Number control for meter running time (register 0x1018, 2 registers, 32-bit)
+/// Read-only in practice, but implemented as number for display
+class DS100MeterRunningTimeNumber : public DS100RegisterNumber<0x1018, 0, 65535> {
+ protected:
+  const char *get_tag() const override { return "ds100_meter.number.running_time"; }
+};
+
+/// Number control for timing current value (register 0x101A, 2 registers, unit mA)
+class DS100TimingCurrentNumber : public DS100RegisterNumber<0x101A, 0, 65535> {
+ protected:
+  const char *get_tag() const override { return "ds100_meter.number.timing_current"; }
+};
+
+/// Number control for auto scroll display content (register 0x1020, 5 registers, bit-wise)
+class DS100AutoScrollNumber : public DS100RegisterNumber<0x1020, 0, 65535> {
+ protected:
+  const char *get_tag() const override { return "ds100_meter.number.auto_scroll"; }
+};
+
 }  // namespace ds100_meter
 }  // namespace esphome

@@ -79,18 +79,25 @@ static const uint16_t DS100_TERMINAL_SIGNAL_ADDR = 0x101D;
 static const uint16_t DS100_TERMINAL_SIGNAL_LEN = 1;  // 1 register
 
 // Settings are Holding Registers (Function 0x03), R/W
-// Register addresses for settings (all 1 register, HEX format):
-static const uint16_t REG_MODBUS_ADDRESS = 0x1003;  // 1-247
-static const uint16_t REG_SCROLLING_TIME = 0x100B;  // 5-99 seconds (0 = disabled)
-static const uint16_t REG_BAUD_RATE = 0x100C;       // 6=9600, 7=19200, 8=38400, 9=115200
-static const uint16_t REG_PARITY = 0x100D;          // 0=None, 1=Odd, 2=Even
-static const uint16_t REG_STOP_BITS = 0x100E;       // 1=1bit, 2=2bits
-static const uint16_t REG_DEMAND_PERIOD = 0x1011;   // 1-30 minutes, default 15
-static const uint16_t REG_PASSWORD = 0x1016;        // 0000-9999
+// Register addresses for settings:
+static const uint16_t REG_MODBUS_ADDRESS = 0x1003;      // 1 register, 1-247
+static const uint16_t REG_TIME = 0x1007;                // 4 registers, BCD format (week, date, time)
+static const uint16_t REG_SCROLLING_TIME = 0x100B;      // 1 register, 5-99 seconds (0 = disabled)
+static const uint16_t REG_BAUD_RATE = 0x100C;           // 1 register, 6=9600, 7=19200, 8=38400, 9=115200
+static const uint16_t REG_PARITY = 0x100D;              // 1 register, 0=None, 1=Odd, 2=Even
+static const uint16_t REG_STOP_BITS = 0x100E;           // 1 register, 1=1bit, 2=2bits
+static const uint16_t REG_COMBINED_CODE = 0x100F;       // 1 register, 1-5 (total calculation mode)
+static const uint16_t REG_DEMAND_MODE = 0x1010;         // 1 register, 0=interval, 1=slip
+static const uint16_t REG_DEMAND_PERIOD = 0x1011;       // 1 register, 1-30 minutes, default 15
+static const uint16_t REG_PASSWORD = 0x1016;            // 1 register, 0000-9999
+static const uint16_t REG_SO_OUTPUT = 0x1017;           // 1 register, 100-2500 (divisible by 10000)
+static const uint16_t REG_METER_RUNNING_TIME = 0x1018;  // 2 registers, running time in hours
+static const uint16_t REG_TIMING_CURRENT = 0x101A;      // 2 registers, unit mA
+static const uint16_t REG_AUTO_SCROLL = 0x1020;         // 5 registers, bit-wise display content
 
-// Settings block: read from 0x1003 to 0x1016 (20 registers covers all settings)
+// Settings block: read from 0x1003 to 0x1024 (covers all settings up to 0x1020 + 5)
 static const uint16_t DS100_SETTINGS_ADDR = 0x1003;
-static const uint16_t DS100_SETTINGS_LEN = 20;
+static const uint16_t DS100_SETTINGS_LEN = 33;  // 0x1024 - 0x1003 = 0x21 = 33 registers
 
 // Calculate statistics length based on enabled features
 #if defined(USE_DS100_QUADRANTS)
@@ -590,6 +597,56 @@ void DS100Meter::on_modbus_data(const std::vector<uint8_t> &data) {  // Helper f
       uint16_t stop_val = get_setting(11);
       const char *stop_str = (stop_val == 1) ? "1" : "2";
       this->stop_bits_select_->publish_state(stop_str);
+    }
+
+    // Combined Code (register 0x100F, offset 12)
+    // Values: 1=forward, 2=reverse, 3=forward+reverse, 4=positive-negative, 5=remaining energy
+    if (this->combined_code_select_ != nullptr) {
+      uint16_t code_val = get_setting(12);
+      const char *code_str = "forward";
+      switch (code_val) {
+        case 1: code_str = "forward"; break;
+        case 2: code_str = "reverse"; break;
+        case 3: code_str = "forward+reverse"; break;
+        case 4: code_str = "positive-negative"; break;
+        case 5: code_str = "remaining energy"; break;
+      }
+      this->combined_code_select_->publish_state(code_str);
+    }
+
+    // Demand Mode (register 0x1010, offset 13)
+    // Values: 0=interval, 1=slip
+    if (this->demand_mode_select_ != nullptr) {
+      uint16_t mode_val = get_setting(13);
+      const char *mode_str = (mode_val == 0) ? "interval" : "slip";
+      this->demand_mode_select_->publish_state(mode_str);
+    }
+
+    // SO Output (register 0x1017, offset 20)
+    // Constant 100-2500, divisible by 10000
+    if (this->so_output_number_ != nullptr) {
+      uint16_t so_val = get_setting(20);
+      this->so_output_number_->publish_state(static_cast<float>(so_val));
+    }
+
+    // Meter Running Time (register 0x1018, offset 21-22, 2 registers)
+    if (this->meter_running_time_number_ != nullptr) {
+      uint32_t running_time = (static_cast<uint32_t>(get_setting(21)) << 16) | get_setting(22);
+      this->meter_running_time_number_->publish_state(static_cast<float>(running_time));
+    }
+
+    // Timing Current (register 0x101A, offset 23-24, 2 registers, unit mA)
+    if (this->timing_current_number_ != nullptr) {
+      uint32_t current = (static_cast<uint32_t>(get_setting(23)) << 16) | get_setting(24);
+      this->timing_current_number_->publish_state(static_cast<float>(current));
+    }
+
+    // Auto Scroll Display (register 0x1020, offset 29-33, 5 registers)
+    // Bit-wise mark for display content
+    if (this->auto_scroll_number_ != nullptr) {
+      // Read first register as representative value
+      uint16_t scroll_val = get_setting(29);
+      this->auto_scroll_number_->publish_state(static_cast<float>(scroll_val));
     }
 
   } else if (data.size() == livedata_size) {

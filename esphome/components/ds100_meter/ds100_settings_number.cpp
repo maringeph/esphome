@@ -10,5 +10,9 @@ template class DS100RegisterNumber<0x1003, 1, 247>;
 template class DS100RegisterNumber<0x100B, 0, 99>;
 template class DS100RegisterNumber<0x1011, 1, 30>;
 template class DS100RegisterNumber<0x1016, 0, 9999>;
+template class DS100RegisterNumber<0x1017, 100, 2500>;
+template class DS100RegisterNumber<0x1018, 0, 65535>;
+template class DS100RegisterNumber<0x101A, 0, 65535>;
+template class DS100RegisterNumber<0x1020, 0, 65535>;
 }  // namespace ds100_meter
 }  // namespace esphome
