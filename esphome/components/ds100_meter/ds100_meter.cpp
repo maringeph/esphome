@@ -517,19 +517,21 @@ void DS100Meter::on_modbus_data(const std::vector<uint8_t> &data) {
       this->serial_number_text_sensor_->publish_state(serial_str);
     }
 
-    // Software Version at register 0x1004 (offset = 8 bytes) - 1 register
+    // Software Version at register 0x1004 (offset = 8 bytes) - 1 register, HEX format
     if (this->software_version_text_sensor_ != nullptr) {
       uint16_t version = encode_uint16(data[OFFSET_SOFTWARE_VERSION], data[OFFSET_SOFTWARE_VERSION + 1]);
       char version_str[8];
-      snprintf(version_str, sizeof(version_str), "%u", version);
+      // Format as HEX (e.g., 0x012D -> "012D" = 301 decimal)
+      snprintf(version_str, sizeof(version_str), "%04X", version);
       this->software_version_text_sensor_->publish_state(version_str);
     }
 
-    // Hardware Version at register 0x1005 (offset = 10 bytes) - 1 register
+    // Hardware Version at register 0x1005 (offset = 10 bytes) - 1 register, HEX format
     if (this->hardware_version_text_sensor_ != nullptr) {
       uint16_t version = encode_uint16(data[OFFSET_HARDWARE_VERSION], data[OFFSET_HARDWARE_VERSION + 1]);
       char version_str[8];
-      snprintf(version_str, sizeof(version_str), "%u", version);
+      // Format as HEX (e.g., 0x012D -> "012D" = 301 decimal)
+      snprintf(version_str, sizeof(version_str), "%04X", version);
       this->hardware_version_text_sensor_->publish_state(version_str);
     }
 
