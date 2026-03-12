@@ -1,6 +1,7 @@
 #include "ds100_reset_buttons.h"
 
-#ifdef USE_BUTTON
+// Note: The header has #ifdef USE_BUTTON guard, so this cpp file
+// will only be included in the build when USE_BUTTON is defined
 
 #include "ds100_meter.h"
 #include "esphome/core/log.h"
@@ -22,5 +23,3 @@ void DS100ResetStatisticsButton::press_action() {
 
 }  // namespace ds100_meter
 }  // namespace esphome
-
-#endif  // USE_BUTTON
