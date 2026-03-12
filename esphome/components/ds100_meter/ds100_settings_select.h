@@ -19,15 +19,7 @@ template<uint16_t REG_ADDR> class DS100RegisterSelect : public select::Select, p
   DS100RegisterSelect() = default;
 
  protected:
-  void control(const std::string &value) override {
-    this->publish_state(value);
-
-    // Map string value to register value using derived class implementation
-    auto reg_value = this->map_value(value);
-    if (reg_value.has_value()) {
-      this->parent_->write_register(REG_ADDR, reg_value.value());
-    }
-  }
+  void control(const std::string &value) override;
 
   /// Map user-friendly string to register value
   /// @param value The string value from the select control

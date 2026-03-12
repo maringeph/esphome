@@ -5,6 +5,16 @@
 namespace esphome {
 namespace ds100_meter {
 
+// Template method implementation - must be here where DS100Meter is fully declared
+template<uint16_t REG_ADDR> void DS100RegisterSelect<REG_ADDR>::control(const std::string &value) {
+  this->publish_state(value);
+
+  auto reg_value = this->map_value(value);
+  if (reg_value.has_value()) {
+    this->parent_->write_register(REG_ADDR, reg_value.value());
+  }
+}
+
 optional<uint16_t> DS100BaudRateSelect::map_value(const std::string &value) {
   // Register 0x100C: Baud rate (6=9600, 7=19200, 8=38400, 9=115200)
   if (value == "9600")

@@ -16,32 +16,19 @@ class DS100Meter;
 ///   REG_ADDR: Modbus register address to write to
 ///   MIN_VAL: Minimum allowed value (inclusive)
 ///   MAX_VAL: Maximum allowed value (inclusive)
+// Forward declare the control implementation
+namespace internal {
+// This function is defined in the .cpp file where DS100Meter is fully declared
+void ds100_register_number_control(uint16_t reg_addr, uint16_t value, void *parent, const char *tag);
+}  // namespace internal
+
 template<uint16_t REG_ADDR, uint16_t MIN_VAL, uint16_t MAX_VAL>
 class DS100RegisterNumber : public number::Number, public Parented<DS100Meter> {
  public:
   DS100RegisterNumber() = default;
 
  protected:
-  void control(float value) override {
-    this->publish_state(value);
-
-    // Register address and description from template parameters
-    auto register_value = static_cast<uint16_t>(value);
-
-    // Validate range using template parameters
-    if (register_value < MIN_VAL || register_value > MAX_VAL) {
-      ESP_LOGW(this->get_tag(), "Invalid value: %d (must be %d-%d)", register_value, MIN_VAL, MAX_VAL);
-      return;
-    }
-
-    // Apply any additional custom validation if needed
-    if (!this->validate_value(register_value)) {
-      return;
-    }
-
-    // Write to register
-    this->parent_->write_register(REG_ADDR, register_value);
-  }
+  void control(float value) override;
 
   /// Optional additional validation (can be overridden by derived classes)
   /// @param value The value after range check
