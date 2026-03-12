@@ -7,7 +7,7 @@ from esphome.const import (
     ENTITY_CATEGORY_DIAGNOSTIC,
 )
 
-from . import CONF_DS100_METER_ID, ds100_meter_ns
+from . import CONF_DS100_METER_ID, ds100_meter_ns, get_or_create_device
 
 DS100Meter = ds100_meter_ns.class_("DS100Meter")
 
@@ -36,9 +36,11 @@ CONFIG_SCHEMA = cv.Schema(
 )
 
 
-async def _register_text_sensor_with_device(sensor_config, device_id):
-    """Register a text sensor and set device_id if configured."""
+async def _register_text_sensor_with_device(sensor_config, device_obj):
+    """Register a text sensor and associate with device if provided."""
     ts = await text_sensor.new_text_sensor(sensor_config)
+    if device_obj is not None:
+        cg.add(ts.set_device(device_obj))
     return ts
 
 
@@ -47,15 +49,15 @@ async def to_code(config):
     device_id = config.get(CONF_DEVICE_ID)
 
     if serial_number_config := config.get(CONF_SERIAL_NUMBER):
-        ts = await _register_text_sensor_with_device(serial_number_config, device_id)
+        ts = await _register_text_sensor_with_device(serial_number_config, device_obj)
         cg.add(parent.set_serial_number_text_sensor(ts))
 
     if software_version_config := config.get(CONF_SOFTWARE_VERSION):
-        ts = await _register_text_sensor_with_device(software_version_config, device_id)
+        ts = await _register_text_sensor_with_device(software_version_config, device_obj)
         cg.add(parent.set_software_version_text_sensor(ts))
 
     if hardware_version_config := config.get(CONF_HARDWARE_VERSION):
-        ts = await _register_text_sensor_with_device(hardware_version_config, device_id)
+        ts = await _register_text_sensor_with_device(hardware_version_config, device_obj)
         cg.add(parent.set_hardware_version_text_sensor(ts))
 
     if firmware_checksum_config := config.get(CONF_FIRMWARE_CHECKSUM):

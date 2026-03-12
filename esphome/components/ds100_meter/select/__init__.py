@@ -8,7 +8,7 @@ from esphome.const import (
     ENTITY_CATEGORY_CONFIG,
 )
 
-from .. import CONF_DS100_METER_ID, ds100_meter_ns
+from .. import CONF_DS100_METER_ID, ds100_meter_ns, get_or_create_device
 
 # Configuration keys not in esphome.const
 CONF_PARITY = "parity"
@@ -37,28 +37,31 @@ CONFIG_SCHEMA = {
 }
 
 
-async def _register_select_with_device(config, device_id, parent_id, options):
-    """Register a select and set device_id if configured."""
+async def _register_select_with_device(config, device_obj, parent_id, options):
+    """Register a select and associate with device if provided."""
     s = await select.new_select(config, options=options)
     await cg.register_parented(s, parent_id)
+    if device_obj is not None:
+        cg.add(s.set_device(device_obj))
     return s
 
 
 async def to_code(config):
     device_id = config.get(CONF_DEVICE_ID)
+    device_obj = await get_or_create_device(device_id)
     parent_id = config[CONF_DS100_METER_ID]
 
     if baud_rate_config := config.get(CONF_BAUD_RATE):
         await _register_select_with_device(
-            baud_rate_config, device_id, parent_id, ["9600", "19200", "38400", "115200"]
+            baud_rate_config, device_obj, parent_id, ["9600", "19200", "38400", "115200"]
         )
 
     if parity_config := config.get(CONF_PARITY):
         await _register_select_with_device(
-            parity_config, device_id, parent_id, ["None", "Odd", "Even"]
+            parity_config, device_obj, parent_id, ["None", "Odd", "Even"]
         )
 
     if stop_bits_config := config.get(CONF_STOP_BITS):
         await _register_select_with_device(
-            stop_bits_config, device_id, parent_id, ["1", "2"]
+            stop_bits_config, device_obj, parent_id, ["1", "2"]
         )

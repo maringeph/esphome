@@ -7,7 +7,7 @@ from esphome.const import (
     ENTITY_CATEGORY_CONFIG,
     ICON_RESTART,
 )
-from . import CONF_DS100_METER_ID, ds100_meter_ns
+from . import CONF_DS100_METER_ID, ds100_meter_ns, get_or_create_device
 
 AUTO_LOAD = ["button"]
 CODEOWNERS = ["@maringeph"]
@@ -44,28 +44,31 @@ CONFIG_SCHEMA = cv.Schema(
 )
 
 
-async def _register_button_with_device(config, device_id):
-    """Register a button and set device_id if configured."""
+async def _register_button_with_device(config, device_obj):
+    """Register a button and associate with device if provided."""
     btn = await button.new_button(config)
     await cg.register_component(btn, config)
+    if device_obj is not None:
+        cg.add(btn.set_device(device_obj))
     return btn
 
 
 async def to_code(config):
     parent = await cg.get_variable(config[CONF_DS100_METER_ID])
     device_id = config.get(CONF_DEVICE_ID)
+    device_obj = await get_or_create_device(device_id)
 
     # Define USE_BUTTON when any button is configured
     cg.add_define("USE_BUTTON")
 
     if CONF_RESET_MAXIMUM_DEMAND in config:
         conf = config[CONF_RESET_MAXIMUM_DEMAND]
-        btn = await _register_button_with_device(conf, device_id)
+        btn = await _register_button_with_device(conf, device_obj)
         cg.add(btn.set_parent(parent))
         cg.add_define("USE_DS100_MAXIMUM_DEMAND")
 
     if CONF_RESET_STATISTICS in config:
         conf = config[CONF_RESET_STATISTICS]
-        btn = await _register_button_with_device(conf, device_id)
+        btn = await _register_button_with_device(conf, device_obj)
         cg.add(btn.set_parent(parent))
         cg.add_define("USE_DS100_RESETTABLE_STATISTICS")

@@ -690,9 +690,11 @@ def _check_statistics_used(config):
     return False
 
 
-async def _register_sensor_with_device(var, sensor_config, device_id):
-    """Register a sensor and set device_id if configured."""
+async def _register_sensor_with_device(sensor_config, device_obj):
+    """Register a sensor and associate with device if provided."""
     sens = await sensor.new_sensor(sensor_config)
+    if device_obj is not None:
+        cg.add(sens.set_device(device_obj))
     return sens
 
 
@@ -701,8 +703,9 @@ async def to_code(config):
     await cg.register_component(var, config)
     await modbus.register_modbus_device(var, config)
 
-    # Get device_id if configured
+    # Get device_id if configured and create device object
     device_id = config.get(CONF_DEVICE_ID)
+    device_obj = await get_or_create_device(device_id)
 
     # Set update intervals for different data categories
     # Use configured values or defaults (convert to milliseconds)
@@ -805,115 +808,81 @@ async def to_code(config):
 
     # Livedata - total/combined sensors
     if CONF_TOTAL_POWER in config:
-        sens = await _register_sensor_with_device(
-            var, config[CONF_TOTAL_POWER], device_id
-        )
+        sens = await _register_sensor_with_device(config[CONF_TOTAL_POWER], device_obj)
         cg.add(var.set_total_power_sensor(sens))
 
     if CONF_FREQUENCY in config:
-        sens = await _register_sensor_with_device(
-            var, config[CONF_FREQUENCY], device_id
-        )
+        sens = await _register_sensor_with_device(config[CONF_FREQUENCY], device_obj)
         cg.add(var.set_frequency_sensor(sens))
 
     if CONF_CURRENT_N in config:
-        sens = await _register_sensor_with_device(
-            var, config[CONF_CURRENT_N], device_id
-        )
+        sens = await _register_sensor_with_device(config[CONF_CURRENT_N], device_obj)
         cg.add(var.set_current_n_sensor(sens))
 
     # Line-to-line voltages
     if CONF_VOLTAGE_L1_L2 in config:
-        sens = await _register_sensor_with_device(
-            var, config[CONF_VOLTAGE_L1_L2], device_id
-        )
+        sens = await _register_sensor_with_device(config[CONF_VOLTAGE_L1_L2], device_obj)
         cg.add(var.set_voltage_l1_l2_sensor(sens))
 
     if CONF_VOLTAGE_L2_L3 in config:
-        sens = await _register_sensor_with_device(
-            var, config[CONF_VOLTAGE_L2_L3], device_id
-        )
+        sens = await _register_sensor_with_device(config[CONF_VOLTAGE_L2_L3], device_obj)
         cg.add(var.set_voltage_l2_l3_sensor(sens))
 
     if CONF_VOLTAGE_L3_L1 in config:
-        sens = await _register_sensor_with_device(
-            var, config[CONF_VOLTAGE_L3_L1], device_id
-        )
+        sens = await _register_sensor_with_device(config[CONF_VOLTAGE_L3_L1], device_obj)
         cg.add(var.set_voltage_l3_l1_sensor(sens))
 
     # Average voltages
     if CONF_VOLTAGE_L_N_AVG in config:
-        sens = await _register_sensor_with_device(
-            var, config[CONF_VOLTAGE_L_N_AVG], device_id
-        )
+        sens = await _register_sensor_with_device(config[CONF_VOLTAGE_L_N_AVG], device_obj)
         cg.add(var.set_voltage_l_n_avg_sensor(sens))
 
     if CONF_VOLTAGE_L_L_AVG in config:
-        sens = await _register_sensor_with_device(
-            var, config[CONF_VOLTAGE_L_L_AVG], device_id
-        )
+        sens = await _register_sensor_with_device(config[CONF_VOLTAGE_L_L_AVG], device_obj)
         cg.add(var.set_voltage_l_l_avg_sensor(sens))
 
     # Average current
     if CONF_CURRENT in config:
-        sens = await _register_sensor_with_device(var, config[CONF_CURRENT], device_id)
+        sens = await _register_sensor_with_device(config[CONF_CURRENT], device_obj)
         cg.add(var.set_current_avg_sensor(sens))
 
     # Total power sensors
     if CONF_APPARENT_POWER_TOTAL in config:
-        sens = await _register_sensor_with_device(
-            var, config[CONF_APPARENT_POWER_TOTAL], device_id
-        )
+        sens = await _register_sensor_with_device(config[CONF_APPARENT_POWER_TOTAL], device_obj)
         cg.add(var.set_apparent_power_total_sensor(sens))
 
     if CONF_REACTIVE_POWER_TOTAL in config:
-        sens = await _register_sensor_with_device(
-            var, config[CONF_REACTIVE_POWER_TOTAL], device_id
-        )
+        sens = await _register_sensor_with_device(config[CONF_REACTIVE_POWER_TOTAL], device_obj)
         cg.add(var.set_reactive_power_total_sensor(sens))
 
     # Power factor average
     if CONF_POWER_FACTOR in config:
-        sens = await _register_sensor_with_device(
-            var, config[CONF_POWER_FACTOR], device_id
-        )
+        sens = await _register_sensor_with_device(config[CONF_POWER_FACTOR], device_obj)
         cg.add(var.set_power_factor_avg_sensor(sens))
 
     # Statistics - total energy sensors
     if CONF_ACTIVE_ENERGY in config:
-        sens = await _register_sensor_with_device(
-            var, config[CONF_ACTIVE_ENERGY], device_id
-        )
+        sens = await _register_sensor_with_device(config[CONF_ACTIVE_ENERGY], device_obj)
         cg.add(var.set_active_energy_sensor(sens))
 
     if CONF_IMPORT_ACTIVE_ENERGY in config:
-        sens = await _register_sensor_with_device(
-            var, config[CONF_IMPORT_ACTIVE_ENERGY], device_id
-        )
+        sens = await _register_sensor_with_device(config[CONF_IMPORT_ACTIVE_ENERGY], device_obj)
         cg.add(var.set_import_active_energy_sensor(sens))
 
     if CONF_EXPORT_ACTIVE_ENERGY in config:
-        sens = await _register_sensor_with_device(
-            var, config[CONF_EXPORT_ACTIVE_ENERGY], device_id
-        )
+        sens = await _register_sensor_with_device(config[CONF_EXPORT_ACTIVE_ENERGY], device_obj)
         cg.add(var.set_export_active_energy_sensor(sens))
 
     if CONF_REACTIVE_ENERGY in config:
-        sens = await _register_sensor_with_device(
-            var, config[CONF_REACTIVE_ENERGY], device_id
-        )
+        sens = await _register_sensor_with_device(config[CONF_REACTIVE_ENERGY], device_obj)
         cg.add(var.set_reactive_energy_sensor(sens))
 
     if CONF_IMPORT_REACTIVE_ENERGY in config:
-        sens = await _register_sensor_with_device(
-            var, config[CONF_IMPORT_REACTIVE_ENERGY], device_id
-        )
+        sens = await _register_sensor_with_device(config[CONF_IMPORT_REACTIVE_ENERGY], device_obj)
         cg.add(var.set_import_reactive_energy_sensor(sens))
 
     if CONF_EXPORT_REACTIVE_ENERGY in config:
-        sens = await _register_sensor_with_device(
-            var, config[CONF_EXPORT_REACTIVE_ENERGY], device_id
-        )
+        sens = await _register_sensor_with_device(config[CONF_EXPORT_REACTIVE_ENERGY], device_obj)
         cg.add(var.set_export_reactive_energy_sensor(sens))
 
     # Quadrants - total
@@ -921,7 +890,7 @@ async def to_code(config):
         [CONF_QUADRANT_1, CONF_QUADRANT_2, CONF_QUADRANT_3, CONF_QUADRANT_4]
     ):
         if quadrant in config:
-            sens = await _register_sensor_with_device(var, config[quadrant], device_id)
+            sens = await _register_sensor_with_device(config[quadrant], device_obj)
             cg.add(var.set_reactive_energy_quadrant_sensor(i + 1, sens))
 
     # Tariffs
@@ -936,39 +905,27 @@ async def to_code(config):
 
         # Energy sensors for this tariff
         if CONF_ACTIVE_ENERGY in tariff_config:
-            sens = await _register_sensor_with_device(
-                var, tariff_config[CONF_ACTIVE_ENERGY], device_id
-            )
+            sens = await _register_sensor_with_device(tariff_config[CONF_ACTIVE_ENERGY], device_obj)
             cg.add(var.set_tariff_active_energy_sensor(tariff_num, sens))
 
         if CONF_IMPORT_ACTIVE_ENERGY in tariff_config:
-            sens = await _register_sensor_with_device(
-                var, tariff_config[CONF_IMPORT_ACTIVE_ENERGY], device_id
-            )
+            sens = await _register_sensor_with_device(tariff_config[CONF_IMPORT_ACTIVE_ENERGY], device_obj)
             cg.add(var.set_tariff_import_active_energy_sensor(tariff_num, sens))
 
         if CONF_EXPORT_ACTIVE_ENERGY in tariff_config:
-            sens = await _register_sensor_with_device(
-                var, tariff_config[CONF_EXPORT_ACTIVE_ENERGY], device_id
-            )
+            sens = await _register_sensor_with_device(tariff_config[CONF_EXPORT_ACTIVE_ENERGY], device_obj)
             cg.add(var.set_tariff_export_active_energy_sensor(tariff_num, sens))
 
         if CONF_REACTIVE_ENERGY in tariff_config:
-            sens = await _register_sensor_with_device(
-                var, tariff_config[CONF_REACTIVE_ENERGY], device_id
-            )
+            sens = await _register_sensor_with_device(tariff_config[CONF_REACTIVE_ENERGY], device_obj)
             cg.add(var.set_tariff_reactive_energy_sensor(tariff_num, sens))
 
         if CONF_IMPORT_REACTIVE_ENERGY in tariff_config:
-            sens = await _register_sensor_with_device(
-                var, tariff_config[CONF_IMPORT_REACTIVE_ENERGY], device_id
-            )
+            sens = await _register_sensor_with_device(tariff_config[CONF_IMPORT_REACTIVE_ENERGY], device_obj)
             cg.add(var.set_tariff_import_reactive_energy_sensor(tariff_num, sens))
 
         if CONF_EXPORT_REACTIVE_ENERGY in tariff_config:
-            sens = await _register_sensor_with_device(
-                var, tariff_config[CONF_EXPORT_REACTIVE_ENERGY], device_id
-            )
+            sens = await _register_sensor_with_device(tariff_config[CONF_EXPORT_REACTIVE_ENERGY], device_obj)
             cg.add(var.set_tariff_export_reactive_energy_sensor(tariff_num, sens))
 
         # Quadrants for this tariff
@@ -976,9 +933,7 @@ async def to_code(config):
             [CONF_QUADRANT_1, CONF_QUADRANT_2, CONF_QUADRANT_3, CONF_QUADRANT_4]
         ):
             if quadrant in tariff_config:
-                sens = await _register_sensor_with_device(
-                    var, tariff_config[quadrant], device_id
-                )
+                sens = await _register_sensor_with_device(tariff_config[quadrant], device_obj)
                 cg.add(
                     var.set_tariff_reactive_energy_quadrant_sensor(
                         tariff_num, quadrant_idx + 1, sens
@@ -993,9 +948,7 @@ async def to_code(config):
         phase_config = config[phase]
         for sensor_type in PHASE_SENSORS:
             if sensor_type in phase_config:
-                sens = await _register_sensor_with_device(
-                    var, phase_config[sensor_type], device_id
-                )
+                sens = await _register_sensor_with_device(phase_config[sensor_type], device_obj)
                 # Use set_phase_frequency_sensor for phase frequency, set_{type}_sensor for others
                 if sensor_type == CONF_FREQUENCY:
                     cg.add(var.set_phase_frequency_sensor(i, sens))
@@ -1021,39 +974,27 @@ async def to_code(config):
             phase_demand = demand_config[phase_key]
 
             if CONF_IMPORT_ACTIVE_DEMAND in phase_demand:
-                sens = await _register_sensor_with_device(
-                    var, phase_demand[CONF_IMPORT_ACTIVE_DEMAND], device_id
-                )
+                sens = await _register_sensor_with_device(phase_demand[CONF_IMPORT_ACTIVE_DEMAND], device_obj)
                 cg.add(var.set_import_active_demand_sensor(phase_idx, sens))
 
             if CONF_EXPORT_ACTIVE_DEMAND in phase_demand:
-                sens = await _register_sensor_with_device(
-                    var, phase_demand[CONF_EXPORT_ACTIVE_DEMAND], device_id
-                )
+                sens = await _register_sensor_with_device(phase_demand[CONF_EXPORT_ACTIVE_DEMAND], device_obj)
                 cg.add(var.set_export_active_demand_sensor(phase_idx, sens))
 
             if CONF_TOTAL_ACTIVE_DEMAND in phase_demand:
-                sens = await _register_sensor_with_device(
-                    var, phase_demand[CONF_TOTAL_ACTIVE_DEMAND], device_id
-                )
+                sens = await _register_sensor_with_device(phase_demand[CONF_TOTAL_ACTIVE_DEMAND], device_obj)
                 cg.add(var.set_total_active_demand_sensor(phase_idx, sens))
 
             if CONF_IMPORT_REACTIVE_DEMAND in phase_demand:
-                sens = await _register_sensor_with_device(
-                    var, phase_demand[CONF_IMPORT_REACTIVE_DEMAND], device_id
-                )
+                sens = await _register_sensor_with_device(phase_demand[CONF_IMPORT_REACTIVE_DEMAND], device_obj)
                 cg.add(var.set_import_reactive_demand_sensor(phase_idx, sens))
 
             if CONF_EXPORT_REACTIVE_DEMAND in phase_demand:
-                sens = await _register_sensor_with_device(
-                    var, phase_demand[CONF_EXPORT_REACTIVE_DEMAND], device_id
-                )
+                sens = await _register_sensor_with_device(phase_demand[CONF_EXPORT_REACTIVE_DEMAND], device_obj)
                 cg.add(var.set_export_reactive_demand_sensor(phase_idx, sens))
 
             if CONF_TOTAL_REACTIVE_DEMAND in phase_demand:
-                sens = await _register_sensor_with_device(
-                    var, phase_demand[CONF_TOTAL_REACTIVE_DEMAND], device_id
-                )
+                sens = await _register_sensor_with_device(phase_demand[CONF_TOTAL_REACTIVE_DEMAND], device_obj)
                 cg.add(var.set_total_reactive_demand_sensor(phase_idx, sens))
 
     # Maximum Demand sensors - per phase or total
@@ -1075,21 +1016,15 @@ async def to_code(config):
             phase_max_demand = max_demand_config[phase_key]
 
             if CONF_IMPORT_ACTIVE_MAXIMUM_DEMAND in phase_max_demand:
-                sens = await _register_sensor_with_device(
-                    var, phase_max_demand[CONF_IMPORT_ACTIVE_MAXIMUM_DEMAND], device_id
-                )
+                sens = await _register_sensor_with_device(phase_max_demand[CONF_IMPORT_ACTIVE_MAXIMUM_DEMAND], device_obj)
                 cg.add(var.set_import_active_maximum_demand_sensor(phase_idx, sens))
 
             if CONF_EXPORT_ACTIVE_MAXIMUM_DEMAND in phase_max_demand:
-                sens = await _register_sensor_with_device(
-                    var, phase_max_demand[CONF_EXPORT_ACTIVE_MAXIMUM_DEMAND], device_id
-                )
+                sens = await _register_sensor_with_device(phase_max_demand[CONF_EXPORT_ACTIVE_MAXIMUM_DEMAND], device_obj)
                 cg.add(var.set_export_active_maximum_demand_sensor(phase_idx, sens))
 
             if CONF_TOTAL_ACTIVE_MAXIMUM_DEMAND in phase_max_demand:
-                sens = await _register_sensor_with_device(
-                    var, phase_max_demand[CONF_TOTAL_ACTIVE_MAXIMUM_DEMAND], device_id
-                )
+                sens = await _register_sensor_with_device(phase_max_demand[CONF_TOTAL_ACTIVE_MAXIMUM_DEMAND], device_obj)
                 cg.add(var.set_total_active_maximum_demand_sensor(phase_idx, sens))
 
             if CONF_IMPORT_REACTIVE_MAXIMUM_DEMAND in phase_max_demand:
@@ -1109,9 +1044,7 @@ async def to_code(config):
                 cg.add(var.set_export_reactive_maximum_demand_sensor(phase_idx, sens))
 
             if CONF_TOTAL_REACTIVE_MAXIMUM_DEMAND in phase_max_demand:
-                sens = await _register_sensor_with_device(
-                    var, phase_max_demand[CONF_TOTAL_REACTIVE_MAXIMUM_DEMAND], device_id
-                )
+                sens = await _register_sensor_with_device(phase_max_demand[CONF_TOTAL_REACTIVE_MAXIMUM_DEMAND], device_obj)
                 cg.add(var.set_total_reactive_maximum_demand_sensor(phase_idx, sens))
 
     # Resettable Statistics sensors - energy values that can be reset
@@ -1123,39 +1056,27 @@ async def to_code(config):
             total_resettable = resettable_config[CONF_TOTAL]
 
             if CONF_ACTIVE_ENERGY in total_resettable:
-                sens = await _register_sensor_with_device(
-                    var, total_resettable[CONF_ACTIVE_ENERGY], device_id
-                )
+                sens = await _register_sensor_with_device(total_resettable[CONF_ACTIVE_ENERGY], device_obj)
                 cg.add(var.set_resettable_active_energy_sensor(sens))
 
             if CONF_IMPORT_ACTIVE_ENERGY in total_resettable:
-                sens = await _register_sensor_with_device(
-                    var, total_resettable[CONF_IMPORT_ACTIVE_ENERGY], device_id
-                )
+                sens = await _register_sensor_with_device(total_resettable[CONF_IMPORT_ACTIVE_ENERGY], device_obj)
                 cg.add(var.set_resettable_import_active_energy_sensor(sens))
 
             if CONF_EXPORT_ACTIVE_ENERGY in total_resettable:
-                sens = await _register_sensor_with_device(
-                    var, total_resettable[CONF_EXPORT_ACTIVE_ENERGY], device_id
-                )
+                sens = await _register_sensor_with_device(total_resettable[CONF_EXPORT_ACTIVE_ENERGY], device_obj)
                 cg.add(var.set_resettable_export_active_energy_sensor(sens))
 
             if CONF_REACTIVE_ENERGY in total_resettable:
-                sens = await _register_sensor_with_device(
-                    var, total_resettable[CONF_REACTIVE_ENERGY], device_id
-                )
+                sens = await _register_sensor_with_device(total_resettable[CONF_REACTIVE_ENERGY], device_obj)
                 cg.add(var.set_resettable_reactive_energy_sensor(sens))
 
             if CONF_IMPORT_REACTIVE_ENERGY in total_resettable:
-                sens = await _register_sensor_with_device(
-                    var, total_resettable[CONF_IMPORT_REACTIVE_ENERGY], device_id
-                )
+                sens = await _register_sensor_with_device(total_resettable[CONF_IMPORT_REACTIVE_ENERGY], device_obj)
                 cg.add(var.set_resettable_import_reactive_energy_sensor(sens))
 
             if CONF_EXPORT_REACTIVE_ENERGY in total_resettable:
-                sens = await _register_sensor_with_device(
-                    var, total_resettable[CONF_EXPORT_REACTIVE_ENERGY], device_id
-                )
+                sens = await _register_sensor_with_device(total_resettable[CONF_EXPORT_REACTIVE_ENERGY], device_obj)
                 cg.add(var.set_resettable_export_reactive_energy_sensor(sens))
 
         # Per-phase resettable statistics (A, B, C)
@@ -1167,15 +1088,11 @@ async def to_code(config):
             phase_resettable = resettable_config[phase_key]
 
             if CONF_ACTIVE_ENERGY in phase_resettable:
-                sens = await _register_sensor_with_device(
-                    var, phase_resettable[CONF_ACTIVE_ENERGY], device_id
-                )
+                sens = await _register_sensor_with_device(phase_resettable[CONF_ACTIVE_ENERGY], device_obj)
                 cg.add(var.set_resettable_phase_active_energy_sensor(phase_idx, sens))
 
             if CONF_IMPORT_ACTIVE_ENERGY in phase_resettable:
-                sens = await _register_sensor_with_device(
-                    var, phase_resettable[CONF_IMPORT_ACTIVE_ENERGY], device_id
-                )
+                sens = await _register_sensor_with_device(phase_resettable[CONF_IMPORT_ACTIVE_ENERGY], device_obj)
                 cg.add(
                     var.set_resettable_phase_import_active_energy_sensor(
                         phase_idx, sens
@@ -1183,9 +1100,7 @@ async def to_code(config):
                 )
 
             if CONF_EXPORT_ACTIVE_ENERGY in phase_resettable:
-                sens = await _register_sensor_with_device(
-                    var, phase_resettable[CONF_EXPORT_ACTIVE_ENERGY], device_id
-                )
+                sens = await _register_sensor_with_device(phase_resettable[CONF_EXPORT_ACTIVE_ENERGY], device_obj)
                 cg.add(
                     var.set_resettable_phase_export_active_energy_sensor(
                         phase_idx, sens
@@ -1193,15 +1108,11 @@ async def to_code(config):
                 )
 
             if CONF_REACTIVE_ENERGY in phase_resettable:
-                sens = await _register_sensor_with_device(
-                    var, phase_resettable[CONF_REACTIVE_ENERGY], device_id
-                )
+                sens = await _register_sensor_with_device(phase_resettable[CONF_REACTIVE_ENERGY], device_obj)
                 cg.add(var.set_resettable_phase_reactive_energy_sensor(phase_idx, sens))
 
             if CONF_IMPORT_REACTIVE_ENERGY in phase_resettable:
-                sens = await _register_sensor_with_device(
-                    var, phase_resettable[CONF_IMPORT_REACTIVE_ENERGY], device_id
-                )
+                sens = await _register_sensor_with_device(phase_resettable[CONF_IMPORT_REACTIVE_ENERGY], device_obj)
                 cg.add(
                     var.set_resettable_phase_import_reactive_energy_sensor(
                         phase_idx, sens
@@ -1209,9 +1120,7 @@ async def to_code(config):
                 )
 
             if CONF_EXPORT_REACTIVE_ENERGY in phase_resettable:
-                sens = await _register_sensor_with_device(
-                    var, phase_resettable[CONF_EXPORT_REACTIVE_ENERGY], device_id
-                )
+                sens = await _register_sensor_with_device(phase_resettable[CONF_EXPORT_REACTIVE_ENERGY], device_obj)
                 cg.add(
                     var.set_resettable_phase_export_reactive_energy_sensor(
                         phase_idx, sens
@@ -1227,37 +1136,25 @@ async def to_code(config):
         phase_stats = config[stats_key]
 
         if CONF_ACTIVE_ENERGY in phase_stats:
-            sens = await _register_sensor_with_device(
-                var, phase_stats[CONF_ACTIVE_ENERGY], device_id
-            )
+            sens = await _register_sensor_with_device(phase_stats[CONF_ACTIVE_ENERGY], device_obj)
             cg.add(var.set_phase_active_energy_sensor(phase_idx, sens))
 
         if CONF_IMPORT_ACTIVE_ENERGY in phase_stats:
-            sens = await _register_sensor_with_device(
-                var, phase_stats[CONF_IMPORT_ACTIVE_ENERGY], device_id
-            )
+            sens = await _register_sensor_with_device(phase_stats[CONF_IMPORT_ACTIVE_ENERGY], device_obj)
             cg.add(var.set_phase_import_active_energy_sensor(phase_idx, sens))
 
         if CONF_EXPORT_ACTIVE_ENERGY in phase_stats:
-            sens = await _register_sensor_with_device(
-                var, phase_stats[CONF_EXPORT_ACTIVE_ENERGY], device_id
-            )
+            sens = await _register_sensor_with_device(phase_stats[CONF_EXPORT_ACTIVE_ENERGY], device_obj)
             cg.add(var.set_phase_export_active_energy_sensor(phase_idx, sens))
 
         if CONF_REACTIVE_ENERGY in phase_stats:
-            sens = await _register_sensor_with_device(
-                var, phase_stats[CONF_REACTIVE_ENERGY], device_id
-            )
+            sens = await _register_sensor_with_device(phase_stats[CONF_REACTIVE_ENERGY], device_obj)
             cg.add(var.set_phase_reactive_energy_sensor(phase_idx, sens))
 
         if CONF_IMPORT_REACTIVE_ENERGY in phase_stats:
-            sens = await _register_sensor_with_device(
-                var, phase_stats[CONF_IMPORT_REACTIVE_ENERGY], device_id
-            )
+            sens = await _register_sensor_with_device(phase_stats[CONF_IMPORT_REACTIVE_ENERGY], device_obj)
             cg.add(var.set_phase_import_reactive_energy_sensor(phase_idx, sens))
 
         if CONF_EXPORT_REACTIVE_ENERGY in phase_stats:
-            sens = await _register_sensor_with_device(
-                var, phase_stats[CONF_EXPORT_REACTIVE_ENERGY], device_id
-            )
+            sens = await _register_sensor_with_device(phase_stats[CONF_EXPORT_REACTIVE_ENERGY], device_obj)
             cg.add(var.set_phase_export_reactive_energy_sensor(phase_idx, sens))

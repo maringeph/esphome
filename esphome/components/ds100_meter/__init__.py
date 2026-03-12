@@ -10,24 +10,84 @@ Features:
 - Maximum Demand: Peak power demand tracking with reset capability
 - Resettable Statistics: Separate resettable energy counters
 - Device Configuration: Modbus settings (baud rate, parity, stop bits, address, etc.)
+- Device Grouping: Optional device_id for grouping entities as subdevices in Home Assistant
 
 Platforms:
 - sensor: Energy and power measurements
 - select: Baud rate, parity, stop bits configuration
 - number: Modbus address, scrolling time, demand period, password
 - button: Reset maximum demand and resettable statistics
+- text_sensor: Serial number, firmware versions
+- binary_sensor: Terminal signal status
 """
 
 import esphome.codegen as cg
 import esphome.config_validation as cv
 from esphome import automation
-from esphome.const import CONF_ID
+from esphome.const import CONF_ID, CONF_DEVICE_ID
+from esphome.core import CORE
+from esphome.helpers import fnv1a_32bit_hash
 
 AUTO_LOAD = ["modbus"]
 CODEOWNERS = ["@maringeph"]
 
 CONF_DS100_METER_ID = "ds100_meter_id"
 ds100_meter_ns = cg.esphome_ns.namespace("ds100_meter")
+
+# Cache for device objects to avoid recreating them
+devices_cache = {}
+
+
+Device = cg.esphome_ns.class_("Device")
+
+
+async def get_or_create_device(device_id: str | None) -> cg.MockObj | None:
+    """Create or retrieve a cached Device object for Home Assistant grouping.
+
+    When device_id is configured, this creates a Device object that groups
+    all entities with the same device_id as a subdevice in Home Assistant.
+
+    Args:
+        device_id: The device identifier string (e.g., "smartmeter_1")
+
+    Returns:
+        A Device object if device_id is provided, None otherwise
+    """
+    if device_id is None:
+        return None
+
+    # Check cache first
+    if device_id in devices_cache:
+        return devices_cache[device_id]
+
+    # Create new device with unique ID
+    device_hash = fnv1a_32bit_hash(device_id)
+    device_id_obj = cv.declare_id(Device)(f"ds100_device_{device_hash}")
+    device_var = cg.new_Pvariable(device_id_obj)
+
+    # Configure device properties
+    cg.add(device_var.set_device_id(device_hash))
+    cg.add(device_var.set_name(device_id))
+
+    # Register device with ESPHome
+    cg.add(cg.App.register_device(device_var))
+
+    # Cache for reuse
+    devices_cache[device_id] = device_var
+
+    return device_var
+
+
+def set_entity_device(entity: cg.MockObj, device: cg.MockObj | None):
+    """Associate an entity with a device for Home Assistant grouping.
+
+    Args:
+        entity: The entity to associate (sensor, button, etc.)
+        device: The Device object, or None for no device association
+    """
+    if device is not None:
+        cg.add(entity.set_device(device))
+
 
 # Define action schema once - all read actions use same pattern
 READ_ACTION_SCHEMA = cv.Schema(

@@ -7,7 +7,7 @@ from esphome.const import (
     ENTITY_CATEGORY_DIAGNOSTIC,
 )
 
-from . import CONF_DS100_METER_ID, ds100_meter_ns
+from . import CONF_DS100_METER_ID, ds100_meter_ns, get_or_create_device
 
 DS100Meter = ds100_meter_ns.class_("DS100Meter")
 
@@ -24,9 +24,11 @@ CONFIG_SCHEMA = cv.Schema(
 )
 
 
-async def _register_binary_sensor_with_device(sensor_config, device_id):
-    """Register a binary sensor and set device_id if configured."""
+async def _register_binary_sensor_with_device(sensor_config, device_obj):
+    """Register a binary sensor and associate with device if provided."""
     bs = await binary_sensor.new_binary_sensor(sensor_config)
+    if device_obj is not None:
+        cg.add(bs.set_device(device_obj))
     return bs
 
 

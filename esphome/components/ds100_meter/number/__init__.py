@@ -11,7 +11,7 @@ from esphome.const import (
     UNIT_SECOND,
 )
 
-from .. import CONF_DS100_METER_ID, ds100_meter_ns
+from .. import CONF_DS100_METER_ID, ds100_meter_ns, get_or_create_device
 
 DS100ModbusAddressNumber = ds100_meter_ns.class_(
     "DS100ModbusAddressNumber", number.Number
@@ -53,34 +53,37 @@ CONFIG_SCHEMA = {
 
 
 async def _register_number_with_device(
-    config, device_id, parent_id, min_val, max_val, step
+    config, device_obj, parent_id, min_val, max_val, step
 ):
-    """Register a number and set device_id if configured."""
+    """Register a number and associate with device if provided."""
     n = await number.new_number(config, min_value=min_val, max_value=max_val, step=step)
     await cg.register_parented(n, parent_id)
+    if device_obj is not None:
+        cg.add(n.set_device(device_obj))
     return n
 
 
 async def to_code(config):
     device_id = config.get(CONF_DEVICE_ID)
+    device_obj = await get_or_create_device(device_id)
     parent_id = config[CONF_DS100_METER_ID]
 
     if address_config := config.get(CONF_ADDRESS):
         await _register_number_with_device(
-            address_config, device_id, parent_id, 1, 247, 1
+            address_config, device_obj, parent_id, 1, 247, 1
         )
 
     if scrolling_time_config := config.get(CONF_SCROLLING_TIME):
         await _register_number_with_device(
-            scrolling_time_config, device_id, parent_id, 0, 99, 1
+            scrolling_time_config, device_obj, parent_id, 0, 99, 1
         )
 
     if demand_period_config := config.get(CONF_DEMAND_PERIOD):
         await _register_number_with_device(
-            demand_period_config, device_id, parent_id, 1, 30, 1
+            demand_period_config, device_obj, parent_id, 1, 30, 1
         )
 
     if password_config := config.get(CONF_PASSWORD):
         await _register_number_with_device(
-            password_config, device_id, parent_id, 0, 9999, 1
+            password_config, device_obj, parent_id, 0, 9999, 1
         )
