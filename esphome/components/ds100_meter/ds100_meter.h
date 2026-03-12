@@ -21,10 +21,10 @@
 #include <vector>
 
 // Include settings headers for Select, Number, and Button classes
-#include "settings/ds100_settings_select.h"
-#include "settings/ds100_settings_number.h"
+#include "esphome/components/ds100_meter/settings/ds100_settings_select.h"
+#include "esphome/components/ds100_meter/settings/ds100_settings_number.h"
 #ifdef USE_BUTTON
-#include "settings/ds100_reset_buttons.h"
+#include "esphome/components/ds100_meter/settings/ds100_reset_buttons.h"
 #endif
 
 namespace esphome {
