@@ -34,10 +34,11 @@ async def _register_binary_sensor_with_device(sensor_config, device_obj):
 
 async def to_code(config):
     device_id = config.get(CONF_DEVICE_ID)
+    device_obj = await get_or_create_device(device_id)
     parent = await cg.get_variable(config[CONF_DS100_METER_ID])
 
     if terminal_signal_config := config.get(CONF_TERMINAL_SIGNAL):
         bs = await _register_binary_sensor_with_device(
-            terminal_signal_config, device_id
+            terminal_signal_config, device_obj
         )
         cg.add(parent.set_terminal_signal_binary_sensor(bs))

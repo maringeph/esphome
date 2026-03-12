@@ -47,21 +47,26 @@ async def _register_text_sensor_with_device(sensor_config, device_obj):
 async def to_code(config):
     parent = await cg.get_variable(config[CONF_DS100_METER_ID])
     device_id = config.get(CONF_DEVICE_ID)
+    device_obj = await get_or_create_device(device_id)
 
     if serial_number_config := config.get(CONF_SERIAL_NUMBER):
         ts = await _register_text_sensor_with_device(serial_number_config, device_obj)
         cg.add(parent.set_serial_number_text_sensor(ts))
 
     if software_version_config := config.get(CONF_SOFTWARE_VERSION):
-        ts = await _register_text_sensor_with_device(software_version_config, device_obj)
+        ts = await _register_text_sensor_with_device(
+            software_version_config, device_obj
+        )
         cg.add(parent.set_software_version_text_sensor(ts))
 
     if hardware_version_config := config.get(CONF_HARDWARE_VERSION):
-        ts = await _register_text_sensor_with_device(hardware_version_config, device_obj)
+        ts = await _register_text_sensor_with_device(
+            hardware_version_config, device_obj
+        )
         cg.add(parent.set_hardware_version_text_sensor(ts))
 
     if firmware_checksum_config := config.get(CONF_FIRMWARE_CHECKSUM):
         ts = await _register_text_sensor_with_device(
-            firmware_checksum_config, device_id
+            firmware_checksum_config, device_obj
         )
         cg.add(parent.set_firmware_checksum_text_sensor(ts))
