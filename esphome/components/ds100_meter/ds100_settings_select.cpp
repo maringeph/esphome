@@ -1,4 +1,5 @@
 #include "ds100_settings_select.h"
+#include "ds100_meter.h"
 #include "esphome/core/log.h"
 
 namespace esphome {
@@ -45,3 +46,9 @@ optional<uint16_t> DS100StopBitsSelect::map_value(const std::string &value) {
 
 }  // namespace ds100_meter
 }  // namespace esphome
+
+// Explicit instantiations for the template classes
+// This ensures the template methods are compiled with full DS100Meter definition
+template class esphome::ds100_meter::DS100RegisterSelect<0x100C>;
+template class esphome::ds100_meter::DS100RegisterSelect<0x100D>;
+template class esphome::ds100_meter::DS100RegisterSelect<0x100E>;

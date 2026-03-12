@@ -20,15 +20,21 @@
 #include <array>
 #include <vector>
 
-// Include settings headers for Select, Number, and Button classes
-#include "ds100_settings_select.h"
-#include "ds100_settings_number.h"
-#ifdef USE_BUTTON
-#include "ds100_reset_buttons.h"
-#endif
-
 namespace esphome {
 namespace ds100_meter {
+
+// Forward declarations for settings classes (defined in separate headers)
+class DS100BaudRateSelect;
+class DS100ParitySelect;
+class DS100StopBitsSelect;
+class DS100ModbusAddressNumber;
+class DS100ScrollingTimeNumber;
+class DS100DemandPeriodNumber;
+class DS100PasswordNumber;
+#ifdef USE_BUTTON
+class DS100ResetMaximumDemandButton;
+class DS100ResetStatisticsButton;
+#endif
 
 /// DS100 Meter - 3-phase energy meter with Modbus interface
 class DS100Meter : public PollingComponent, public modbus::ModbusDevice {

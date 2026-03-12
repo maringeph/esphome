@@ -2,6 +2,14 @@
 #include "esphome/core/helpers.h"
 #include "esphome/core/log.h"
 
+// Include settings headers after ds100_meter.h so template classes
+// can use the fully defined DS100Meter class
+#include "ds100_settings_select.h"
+#include "ds100_settings_number.h"
+#ifdef USE_BUTTON
+#include "ds100_reset_buttons.h"
+#endif
+
 namespace esphome {
 namespace ds100_meter {
 
