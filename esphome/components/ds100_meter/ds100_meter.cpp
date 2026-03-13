@@ -818,11 +818,21 @@ void DS100Meter::handle_livedata_response(const std::vector<uint8_t> &data) {
     }
     if (this->phases_[i].reactive_power_sensor_ != nullptr) {
       float reactive_power = get_int32_helper(data, REG_REACTIVE_POWER_L1 + power_offset, 1.0f);  // unit: var (direct)
+      int32_t raw = (static_cast<int32_t>(data[REG_REACTIVE_POWER_L1 + power_offset]) << 24) |
+                    (static_cast<int32_t>(data[REG_REACTIVE_POWER_L1 + power_offset + 1]) << 16) |
+                    (static_cast<int32_t>(data[REG_REACTIVE_POWER_L1 + power_offset + 2]) << 8) |
+                    static_cast<int32_t>(data[REG_REACTIVE_POWER_L1 + power_offset + 3]);
+      ESP_LOGV(TAG, "Phase %d Reactive Power - raw: %ld (0x%08lX), scaled: %.1f", i + 1, (long) raw,
+               (unsigned long) raw, reactive_power);
       this->phases_[i].reactive_power_sensor_->publish_state(reactive_power);
     }
     if (this->phases_[i].power_factor_sensor_ != nullptr) {
+      uint16_t raw_pf = get_uint16_helper(data, REG_POWER_FACTOR_L1 + (i * 2));
       float power_factor = get_power_factor_helper(data, REG_POWER_FACTOR_L1 + (i * 2));
+      ESP_LOGV(TAG, "Phase %d Power Factor - raw: %u (0x%04X), scaled: %.3f", i + 1, raw_pf, raw_pf, power_factor);
       this->phases_[i].power_factor_sensor_->publish_state(power_factor);
+    } else {
+      ESP_LOGV(TAG, "Phase %d Power Factor sensor is nullptr", i + 1);
     }
     if (this->phases_[i].frequency_sensor_ != nullptr) {
       float frequency = get_frequency_helper(data, REG_FREQUENCY_L1 + (i * 2));
@@ -1000,6 +1010,9 @@ void DS100Meter::handle_total_statistics_response(const std::vector<uint8_t> &da
 
   ESP_LOGV(TAG, "Processing statistics (%zu bytes)", data.size());
 
+  // Check if reactive energy sensor is configured
+  ESP_LOGV(TAG, "Reactive energy sensor: %p", this->total_energy_sensors_.reactive_);
+
   // Total energy values (always present) - use helper function
   this->read_energy_sensors(data.data(), 0, this->total_energy_sensors_, 0.01f, statistics_size);
 
@@ -1165,6 +1178,8 @@ void DS100Meter::read_energy_sensors(const uint8_t *data, uint16_t base_offset, 
     int32_t raw = (static_cast<int32_t>(data[base_offset + 12]) << 24) |
                   (static_cast<int32_t>(data[base_offset + 13]) << 16) |
                   (static_cast<int32_t>(data[base_offset + 14]) << 8) | static_cast<int32_t>(data[base_offset + 15]);
+    ESP_LOGV(TAG, "Reactive energy raw at offset %u: %ld (0x%08lX), scaled: %.2f", base_offset + 12, (long) raw,
+             (unsigned long) raw, static_cast<float>(raw) * scale);
     sensors.reactive_->publish_state(static_cast<float>(raw) * scale);
   }
 
