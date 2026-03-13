@@ -1286,5 +1286,19 @@ void DS100Meter::write_register(uint16_t address, uint16_t value) {
   this->queue_command(cmd);
 }
 
+#ifdef USE_BUTTON
+void DS100ResetMaximumDemandButton::press_action() {
+  if (this->parent_ != nullptr) {
+    this->parent_->reset_maximum_demand();
+  }
+}
+
+void DS100ResetStatisticsButton::press_action() {
+  if (this->parent_ != nullptr) {
+    this->parent_->reset_statistics();
+  }
+}
+#endif
+
 }  // namespace ds100_meter
 }  // namespace esphome
