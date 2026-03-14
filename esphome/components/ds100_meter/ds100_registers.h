@@ -527,12 +527,6 @@ constexpr size_t statistics_offset(uint16_t reg_addr) { return static_cast<size_
 // Formula: offset = (address - 0x043A) × 2
 constexpr size_t demand_offset(uint16_t reg_addr) { return static_cast<size_t>(reg_addr - DEMAND_ADDR) * 2; }
 
-// Convert phase statistics register address to byte offset
-// Formula: offset = (address - phase_base) × 2
-constexpr size_t phase_statistics_offset(uint16_t reg_addr, uint16_t phase_base) {
-  return static_cast<size_t>(reg_addr - phase_base) * 2;
-}
-
 // Convert resettable statistics register address to byte offset (base: 0x062C)
 // Formula: offset = (address - 0x062C) × 2
 constexpr size_t resettable_statistics_offset(uint16_t reg_addr) {
