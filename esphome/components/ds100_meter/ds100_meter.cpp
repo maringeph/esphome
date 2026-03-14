@@ -941,32 +941,43 @@ void DS100Meter::read_energy_sensors(const uint8_t *data, uint16_t base_register
       sensors.export_reactive_->publish_state(static_cast<float>(raw) * scale);
     }
   }
-  // Phase Statistics (0x0500, 0x0564, 0x05C8) - relative to base
+  // Phase Statistics (0x0500, 0x0564, 0x05C8) - use phase_statistics_offset helper
   else {
-    // For phase statistics, the registers have the same structure but different base
-    // Offsets calculated from: register_address - STATISTICS_ADDR (0x010E)
+    // Helper lambda that uses phase_statistics_offset with the current base
+    auto read_phase_int32_at = [&](uint16_t reg_addr) -> int32_t {
+      size_t byte_offset = phase_statistics_offset(reg_addr, base_register);
+      if (byte_offset + 3 >= max_data_len) {
+        ESP_LOGW(TAG, "Phase energy read would exceed bounds: register 0x%04X (offset %zu), max=%u", reg_addr,
+                 byte_offset, max_data_len);
+        return 0;
+      }
+      return (static_cast<int32_t>(data[byte_offset]) << 24) | (static_cast<int32_t>(data[byte_offset + 1]) << 16) |
+             (static_cast<int32_t>(data[byte_offset + 2]) << 8) | static_cast<int32_t>(data[byte_offset + 3]);
+    };
+
+    // Read phase energy values using phase-specific register addresses
     if (sensors.active_ != nullptr) {
-      int32_t raw = read_int32_at(base_register + 20);  // Active Total at base+20 (0x0122 - 0x010E)
+      int32_t raw = read_phase_int32_at(STATISTICS_ACTIVE_ENERGY_TOTAL);
       sensors.active_->publish_state(static_cast<float>(raw) * scale);
     }
     if (sensors.import_active_ != nullptr) {
-      int32_t raw = read_int32_at(base_register);  // Import Active at base (0x010E - 0x010E)
+      int32_t raw = read_phase_int32_at(STATISTICS_ACTIVE_ENERGY_IMPORT);
       sensors.import_active_->publish_state(static_cast<float>(raw) * scale);
     }
     if (sensors.export_active_ != nullptr) {
-      int32_t raw = read_int32_at(base_register + 10);  // Export Active at base+10 (0x0118 - 0x010E)
+      int32_t raw = read_phase_int32_at(STATISTICS_ACTIVE_ENERGY_EXPORT);
       sensors.export_active_->publish_state(static_cast<float>(raw) * scale);
     }
     if (sensors.reactive_ != nullptr) {
-      int32_t raw = read_int32_at(base_register + 50);  // Reactive Total at base+50 (0x0140 - 0x010E)
+      int32_t raw = read_phase_int32_at(STATISTICS_REACTIVE_ENERGY_TOTAL);
       sensors.reactive_->publish_state(static_cast<float>(raw) * scale);
     }
     if (sensors.import_reactive_ != nullptr) {
-      int32_t raw = read_int32_at(base_register + 30);  // Import Reactive at base+30 (0x012C - 0x010E)
+      int32_t raw = read_phase_int32_at(STATISTICS_REACTIVE_ENERGY_IMPORT);
       sensors.import_reactive_->publish_state(static_cast<float>(raw) * scale);
     }
     if (sensors.export_reactive_ != nullptr) {
-      int32_t raw = read_int32_at(base_register + 40);  // Export Reactive at base+40 (0x0136 - 0x010E)
+      int32_t raw = read_phase_int32_at(STATISTICS_REACTIVE_ENERGY_EXPORT);
       sensors.export_reactive_->publish_state(static_cast<float>(raw) * scale);
     }
   }
