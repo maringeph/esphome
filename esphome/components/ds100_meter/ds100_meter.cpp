@@ -544,110 +544,112 @@ void DS100Meter::handle_livedata_response(const std::vector<uint8_t> &data) {
     const size_t power_offset = i * 4;
 
     if (this->phases_[i].voltage_sensor_ != nullptr) {
-      float voltage = get_int32_helper(data, LIVEDATA_VOLTAGE_L1_N + voltage_offset, 0.001f);  // mV -> V
+      float voltage =
+          get_int32_helper(data, livedata_offset(LIVEDATA_VOLTAGE_L1_N) + voltage_offset, 0.001f);  // mV -> V
       this->phases_[i].voltage_sensor_->publish_state(voltage);
     }
     if (this->phases_[i].current_sensor_ != nullptr) {
-      float current = get_int32_helper(data, LIVEDATA_CURRENT_L1 + current_offset, 0.001f);  // mA -> A
+      float current = get_int32_helper(data, livedata_offset(LIVEDATA_CURRENT_L1) + current_offset, 0.001f);  // mA -> A
       this->phases_[i].current_sensor_->publish_state(current);
     }
     if (this->phases_[i].active_power_sensor_ != nullptr) {
-      float active_power = get_int32_helper(data, LIVEDATA_ACTIVE_POWER_L1 + power_offset, 1.0f);  // unit: W (direct)
+      float active_power =
+          get_int32_helper(data, livedata_offset(LIVEDATA_ACTIVE_POWER_L1) + power_offset, 1.0f);  // unit: W (direct)
       this->phases_[i].active_power_sensor_->publish_state(active_power);
     }
     if (this->phases_[i].apparent_power_sensor_ != nullptr) {
-      float apparent_power =
-          get_int32_helper(data, LIVEDATA_APPARENT_POWER_L1 + power_offset, 1.0f);  // unit: VA (direct)
+      float apparent_power = get_int32_helper(data, livedata_offset(LIVEDATA_APPARENT_POWER_L1) + power_offset,
+                                              1.0f);  // unit: VA (direct)
       this->phases_[i].apparent_power_sensor_->publish_state(apparent_power);
     }
     if (this->phases_[i].reactive_power_sensor_ != nullptr) {
-      float reactive_power =
-          get_int32_helper(data, LIVEDATA_REACTIVE_POWER_L1 + power_offset, 1.0f);  // unit: var (direct)
-      int32_t raw = (static_cast<int32_t>(data[LIVEDATA_REACTIVE_POWER_L1 + power_offset]) << 24) |
-                    (static_cast<int32_t>(data[LIVEDATA_REACTIVE_POWER_L1 + power_offset + 1]) << 16) |
-                    (static_cast<int32_t>(data[LIVEDATA_REACTIVE_POWER_L1 + power_offset + 2]) << 8) |
-                    static_cast<int32_t>(data[LIVEDATA_REACTIVE_POWER_L1 + power_offset + 3]);
+      float reactive_power = get_int32_helper(data, livedata_offset(LIVEDATA_REACTIVE_POWER_L1) + power_offset,
+                                              1.0f);  // unit: var (direct)
+      int32_t raw = (static_cast<int32_t>(data[livedata_offset(LIVEDATA_REACTIVE_POWER_L1) + power_offset]) << 24) |
+                    (static_cast<int32_t>(data[livedata_offset(LIVEDATA_REACTIVE_POWER_L1) + power_offset + 1]) << 16) |
+                    (static_cast<int32_t>(data[livedata_offset(LIVEDATA_REACTIVE_POWER_L1) + power_offset + 2]) << 8) |
+                    static_cast<int32_t>(data[livedata_offset(LIVEDATA_REACTIVE_POWER_L1) + power_offset + 3]);
       ESP_LOGV(TAG, "Phase %d Reactive Power - raw: %ld (0x%08lX), scaled: %.1f", i + 1, (long) raw,
                (unsigned long) raw, reactive_power);
       this->phases_[i].reactive_power_sensor_->publish_state(reactive_power);
     }
     if (this->phases_[i].power_factor_sensor_ != nullptr) {
-      uint16_t raw_pf = get_uint16_helper(data, LIVEDATA_POWER_FACTOR_L1 + (i * 2));
-      float power_factor = get_power_factor_helper(data, LIVEDATA_POWER_FACTOR_L1 + (i * 2));
+      uint16_t raw_pf = get_uint16_helper(data, livedata_offset(LIVEDATA_POWER_FACTOR_L1) + (i * 2));
+      float power_factor = get_power_factor_helper(data, livedata_offset(LIVEDATA_POWER_FACTOR_L1) + (i * 2));
       ESP_LOGV(TAG, "Phase %d Power Factor - raw: %u (0x%04X), scaled: %.3f", i + 1, raw_pf, raw_pf, power_factor);
       this->phases_[i].power_factor_sensor_->publish_state(power_factor);
     } else {
       ESP_LOGV(TAG, "Phase %d Power Factor sensor is nullptr", i + 1);
     }
     if (this->phases_[i].frequency_sensor_ != nullptr) {
-      float frequency = get_frequency_helper(data, LIVEDATA_FREQUENCY_L1 + (i * 2));
+      float frequency = get_frequency_helper(data, livedata_offset(LIVEDATA_FREQUENCY_L1) + (i * 2));
       this->phases_[i].frequency_sensor_->publish_state(frequency);
     }
   }
 
   // Read neutral current
   if (this->current_n_sensor_ != nullptr) {
-    float current_n = get_int32_helper(data, LIVEDATA_CURRENT_N, 0.001f);  // mA -> A
+    float current_n = get_int32_helper(data, livedata_offset(LIVEDATA_CURRENT_N), 0.001f);  // mA -> A
     this->current_n_sensor_->publish_state(current_n);
   }
 
   // Read line-to-line voltages
   if (this->voltage_l1_l2_sensor_ != nullptr) {
-    float voltage = get_int32_helper(data, LIVEDATA_VOLTAGE_L1_L2, 0.001f);  // mV -> V
+    float voltage = get_int32_helper(data, livedata_offset(LIVEDATA_VOLTAGE_L1_L2), 0.001f);  // mV -> V
     this->voltage_l1_l2_sensor_->publish_state(voltage);
   }
   if (this->voltage_l2_l3_sensor_ != nullptr) {
-    float voltage = get_int32_helper(data, LIVEDATA_VOLTAGE_L2_L3, 0.001f);  // mV -> V
+    float voltage = get_int32_helper(data, livedata_offset(LIVEDATA_VOLTAGE_L2_L3), 0.001f);  // mV -> V
     this->voltage_l2_l3_sensor_->publish_state(voltage);
   }
   if (this->voltage_l3_l1_sensor_ != nullptr) {
-    float voltage = get_int32_helper(data, LIVEDATA_VOLTAGE_L3_L1, 0.001f);  // mV -> V
+    float voltage = get_int32_helper(data, livedata_offset(LIVEDATA_VOLTAGE_L3_L1), 0.001f);  // mV -> V
     this->voltage_l3_l1_sensor_->publish_state(voltage);
   }
 
   // Read average voltages
   if (this->voltage_l_n_avg_sensor_ != nullptr) {
-    float voltage = get_int32_helper(data, LIVEDATA_VOLTAGE_L_N_AVG, 0.001f);  // mV -> V
+    float voltage = get_int32_helper(data, livedata_offset(LIVEDATA_VOLTAGE_L_N_AVG), 0.001f);  // mV -> V
     this->voltage_l_n_avg_sensor_->publish_state(voltage);
   }
   if (this->voltage_l_l_avg_sensor_ != nullptr) {
-    float voltage = get_int32_helper(data, LIVEDATA_VOLTAGE_L_L_AVG, 0.001f);  // mV -> V
+    float voltage = get_int32_helper(data, livedata_offset(LIVEDATA_VOLTAGE_L_L_AVG), 0.001f);  // mV -> V
     this->voltage_l_l_avg_sensor_->publish_state(voltage);
   }
 
   // Read average current
   if (this->current_avg_sensor_ != nullptr) {
-    float current = get_int32_helper(data, LIVEDATA_CURRENT_AVG, 0.001f);  // mA -> A
+    float current = get_int32_helper(data, livedata_offset(LIVEDATA_CURRENT_AVG), 0.001f);  // mA -> A
     this->current_avg_sensor_->publish_state(current);
   }
 
   // Read total/combined values
   if (this->total_power_sensor_ != nullptr) {
-    float total_power = get_int32_helper(data, LIVEDATA_ACTIVE_POWER_TOTAL, 1.0f);  // unit: W (direct)
+    float total_power = get_int32_helper(data, livedata_offset(LIVEDATA_ACTIVE_POWER_TOTAL), 1.0f);  // unit: W (direct)
     this->total_power_sensor_->publish_state(total_power);
   }
 
   // Total apparent power (first 3 registers after total active power)
   if (this->apparent_power_total_sensor_ != nullptr) {
-    float apparent_power = get_int32_helper(data, LIVEDATA_ACTIVE_POWER_TOTAL + 4, 1.0f);  // unit: VA
+    float apparent_power = get_int32_helper(data, livedata_offset(LIVEDATA_ACTIVE_POWER_TOTAL) + 4, 1.0f);  // unit: VA
     this->apparent_power_total_sensor_->publish_state(apparent_power);
   }
 
   // Total reactive power (next 3 registers after apparent power)
   if (this->reactive_power_total_sensor_ != nullptr) {
-    float reactive_power = get_int32_helper(data, LIVEDATA_ACTIVE_POWER_TOTAL + 8, 1.0f);  // unit: var
+    float reactive_power = get_int32_helper(data, livedata_offset(LIVEDATA_ACTIVE_POWER_TOTAL) + 8, 1.0f);  // unit: var
     this->reactive_power_total_sensor_->publish_state(reactive_power);
   }
 
   // Total power factor (1 register after reactive power)
   if (this->power_factor_avg_sensor_ != nullptr) {
-    float power_factor = get_power_factor_helper(data, LIVEDATA_ACTIVE_POWER_TOTAL + 12);
+    float power_factor = get_power_factor_helper(data, livedata_offset(LIVEDATA_ACTIVE_POWER_TOTAL) + 12);
     this->power_factor_avg_sensor_->publish_state(power_factor);
   }
 
   // Frequency (use L1 frequency as total)
   if (this->frequency_sensor_ != nullptr) {
-    float frequency = get_frequency_helper(data, LIVEDATA_FREQUENCY_L1);
+    float frequency = get_frequency_helper(data, livedata_offset(LIVEDATA_FREQUENCY_L1));
     this->frequency_sensor_->publish_state(frequency);
   }
 }
@@ -749,8 +751,8 @@ void DS100Meter::handle_total_statistics_response(const std::vector<uint8_t> &da
 
 #ifdef USE_DS100_QUADRANTS
   // Quadrant reactive energy values
-  const uint16_t quadrant_offsets[] = {STATISTICS_REACTIVE_ENERGY_Q1, STATISTICS_REACTIVE_ENERGY_Q2, STATISTICS_REACTIVE_ENERGY_Q3,
-                                       STATISTICS_REACTIVE_ENERGY_Q4};
+  const uint16_t quadrant_offsets[] = {STATISTICS_REACTIVE_ENERGY_Q1, STATISTICS_REACTIVE_ENERGY_Q2,
+                                       STATISTICS_REACTIVE_ENERGY_Q3, STATISTICS_REACTIVE_ENERGY_Q4};
 
   for (uint8_t i = 0; i < 4; i++) {
     if (this->reactive_energy_quadrant_sensors_[i] != nullptr) {
@@ -762,10 +764,14 @@ void DS100Meter::handle_total_statistics_response(const std::vector<uint8_t> &da
 #ifdef USE_DS100_TARIFFS
   // Tariff + quadrant combinations
   const uint16_t tariff_quadrant_offsets[4][4] = {
-      {STATISTICS_REACTIVE_ENERGY_Q1_T1, STATISTICS_REACTIVE_ENERGY_Q1_T2, STATISTICS_REACTIVE_ENERGY_Q1_T3, STATISTICS_REACTIVE_ENERGY_Q1_T4},
-      {STATISTICS_REACTIVE_ENERGY_Q2_T1, STATISTICS_REACTIVE_ENERGY_Q2_T2, STATISTICS_REACTIVE_ENERGY_Q2_T3, STATISTICS_REACTIVE_ENERGY_Q2_T4},
-      {STATISTICS_REACTIVE_ENERGY_Q3_T1, STATISTICS_REACTIVE_ENERGY_Q3_T2, STATISTICS_REACTIVE_ENERGY_Q3_T3, STATISTICS_REACTIVE_ENERGY_Q3_T4},
-      {STATISTICS_REACTIVE_ENERGY_Q4_T1, STATISTICS_REACTIVE_ENERGY_Q4_T2, STATISTICS_REACTIVE_ENERGY_Q4_T3, STATISTICS_REACTIVE_ENERGY_Q4_T4},
+      {STATISTICS_REACTIVE_ENERGY_Q1_T1, STATISTICS_REACTIVE_ENERGY_Q1_T2, STATISTICS_REACTIVE_ENERGY_Q1_T3,
+       STATISTICS_REACTIVE_ENERGY_Q1_T4},
+      {STATISTICS_REACTIVE_ENERGY_Q2_T1, STATISTICS_REACTIVE_ENERGY_Q2_T2, STATISTICS_REACTIVE_ENERGY_Q2_T3,
+       STATISTICS_REACTIVE_ENERGY_Q2_T4},
+      {STATISTICS_REACTIVE_ENERGY_Q3_T1, STATISTICS_REACTIVE_ENERGY_Q3_T2, STATISTICS_REACTIVE_ENERGY_Q3_T3,
+       STATISTICS_REACTIVE_ENERGY_Q3_T4},
+      {STATISTICS_REACTIVE_ENERGY_Q4_T1, STATISTICS_REACTIVE_ENERGY_Q4_T2, STATISTICS_REACTIVE_ENERGY_Q4_T3,
+       STATISTICS_REACTIVE_ENERGY_Q4_T4},
   };
 
   for (uint8_t q = 0; q < 4; q++) {
