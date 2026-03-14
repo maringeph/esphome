@@ -1,5 +1,6 @@
 #pragma once
 
+#include "ds100_registers.h"
 #include "esphome/core/automation.h"
 #include "esphome/core/component.h"
 #include "esphome/components/modbus_controller/modbus_controller.h"
@@ -339,10 +340,8 @@ class DS100Meter : public modbus_controller::ModbusController {
   // Update interval setters for different data categories
   void set_update_interval_livedata(uint32_t interval) { this->update_interval_livedata_ = interval; }
   void set_update_interval_demand(uint32_t interval) { this->update_interval_demand_ = interval; }
-  void set_update_interval_maximum_demand(uint32_t interval) { this->update_interval_maximum_demand_ = interval; }
   void set_update_interval_statistics(uint32_t interval) { this->update_interval_statistics_ = interval; }
   void set_update_interval_settings(uint32_t interval) { this->update_interval_settings_ = interval; }
-  void set_update_interval_device_info(uint32_t interval) { this->update_interval_device_info_ = interval; }
 
   void update() override;
   void dump_config() override;
@@ -352,29 +351,23 @@ class DS100Meter : public modbus_controller::ModbusController {
   void handle_demand_response(const std::vector<uint8_t> &data);
   void handle_phase_statistics_response(const std::vector<uint8_t> &data, uint8_t phase);
   void handle_total_statistics_response(const std::vector<uint8_t> &data);
-  void handle_maximum_demand_response(const std::vector<uint8_t> &data);
   void handle_resettable_statistics_response(const std::vector<uint8_t> &data);
   void handle_settings_response(const std::vector<uint8_t> &data);
-  void handle_device_info_response(const std::vector<uint8_t> &data);
 
   // Automation actions - manual read triggers
   void read_livedata() { this->queue_request(RequestType::LIVEDATA); }
   void read_demand() { this->queue_request(RequestType::DEMAND); }
   void read_statistics() { this->queue_request(RequestType::STATISTICS); }
-  void read_maximum_demand() { this->queue_request(RequestType::MAXIMUM_DEMAND); }
-  void read_device_info() { this->queue_request(RequestType::DEVICE_INFO); }
   void read_statistics_resettable() { this->queue_request(RequestType::RESETTABLE_STATISTICS); }
   void read_settings() { this->queue_request(RequestType::SETTINGS); }
 
   // Request queue with priorities (lower number = higher priority)
   enum class RequestType : uint8_t {
     LIVEDATA = 0,               // Highest priority - real-time data
-    DEMAND = 1,                 // Current power demand
+    DEMAND = 1,                 // Current + Maximum demand (combined)
     STATISTICS = 2,             // Energy statistics (chain: Total -> L1 -> L2 -> L3)
-    MAXIMUM_DEMAND = 3,         // Peak demand values
-    RESETTABLE_STATISTICS = 4,  // Resettable energy counters
-    SETTINGS = 5,               // Device configuration
-    DEVICE_INFO = 6,            // Lowest priority - serial number, versions
+    RESETTABLE_STATISTICS = 3,  // Resettable energy counters
+    SETTINGS = 4,               // Device configuration + device info (combined)
   };
 
   // Request queue management
@@ -531,21 +524,17 @@ class DS100Meter : public modbus_controller::ModbusController {
 #endif
 
   // Update intervals for different data categories (in milliseconds)
-  uint32_t update_interval_livedata_{10000};        // 10s default
-  uint32_t update_interval_demand_{10000};          // 10s default
-  uint32_t update_interval_maximum_demand_{60000};  // 60s default
-  uint32_t update_interval_statistics_{60000};      // 60s default
-  uint32_t update_interval_settings_{60000};        // 60s default
-  uint32_t update_interval_device_info_{60000};     // 60s default
+  uint32_t update_interval_livedata_{10000};    // 10s default
+  uint32_t update_interval_demand_{10000};      // 10s default (includes current + max demand)
+  uint32_t update_interval_statistics_{60000};  // 60s default
+  uint32_t update_interval_settings_{60000};    // 60s default (includes device info)
 
   // Last update timestamps for each category
   uint32_t last_update_livedata_{0};
   uint32_t last_update_demand_{0};
-  uint32_t last_update_maximum_demand_{0};
   uint32_t last_update_statistics_{0};
   uint32_t last_update_resettable_statistics_{0};
   uint32_t last_update_settings_{0};
-  uint32_t last_update_device_info_{0};
 
   // Statistics chain state: 0=idle, 1=L1 pending, 2=L2 pending, 3=L3 pending
   uint8_t statistics_cycle_state_{0};
@@ -556,10 +545,8 @@ class DS100Meter : public modbus_controller::ModbusController {
   static const uint8_t PENDING_LIVEDATA = 0x01;
   static const uint8_t PENDING_DEMAND = 0x02;
   static const uint8_t PENDING_STATISTICS = 0x04;
-  static const uint8_t PENDING_MAXIMUM_DEMAND = 0x08;
-  static const uint8_t PENDING_DEVICE_INFO = 0x10;
-  static const uint8_t PENDING_SETTINGS = 0x20;
-  static const uint8_t PENDING_RESETTABLE_STATISTICS = 0x40;
+  static const uint8_t PENDING_RESETTABLE_STATISTICS = 0x08;
+  static const uint8_t PENDING_SETTINGS = 0x10;
 
   uint8_t pending_requests_{0};      // Bitmask of pending request types
   bool request_in_progress_{false};  // True if waiting for Modbus response
@@ -596,24 +583,6 @@ template<typename... Ts> class ReadStatisticsAction : public Action<Ts...> {
  public:
   explicit ReadStatisticsAction(DS100Meter *meter) : meter_(meter) {}
   void play(Ts... x) override { this->meter_->read_statistics(); }
-
- protected:
-  DS100Meter *meter_;
-};
-
-template<typename... Ts> class ReadMaximumDemandAction : public Action<Ts...> {
- public:
-  explicit ReadMaximumDemandAction(DS100Meter *meter) : meter_(meter) {}
-  void play(Ts... x) override { this->meter_->read_maximum_demand(); }
-
- protected:
-  DS100Meter *meter_;
-};
-
-template<typename... Ts> class ReadDeviceInfoAction : public Action<Ts...> {
- public:
-  explicit ReadDeviceInfoAction(DS100Meter *meter) : meter_(meter) {}
-  void play(Ts... x) override { this->meter_->read_device_info(); }
 
  protected:
   DS100Meter *meter_;

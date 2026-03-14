@@ -323,20 +323,18 @@ CONF_STATISTICS_L2 = "statistics_l2"
 CONF_STATISTICS_L3 = "statistics_l3"
 
 # Update interval configuration for different data categories
+# Note: Demand includes both current demand and maximum demand
+# Note: Settings includes device info (serial, versions)
 CONF_UPDATE_INTERVAL_LIVEDATA = "update_interval_livedata"
 CONF_UPDATE_INTERVAL_DEMAND = "update_interval_demand"
-CONF_UPDATE_INTERVAL_MAXIMUM_DEMAND = "update_interval_maximum_demand"
 CONF_UPDATE_INTERVAL_STATISTICS = "update_interval_statistics"
 CONF_UPDATE_INTERVAL_SETTINGS = "update_interval_settings"
-CONF_UPDATE_INTERVAL_DEVICE_INFO = "update_interval_device_info"
 
 # Default update intervals in milliseconds
 DEFAULT_LIVEDATA_INTERVAL_MS = 10000  # 10s
-DEFAULT_DEMAND_INTERVAL_MS = 10000  # 10s
-DEFAULT_MAXIMUM_DEMAND_INTERVAL_MS = 60000  # 60s
+DEFAULT_DEMAND_INTERVAL_MS = 10000  # 10s (includes max demand)
 DEFAULT_STATISTICS_INTERVAL_MS = 60000  # 60s
-DEFAULT_SETTINGS_INTERVAL_MS = 60000  # 60s
-DEFAULT_DEVICE_INFO_INTERVAL_MS = 60000  # 60s
+DEFAULT_SETTINGS_INTERVAL_MS = 60000  # 60s (includes device info)
 
 CONF_DEVICE_ID = "device_id"
 
@@ -348,10 +346,8 @@ CONFIG_SCHEMA = (
             # Update intervals for different data categories
             cv.Optional(CONF_UPDATE_INTERVAL_LIVEDATA): cv.update_interval,
             cv.Optional(CONF_UPDATE_INTERVAL_DEMAND): cv.update_interval,
-            cv.Optional(CONF_UPDATE_INTERVAL_MAXIMUM_DEMAND): cv.update_interval,
             cv.Optional(CONF_UPDATE_INTERVAL_STATISTICS): cv.update_interval,
             cv.Optional(CONF_UPDATE_INTERVAL_SETTINGS): cv.update_interval,
-            cv.Optional(CONF_UPDATE_INTERVAL_DEVICE_INFO): cv.update_interval,
             # Livedata - phase-specific sensors
             cv.Optional(CONF_PHASE_A): PHASE_SCHEMA,
             cv.Optional(CONF_PHASE_B): PHASE_SCHEMA,
@@ -732,13 +728,6 @@ async def to_code(config):
         else DEFAULT_DEMAND_INTERVAL_MS
     )
 
-    max_demand_interval = config.get(CONF_UPDATE_INTERVAL_MAXIMUM_DEMAND)
-    max_demand_ms = (
-        max_demand_interval.total_milliseconds
-        if max_demand_interval is not None
-        else DEFAULT_MAXIMUM_DEMAND_INTERVAL_MS
-    )
-
     statistics_interval = config.get(CONF_UPDATE_INTERVAL_STATISTICS)
     statistics_ms = (
         statistics_interval.total_milliseconds
@@ -753,23 +742,14 @@ async def to_code(config):
         else DEFAULT_SETTINGS_INTERVAL_MS
     )
 
-    device_info_interval = config.get(CONF_UPDATE_INTERVAL_DEVICE_INFO)
-    device_info_ms = (
-        device_info_interval.total_milliseconds
-        if device_info_interval is not None
-        else DEFAULT_DEVICE_INFO_INTERVAL_MS
-    )
-
     # Calculate GCD of all intervals for efficient polling
     from math import gcd
 
     intervals = [
         livedata_ms,
         demand_ms,
-        max_demand_ms,
         statistics_ms,
         settings_ms,
-        device_info_ms,
     ]
     base_interval = intervals[0]
     for interval in intervals[1:]:
@@ -782,10 +762,8 @@ async def to_code(config):
     # Set individual category intervals
     cg.add(var.set_update_interval_livedata(livedata_ms))
     cg.add(var.set_update_interval_demand(demand_ms))
-    cg.add(var.set_update_interval_maximum_demand(max_demand_ms))
     cg.add(var.set_update_interval_statistics(statistics_ms))
     cg.add(var.set_update_interval_settings(settings_ms))
-    cg.add(var.set_update_interval_device_info(device_info_ms))
 
     # Set feature flags based on configuration
     use_tariffs = _check_tariffs_used(config)
@@ -1097,17 +1075,13 @@ async def to_code(config):
 
             if CONF_IMPORT_REACTIVE_MAXIMUM_DEMAND in phase_max_demand:
                 sens = await _register_sensor_with_device(
-                    var,
-                    phase_max_demand[CONF_IMPORT_REACTIVE_MAXIMUM_DEMAND],
-                    device_id,
+                    phase_max_demand[CONF_IMPORT_REACTIVE_MAXIMUM_DEMAND], device_obj
                 )
                 cg.add(var.set_import_reactive_maximum_demand_sensor(phase_idx, sens))
 
             if CONF_EXPORT_REACTIVE_MAXIMUM_DEMAND in phase_max_demand:
                 sens = await _register_sensor_with_device(
-                    var,
-                    phase_max_demand[CONF_EXPORT_REACTIVE_MAXIMUM_DEMAND],
-                    device_id,
+                    phase_max_demand[CONF_EXPORT_REACTIVE_MAXIMUM_DEMAND], device_obj
                 )
                 cg.add(var.set_export_reactive_maximum_demand_sensor(phase_idx, sens))
 

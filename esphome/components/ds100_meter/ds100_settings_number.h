@@ -1,5 +1,6 @@
 #pragma once
 
+#include "ds100_registers.h"
 #include "esphome/components/number/number.h"
 #include "esphome/core/component.h"
 #include "esphome/core/log.h"
@@ -39,34 +40,34 @@ class DS100RegisterNumber : public number::Number, public Parented<DS100Meter> {
   virtual const char *get_tag() const = 0;
 };
 
-/// Number control for Modbus slave address (register 0x1003, range 1-247)
-class DS100ModbusAddressNumber : public DS100RegisterNumber<0x1003, 1, 247> {
+/// Number control for Modbus slave address (register SETTINGS_RS485_MODBUS_ADDR, range 1-247)
+class DS100ModbusAddressNumber : public DS100RegisterNumber<SETTINGS_RS485_MODBUS_ADDR, 1, 247> {
  protected:
   const char *get_tag() const override { return "ds100_meter.number.address"; }
 };
 
-/// Number control for display scrolling time (register 0x100B, range 0-99 seconds)
-class DS100ScrollingTimeNumber : public DS100RegisterNumber<0x100B, 0, 99> {
+/// Number control for display scrolling time (register SETTINGS_SCROLLING_TIME, range 0-99 seconds)
+class DS100ScrollingTimeNumber : public DS100RegisterNumber<SETTINGS_SCROLLING_TIME, 0, 99> {
  protected:
   const char *get_tag() const override { return "ds100_meter.number.scrolling_time"; }
 };
 
-/// Number control for demand calculation period (register 0x1011, range 1-30 minutes)
-class DS100DemandPeriodNumber : public DS100RegisterNumber<0x1011, 1, 30> {
+/// Number control for demand calculation period (register SETTINGS_DEMAND_PERIOD, range 1-30 minutes)
+class DS100DemandPeriodNumber : public DS100RegisterNumber<SETTINGS_DEMAND_PERIOD, 1, 30> {
  protected:
   const char *get_tag() const override { return "ds100_meter.number.demand_period"; }
 };
 
-/// Number control for device password (register 0x1016, range 0-9999)
+/// Number control for device password (register SETTINGS_PASSWORD, range 0-9999)
 /// WARNING: Password is transmitted in plain text and visible in logs
-class DS100PasswordNumber : public DS100RegisterNumber<0x1016, 0, 9999> {
+class DS100PasswordNumber : public DS100RegisterNumber<SETTINGS_PASSWORD, 0, 9999> {
  protected:
   const char *get_tag() const override { return "ds100_meter.number.password"; }
 };
 
-/// Number control for SO output constant (register 0x1017, range 100-2500)
+/// Number control for SO output constant (register SETTINGS_SO_OUTPUT, range 100-2500)
 /// Must be divisible by 10000
-class DS100SOOutputNumber : public DS100RegisterNumber<0x1017, 100, 2500> {
+class DS100SOOutputNumber : public DS100RegisterNumber<SETTINGS_SO_OUTPUT, 100, 2500> {
  protected:
   const char *get_tag() const override { return "ds100_meter.number.so_output"; }
   bool validate_value(uint16_t value) override {
@@ -78,21 +79,21 @@ class DS100SOOutputNumber : public DS100RegisterNumber<0x1017, 100, 2500> {
   }
 };
 
-/// Number control for meter running time (register 0x1018, 2 registers, 32-bit)
+/// Number control for meter running time (register SETTINGS_METER_RUNNING_TIME, 2 registers, 32-bit)
 /// Read-only in practice, but implemented as number for display
-class DS100MeterRunningTimeNumber : public DS100RegisterNumber<0x1018, 0, 65535> {
+class DS100MeterRunningTimeNumber : public DS100RegisterNumber<SETTINGS_METER_RUNNING_TIME, 0, 65535> {
  protected:
   const char *get_tag() const override { return "ds100_meter.number.running_time"; }
 };
 
-/// Number control for timing current value (register 0x101A, 2 registers, unit mA)
-class DS100TimingCurrentNumber : public DS100RegisterNumber<0x101A, 0, 65535> {
+/// Number control for timing current value (register SETTINGS_TIMING_CURRENT, 2 registers, unit mA)
+class DS100TimingCurrentNumber : public DS100RegisterNumber<SETTINGS_TIMING_CURRENT, 0, 65535> {
  protected:
   const char *get_tag() const override { return "ds100_meter.number.timing_current"; }
 };
 
-/// Number control for auto scroll display content (register 0x1020, 5 registers, bit-wise)
-class DS100AutoScrollNumber : public DS100RegisterNumber<0x1020, 0, 65535> {
+/// Number control for auto scroll display content (register SETTINGS_AUTO_SCROLL_CONTENT, 5 registers, bit-wise)
+class DS100AutoScrollNumber : public DS100RegisterNumber<SETTINGS_AUTO_SCROLL_CONTENT, 0, 65535> {
  protected:
   const char *get_tag() const override { return "ds100_meter.number.auto_scroll"; }
 };

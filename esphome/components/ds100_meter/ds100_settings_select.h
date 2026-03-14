@@ -1,5 +1,6 @@
 #pragma once
 
+#include "ds100_registers.h"
 #include "esphome/components/select/select.h"
 #include "esphome/core/component.h"
 #include "esphome/core/log.h"
@@ -30,41 +31,41 @@ template<uint16_t REG_ADDR> class DS100RegisterSelect : public select::Select, p
   virtual const char *get_tag() const = 0;
 };
 
-/// Select control for baud rate configuration (register 0x100C)
+/// Select control for baud rate configuration (register SETTINGS_RS485_BAUD_RATE)
 /// Options: 9600, 19200, 38400, 115200
-class DS100BaudRateSelect : public DS100RegisterSelect<0x100C> {
+class DS100BaudRateSelect : public DS100RegisterSelect<SETTINGS_RS485_BAUD_RATE> {
  protected:
   optional<uint16_t> map_value(const std::string &value) override;
   const char *get_tag() const override { return "ds100_meter.select.baud_rate"; }
 };
 
-/// Select control for parity configuration (register 0x100D)
+/// Select control for parity configuration (register SETTINGS_RS485_PARITY)
 /// Options: None, Odd, Even
-class DS100ParitySelect : public DS100RegisterSelect<0x100D> {
+class DS100ParitySelect : public DS100RegisterSelect<SETTINGS_RS485_PARITY> {
  protected:
   optional<uint16_t> map_value(const std::string &value) override;
   const char *get_tag() const override { return "ds100_meter.select.parity"; }
 };
 
-/// Select control for stop bits configuration (register 0x100E)
+/// Select control for stop bits configuration (register SETTINGS_RS485_STOP_BITS)
 /// Options: 1, 2
-class DS100StopBitsSelect : public DS100RegisterSelect<0x100E> {
+class DS100StopBitsSelect : public DS100RegisterSelect<SETTINGS_RS485_STOP_BITS> {
  protected:
   optional<uint16_t> map_value(const std::string &value) override;
   const char *get_tag() const override { return "ds100_meter.select.stop_bits"; }
 };
 
-/// Select control for combined code configuration (register 0x100F)
+/// Select control for combined code configuration (register SETTINGS_COMBINED_CODE)
 /// Options: forward, reverse, forward+reverse, positive-negative, remaining energy
-class DS100CombinedCodeSelect : public DS100RegisterSelect<0x100F> {
+class DS100CombinedCodeSelect : public DS100RegisterSelect<SETTINGS_COMBINED_CODE> {
  protected:
   optional<uint16_t> map_value(const std::string &value) override;
   const char *get_tag() const override { return "ds100_meter.select.combined_code"; }
 };
 
-/// Select control for demand mode configuration (register 0x1010)
+/// Select control for demand mode configuration (register SETTINGS_DEMAND_MODE)
 /// Options: interval, slip
-class DS100DemandModeSelect : public DS100RegisterSelect<0x1010> {
+class DS100DemandModeSelect : public DS100RegisterSelect<SETTINGS_DEMAND_MODE> {
  protected:
   optional<uint16_t> map_value(const std::string &value) override;
   const char *get_tag() const override { return "ds100_meter.select.demand_mode"; }

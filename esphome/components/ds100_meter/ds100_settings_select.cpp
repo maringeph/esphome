@@ -16,7 +16,7 @@ template<uint16_t REG_ADDR> void DS100RegisterSelect<REG_ADDR>::control(const st
 }
 
 optional<uint16_t> DS100BaudRateSelect::map_value(const std::string &value) {
-  // Register 0x100C: Baud rate (6=9600, 7=19200, 8=38400, 9=115200)
+  // Register SETTINGS_RS485_BAUD_RATE: Baud rate (6=9600, 7=19200, 8=38400, 9=115200)
   if (value == "9600")
     return 6;
   if (value == "19200")
@@ -31,7 +31,7 @@ optional<uint16_t> DS100BaudRateSelect::map_value(const std::string &value) {
 }
 
 optional<uint16_t> DS100ParitySelect::map_value(const std::string &value) {
-  // Register 0x100D: Parity (0=none, 1=odd, 2=even)
+  // Register SETTINGS_RS485_PARITY: Parity (0=none, 1=odd, 2=even)
   if (value == "None")
     return 0;
   if (value == "Odd")
@@ -44,7 +44,7 @@ optional<uint16_t> DS100ParitySelect::map_value(const std::string &value) {
 }
 
 optional<uint16_t> DS100StopBitsSelect::map_value(const std::string &value) {
-  // Register 0x100E: Stop bits (1=1 bit, 2=2 bits)
+  // Register SETTINGS_RS485_STOP_BITS: Stop bits (1=1 bit, 2=2 bits)
   if (value == "1")
     return 1;
   if (value == "2")
@@ -55,7 +55,8 @@ optional<uint16_t> DS100StopBitsSelect::map_value(const std::string &value) {
 }
 
 optional<uint16_t> DS100CombinedCodeSelect::map_value(const std::string &value) {
-  // Register 0x100F: Combined code (1=forward, 2=reverse, 3=forward+reverse, 4=positive-negative, 5=remaining energy)
+  // Register SETTINGS_COMBINED_CODE: Combined code (1=forward, 2=reverse, 3=forward+reverse, 4=positive-negative,
+  // 5=remaining energy)
   if (value == "forward")
     return 1;
   if (value == "reverse")
@@ -72,7 +73,7 @@ optional<uint16_t> DS100CombinedCodeSelect::map_value(const std::string &value) 
 }
 
 optional<uint16_t> DS100DemandModeSelect::map_value(const std::string &value) {
-  // Register 0x1010: Demand mode (0=interval, 1=slip)
+  // Register SETTINGS_DEMAND_MODE: Demand mode (0=interval, 1=slip)
   if (value == "interval")
     return 0;
   if (value == "slip")
@@ -87,8 +88,8 @@ optional<uint16_t> DS100DemandModeSelect::map_value(const std::string &value) {
 
 // Explicit instantiations for the template classes
 // This ensures the template methods are compiled with full DS100Meter definition
-template class esphome::ds100_meter::DS100RegisterSelect<0x100C>;
-template class esphome::ds100_meter::DS100RegisterSelect<0x100D>;
-template class esphome::ds100_meter::DS100RegisterSelect<0x100E>;
-template class esphome::ds100_meter::DS100RegisterSelect<0x100F>;
-template class esphome::ds100_meter::DS100RegisterSelect<0x1010>;
+template class esphome::ds100_meter::DS100RegisterSelect<esphome::ds100_meter::SETTINGS_RS485_BAUD_RATE>;
+template class esphome::ds100_meter::DS100RegisterSelect<esphome::ds100_meter::SETTINGS_RS485_PARITY>;
+template class esphome::ds100_meter::DS100RegisterSelect<esphome::ds100_meter::SETTINGS_RS485_STOP_BITS>;
+template class esphome::ds100_meter::DS100RegisterSelect<esphome::ds100_meter::SETTINGS_COMBINED_CODE>;
+template class esphome::ds100_meter::DS100RegisterSelect<esphome::ds100_meter::SETTINGS_DEMAND_MODE>;

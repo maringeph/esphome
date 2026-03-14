@@ -6,10 +6,9 @@ Features:
 - Livedata: Instantaneous voltage, current, power, frequency per phase
 - Statistics: Total and per-phase energy counters (active, reactive, import/export)
 - Tariffs: Energy tracking across 4 configurable tariff periods
-- Demand: Current power demand monitoring (per phase and total)
-- Maximum Demand: Peak power demand tracking with reset capability
+- Demand: Current and maximum power demand monitoring (per phase and total)
 - Resettable Statistics: Separate resettable energy counters
-- Device Configuration: Modbus settings (baud rate, parity, stop bits, address, etc.)
+- Settings: Device configuration including device info (serial, versions)
 - Device Grouping: Optional device_id for grouping entities as subdevices in Home Assistant
 
 Platforms:
@@ -135,38 +134,6 @@ ReadStatisticsAction = ds100_meter_ns.class_("ReadStatisticsAction", automation.
     READ_ACTION_SCHEMA,
 )
 async def ds100_meter_read_statistics_to_code(config, action_id, template_arg, args):
-    pvar = await cg.get_variable(config[CONF_ID])
-    return cg.new_Pvariable(action_id, template_arg, pvar)
-
-
-# Action to manually read maximum demand
-ReadMaximumDemandAction = ds100_meter_ns.class_(
-    "ReadMaximumDemandAction", automation.Action
-)
-
-
-@automation.register_action(
-    "ds100_meter.read_maximum_demand",
-    ReadMaximumDemandAction,
-    READ_ACTION_SCHEMA,
-)
-async def ds100_meter_read_maximum_demand_to_code(
-    config, action_id, template_arg, args
-):
-    pvar = await cg.get_variable(config[CONF_ID])
-    return cg.new_Pvariable(action_id, template_arg, pvar)
-
-
-# Action to manually read device info
-ReadDeviceInfoAction = ds100_meter_ns.class_("ReadDeviceInfoAction", automation.Action)
-
-
-@automation.register_action(
-    "ds100_meter.read_device_info",
-    ReadDeviceInfoAction,
-    READ_ACTION_SCHEMA,
-)
-async def ds100_meter_read_device_info_to_code(config, action_id, template_arg, args):
     pvar = await cg.get_variable(config[CONF_ID])
     return cg.new_Pvariable(action_id, template_arg, pvar)
 
