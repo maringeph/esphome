@@ -425,7 +425,8 @@ class DS100Meter : public modbus_controller::ModbusController {
 
   // Helper method to read energy sensors following the DS100 pattern
   // All energy statistics follow the same pattern, just at different register addresses
-  void read_energy_sensors(const uint8_t *data, uint16_t base_offset, EnergySensors &sensors, float scale = 0.01f,
+  // base_register: Starting register address (e.g., STATISTICS_ADDR, STATISTICS_RESETTABLE_ADDR, STATISTICS_L1_ADDR)
+  void read_energy_sensors(const uint8_t *data, uint16_t base_register, EnergySensors &sensors, float scale = 0.01f,
                            uint16_t max_data_len = 60);
 
   // Helper method to read power demand sensors (6 types × 4 phases)
