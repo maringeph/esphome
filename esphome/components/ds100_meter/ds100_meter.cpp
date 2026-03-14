@@ -643,21 +643,21 @@ void DS100Meter::handle_livedata_response(const std::vector<uint8_t> &data) {
     this->total_power_sensor_->publish_state(total_power);
   }
 
-  // Total apparent power (first 3 registers after total active power)
+  // Total apparent power
   if (this->apparent_power_total_sensor_ != nullptr) {
-    float apparent_power = get_int32_helper(data, livedata_offset(LIVEDATA_ACTIVE_POWER_TOTAL) + 4, 1.0f);  // unit: VA
+    float apparent_power = get_int32_helper(data, livedata_offset(LIVEDATA_APPARENT_POWER_TOTAL), 1.0f);  // unit: VA
     this->apparent_power_total_sensor_->publish_state(apparent_power);
   }
 
-  // Total reactive power (next 3 registers after apparent power)
+  // Total reactive power
   if (this->reactive_power_total_sensor_ != nullptr) {
-    float reactive_power = get_int32_helper(data, livedata_offset(LIVEDATA_ACTIVE_POWER_TOTAL) + 8, 1.0f);  // unit: var
+    float reactive_power = get_int32_helper(data, livedata_offset(LIVEDATA_REACTIVE_POWER_TOTAL), 1.0f);  // unit: var
     this->reactive_power_total_sensor_->publish_state(reactive_power);
   }
 
-  // Total power factor (1 register after reactive power)
+  // Total power factor
   if (this->power_factor_avg_sensor_ != nullptr) {
-    float power_factor = get_power_factor_helper(data, livedata_offset(LIVEDATA_ACTIVE_POWER_TOTAL) + 12);
+    float power_factor = get_power_factor_helper(data, livedata_offset(LIVEDATA_POWER_FACTOR_AVG));
     this->power_factor_avg_sensor_->publish_state(power_factor);
   }
 

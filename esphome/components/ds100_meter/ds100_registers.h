@@ -67,10 +67,10 @@ constexpr uint16_t LIVEDATA_APPARENT_POWER_L3 = 0x0426;     // Phase L3 Apparent
 constexpr uint16_t LIVEDATA_APPARENT_POWER_TOTAL = 0x0428;  // Total Apparent Power
 
 // Reactive Power - 32-bit values, unit: var (direct, no scaling)
-constexpr uint16_t LIVEDATA_REACTIVE_POWER_L1 = 0x042A;   // Phase L1 Reactive Power
-constexpr uint16_t LIVEDATA_REACTIVE_POWER_L2 = 0x042C;   // Phase L2 Reactive Power
-constexpr uint16_t LIVEDATA_REACTIVE_POWER_L3 = 0x042E;   // Phase L3 Reactive Power
-constexpr uint16_t LIVEDATA_REACTIVE_POWER_AVG = 0x0430;  // Average Reactive Power
+constexpr uint16_t LIVEDATA_REACTIVE_POWER_L1 = 0x042A;     // Phase L1 Reactive Power
+constexpr uint16_t LIVEDATA_REACTIVE_POWER_L2 = 0x042C;     // Phase L2 Reactive Power
+constexpr uint16_t LIVEDATA_REACTIVE_POWER_L3 = 0x042E;     // Phase L3 Reactive Power
+constexpr uint16_t LIVEDATA_REACTIVE_POWER_TOTAL = 0x0430;  // Total Reactive Power
 
 // Frequency - 16-bit values, scale: 0.1 Hz (value in 0.1 Hz, divide by 10 for Hz)
 constexpr uint16_t LIVEDATA_FREQUENCY_L1 = 0x0432;   // Phase L1 Frequency
