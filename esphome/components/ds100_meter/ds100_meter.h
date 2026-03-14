@@ -430,7 +430,8 @@ class DS100Meter : public modbus_controller::ModbusController {
                            uint16_t max_data_len = 60);
 
   // Helper method to read power demand sensors (6 types × 4 phases)
-  void read_power_demand_sensors(const uint8_t *data, uint16_t base_offset, PowerDemandSensors &sensors,
+  // base_register: Starting register address (DEMAND_ADDR = 0x043A)
+  void read_power_demand_sensors(const uint8_t *data, uint16_t base_register, PowerDemandSensors &sensors,
                                  float scale = 1.0f);
 
   // Phase data (3 phases: A, B, C)

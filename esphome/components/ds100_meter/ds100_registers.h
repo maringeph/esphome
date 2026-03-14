@@ -517,19 +517,15 @@ constexpr uint16_t HOLIDAY_TABLE_LEN = 100;  // Total table length: 100 holidays
 
 // Convert livedata register address to byte offset (base: 0x0400)
 // Formula: offset = (address - 0x0400) × 2
-constexpr size_t livedata_offset(uint16_t reg_addr) { return static_cast<size_t>(reg_addr - 0x0400) * 2; }
+constexpr size_t livedata_offset(uint16_t reg_addr) { return static_cast<size_t>(reg_addr - LIVEDATA_ADDR) * 2; }
 
 // Convert statistics register address to byte offset (base: 0x010E)
 // Formula: offset = (address - 0x010E) × 2
-constexpr size_t statistics_offset(uint16_t reg_addr) { return static_cast<size_t>(reg_addr - 0x010E) * 2; }
+constexpr size_t statistics_offset(uint16_t reg_addr) { return static_cast<size_t>(reg_addr - STATISTICS_ADDR) * 2; }
 
 // Convert demand register address to byte offset (base: 0x043A)
 // Formula: offset = (address - 0x043A) × 2
-constexpr size_t demand_offset(uint16_t reg_addr) { return static_cast<size_t>(reg_addr - 0x043A) * 2; }
-
-// Convert maximum demand register address to byte offset (base: 0x046A)
-// Formula: offset = (address - 0x046A) × 2
-constexpr size_t max_demand_offset(uint16_t reg_addr) { return static_cast<size_t>(reg_addr - 0x046A) * 2; }
+constexpr size_t demand_offset(uint16_t reg_addr) { return static_cast<size_t>(reg_addr - DEMAND_ADDR) * 2; }
 
 // Convert phase statistics register address to byte offset
 // Formula: offset = (address - phase_base) × 2
@@ -539,15 +535,19 @@ constexpr size_t phase_statistics_offset(uint16_t reg_addr, uint16_t phase_base)
 
 // Convert resettable statistics register address to byte offset (base: 0x062C)
 // Formula: offset = (address - 0x062C) × 2
-constexpr size_t resettable_statistics_offset(uint16_t reg_addr) { return static_cast<size_t>(reg_addr - 0x062C) * 2; }
+constexpr size_t resettable_statistics_offset(uint16_t reg_addr) {
+  return static_cast<size_t>(reg_addr - STATISTICS_RESETTABLE_ADDR) * 2;
+}
 
 // Convert resettable demand register address to byte offset (base: 0x0680)
 // Formula: offset = (address - 0x0680) × 2
-constexpr size_t resettable_demand_offset(uint16_t reg_addr) { return static_cast<size_t>(reg_addr - 0x0680) * 2; }
+constexpr size_t resettable_demand_offset(uint16_t reg_addr) {
+  return static_cast<size_t>(reg_addr - DEMAND_RESETTABLE_ADDR) * 2;
+}
 
-// Convert settings register address to byte offset (base: 0x1003)
-// Formula: offset = (address - 0x1003) × 2
-constexpr size_t settings_offset(uint16_t reg_addr) { return static_cast<size_t>(reg_addr - 0x1003) * 2; }
+// Convert settings register address to byte offset (base: 0x1000)
+// Formula: offset = (address - 0x1000) × 2
+constexpr size_t settings_offset(uint16_t reg_addr) { return static_cast<size_t>(reg_addr - SETTINGS_ADDR) * 2; }
 
 }  // namespace ds100_meter
 }  // namespace esphome
