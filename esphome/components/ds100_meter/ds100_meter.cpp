@@ -62,39 +62,22 @@ void DS100Meter::update() {
     ESP_LOGV(TAG, "Consecutive timeouts: %d", this->consecutive_timeouts_);
   }
 
-  // Increment startup cycle counter (saturates at 255)
-  if (this->startup_cycle_ < 255) {
-    this->startup_cycle_++;
-  }
-
   // Check which categories are due and add them to the request queue
-  // During startup, stagger requests to avoid bus overload
   if (now - this->last_update_livedata_ >= this->update_interval_livedata_) {
-    // LIVEDATA is always allowed - highest priority
     this->queue_request(RequestType::LIVEDATA);
   }
 
 #ifdef USE_DS100_DEMAND
   if (now - this->last_update_demand_ >= this->update_interval_demand_) {
-    // Allow DEMAND after 1 cycle (startup phase 1)
-    if (this->startup_cycle_ >= 1) {
-      this->queue_request(RequestType::DEMAND);
-    } else {
-      ESP_LOGV(TAG, "Skipping DEMAND during startup (cycle %d)", this->startup_cycle_);
-    }
+    this->queue_request(RequestType::DEMAND);
   }
 #endif
 
 #ifdef USE_DS100_STATISTICS
   if (this->statistics_cycle_state_ > 0 || now - this->last_update_statistics_ >= this->update_interval_statistics_) {
-    // Allow STATISTICS after 2 cycles
-    if (this->startup_cycle_ >= 2) {
-      ESP_LOGV(TAG, "Queueing statistics request (cycle_state=%d, last_update=%u, now=%u, interval=%u)",
-               this->statistics_cycle_state_, this->last_update_statistics_, now, this->update_interval_statistics_);
-      this->queue_request(RequestType::STATISTICS);
-    } else {
-      ESP_LOGV(TAG, "Skipping STATISTICS during startup (cycle %d)", this->startup_cycle_);
-    }
+    ESP_LOGV(TAG, "Queueing statistics request (cycle_state=%d, last_update=%u, now=%u, interval=%u)",
+             this->statistics_cycle_state_, this->last_update_statistics_, now, this->update_interval_statistics_);
+    this->queue_request(RequestType::STATISTICS);
   }
 #endif
 
@@ -117,21 +100,16 @@ void DS100Meter::update() {
     }
 #endif
     if (needs_settings) {
-      // Allow SETTINGS after 5 cycles (lowest priority, large payload)
-      if (this->startup_cycle_ >= 5) {
-        ESP_LOGV(TAG, "Settings check: needs_settings=true, queueing SETTINGS request");
-        this->queue_request(RequestType::SETTINGS);
-      } else {
-        ESP_LOGV(TAG, "Skipping SETTINGS during startup (cycle %d)", this->startup_cycle_);
-      }
+      ESP_LOGV(TAG, "Settings check: needs_settings=true, queueing SETTINGS request");
+      this->queue_request(RequestType::SETTINGS);
     } else {
       ESP_LOGVV(TAG, "Settings check: needs_settings=false (no settings components registered)");
     }
   }
 #endif
 
-  ESP_LOGD(TAG, "Update check - pending: 0x%02X, in_progress: %d, startup_cycle: %d, timeouts: %d",
-           this->pending_requests_, this->request_in_progress_, this->startup_cycle_, this->consecutive_timeouts_);
+  ESP_LOGD(TAG, "Update check - pending: 0x%02X, in_progress: %d, timeouts: %d", this->pending_requests_,
+           this->request_in_progress_, this->consecutive_timeouts_);
 
   // Process the highest priority pending request if no request is currently in progress
   if (!this->request_in_progress_ && this->pending_requests_ != 0) {

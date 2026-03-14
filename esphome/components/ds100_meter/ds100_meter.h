@@ -554,9 +554,6 @@ class DS100Meter : public modbus_controller::ModbusController {
   bool request_in_progress_{false};  // True if waiting for Modbus response
   uint32_t last_request_time_{0};    // Timestamp of last request for timeout tracking
 
-  // Startup phase handling - stagger initial requests to avoid bus overload
-  uint8_t startup_cycle_{0};  // Counts update cycles since start (0-255)
-
   // Bus overload detection - skip low-priority requests after consecutive timeouts
   uint8_t consecutive_timeouts_{0};                   // Count of consecutive timeouts
   static const uint8_t MAX_CONSECUTIVE_TIMEOUTS = 3;  // Skip low-priority after this many timeouts
