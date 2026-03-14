@@ -884,9 +884,10 @@ void DS100Meter::read_energy_sensors(const uint8_t *data, uint16_t base_register
            (static_cast<int32_t>(data[byte_offset + 2]) << 8) | static_cast<int32_t>(data[byte_offset + 3]);
   };
 
-  // Determine which register constants to use based on base_register
-  // Total Statistics (0x010E)
-  if (base_register == STATISTICS_ADDR) {
+  // Total Statistics (0x010E) and Phase Statistics (0x0500, 0x0564, 0x05C8)
+  // Both use the same register structure and offset calculation
+  if (base_register == STATISTICS_ADDR || base_register == STATISTICS_L1_ADDR || base_register == STATISTICS_L2_ADDR ||
+      base_register == STATISTICS_L3_ADDR) {
     if (sensors.active_ != nullptr) {
       int32_t raw = read_int32_at(STATISTICS_ACTIVE_ENERGY_TOTAL);
       sensors.active_->publish_state(static_cast<float>(raw) * scale);
@@ -938,46 +939,6 @@ void DS100Meter::read_energy_sensors(const uint8_t *data, uint16_t base_register
     }
     if (sensors.export_reactive_ != nullptr) {
       int32_t raw = read_int32_at(STATISTICS_RESETTABLE_REACTIVE_EXPORT);
-      sensors.export_reactive_->publish_state(static_cast<float>(raw) * scale);
-    }
-  }
-  // Phase Statistics (0x0500, 0x0564, 0x05C8) - use phase_statistics_offset helper
-  else {
-    // Helper lambda that uses phase_statistics_offset with the current base
-    auto read_phase_int32_at = [&](uint16_t reg_addr) -> int32_t {
-      size_t byte_offset = phase_statistics_offset(reg_addr, base_register);
-      if (byte_offset + 3 >= max_data_len) {
-        ESP_LOGW(TAG, "Phase energy read would exceed bounds: register 0x%04X (offset %zu), max=%u", reg_addr,
-                 byte_offset, max_data_len);
-        return 0;
-      }
-      return (static_cast<int32_t>(data[byte_offset]) << 24) | (static_cast<int32_t>(data[byte_offset + 1]) << 16) |
-             (static_cast<int32_t>(data[byte_offset + 2]) << 8) | static_cast<int32_t>(data[byte_offset + 3]);
-    };
-
-    // Read phase energy values using phase-specific register addresses
-    if (sensors.active_ != nullptr) {
-      int32_t raw = read_phase_int32_at(STATISTICS_ACTIVE_ENERGY_TOTAL);
-      sensors.active_->publish_state(static_cast<float>(raw) * scale);
-    }
-    if (sensors.import_active_ != nullptr) {
-      int32_t raw = read_phase_int32_at(STATISTICS_ACTIVE_ENERGY_IMPORT);
-      sensors.import_active_->publish_state(static_cast<float>(raw) * scale);
-    }
-    if (sensors.export_active_ != nullptr) {
-      int32_t raw = read_phase_int32_at(STATISTICS_ACTIVE_ENERGY_EXPORT);
-      sensors.export_active_->publish_state(static_cast<float>(raw) * scale);
-    }
-    if (sensors.reactive_ != nullptr) {
-      int32_t raw = read_phase_int32_at(STATISTICS_REACTIVE_ENERGY_TOTAL);
-      sensors.reactive_->publish_state(static_cast<float>(raw) * scale);
-    }
-    if (sensors.import_reactive_ != nullptr) {
-      int32_t raw = read_phase_int32_at(STATISTICS_REACTIVE_ENERGY_IMPORT);
-      sensors.import_reactive_->publish_state(static_cast<float>(raw) * scale);
-    }
-    if (sensors.export_reactive_ != nullptr) {
-      int32_t raw = read_phase_int32_at(STATISTICS_REACTIVE_ENERGY_EXPORT);
       sensors.export_reactive_->publish_state(static_cast<float>(raw) * scale);
     }
   }
