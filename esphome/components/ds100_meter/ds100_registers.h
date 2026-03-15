@@ -869,6 +869,14 @@ constexpr uint16_t REGARR_STATISTICS_QUADRANT_4[4][5] = {
     {STATISTICS_L3_REACTIVE_ENERGY_Q4, STATISTICS_L3_REACTIVE_ENERGY_Q4_T1, STATISTICS_L3_REACTIVE_ENERGY_Q4_T2,
      STATISTICS_L3_REACTIVE_ENERGY_Q4_T3, STATISTICS_L3_REACTIVE_ENERGY_Q4_T4}};
 
+// Phase base addresses for iteration (index 0=Total, 1=L1, 2=L2, 3=L3)
+constexpr uint16_t STATISTICS_PHASE_ADDR[4] = {
+    STATISTICS_ADDR,     // 0 = Total
+    STATISTICS_L1_ADDR,  // 1 = L1
+    STATISTICS_L2_ADDR,  // 2 = L2
+    STATISTICS_L3_ADDR   // 3 = L3
+};
+
 // =============================================================================
 // HELPER FUNCTIONS
 // =============================================================================
@@ -879,14 +887,8 @@ constexpr size_t livedata_offset(uint16_t reg_addr) { return static_cast<size_t>
 
 // Convert statistics register address to byte offset (base: 0x010E)
 // Formula: offset = (address - 0x010E) × 2
-constexpr size_t statistics_offset(uint16_t reg_addr) { return static_cast<size_t>(reg_addr - STATISTICS_ADDR) * 2; }
-
-// Convert phase statistics register address to byte offset within phase block (base: 0x0500)
-// Formula: offset = (address - 0x0500) × 2
-// Note: All phase registers are defined relative to L1 base. For L2/L3, calculate offset
-// from response data using: phase_statistics_offset(reg_addr) + (phase_idx * 100 * 2)
-constexpr size_t phase_statistics_offset(uint16_t reg_addr) {
-  return static_cast<size_t>(reg_addr - STATISTICS_L1_ADDR) * 2;
+constexpr size_t statistics_offset(uint16_t reg_addr, uint16_t base_addr = STATISTICS_ADDR) {
+  return static_cast<size_t>(reg_addr - base_addr) * 2;
 }
 
 // Convert resettable statistics register address to byte offset (base: 0x062C)
