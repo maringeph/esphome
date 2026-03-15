@@ -290,11 +290,89 @@ constexpr uint16_t STATISTICS_REACTIVE_ENERGY_Q4_T4 = 0x0170;
 constexpr uint16_t STATISTICS_L1_ADDR = 0x0500;
 constexpr uint16_t STATISTICS_L1_LEN = STATISTICS_LEN;
 
+// Phase L1 Energy Registers (0x0500 base)
+// Note: Phase statistics have DIFFERENT order than Total statistics!
+// L1 Order: Total, Import, Export (+ T1-T4), then Reactive
+
+// === ACTIVE ENERGY ===
+// Total
+constexpr uint16_t STATISTICS_L1_ACTIVE_ENERGY_TOTAL = 0x0500;
+constexpr uint16_t STATISTICS_L1_ACTIVE_ENERGY_TOTAL_T1 = 0x0502;
+constexpr uint16_t STATISTICS_L1_ACTIVE_ENERGY_TOTAL_T2 = 0x0504;
+constexpr uint16_t STATISTICS_L1_ACTIVE_ENERGY_TOTAL_T3 = 0x0506;
+constexpr uint16_t STATISTICS_L1_ACTIVE_ENERGY_TOTAL_T4 = 0x0508;
+// Import
+constexpr uint16_t STATISTICS_L1_ACTIVE_ENERGY_IMPORT = 0x050A;
+constexpr uint16_t STATISTICS_L1_ACTIVE_ENERGY_IMPORT_T1 = 0x050C;
+constexpr uint16_t STATISTICS_L1_ACTIVE_ENERGY_IMPORT_T2 = 0x050E;
+constexpr uint16_t STATISTICS_L1_ACTIVE_ENERGY_IMPORT_T3 = 0x0510;
+constexpr uint16_t STATISTICS_L1_ACTIVE_ENERGY_IMPORT_T4 = 0x0512;
+// Export
+constexpr uint16_t STATISTICS_L1_ACTIVE_ENERGY_EXPORT = 0x0514;
+constexpr uint16_t STATISTICS_L1_ACTIVE_ENERGY_EXPORT_T1 = 0x0516;
+constexpr uint16_t STATISTICS_L1_ACTIVE_ENERGY_EXPORT_T2 = 0x0518;
+constexpr uint16_t STATISTICS_L1_ACTIVE_ENERGY_EXPORT_T3 = 0x051A;
+constexpr uint16_t STATISTICS_L1_ACTIVE_ENERGY_EXPORT_T4 = 0x051C;
+
+// === REACTIVE ENERGY ===
+// Total
+constexpr uint16_t STATISTICS_L1_REACTIVE_ENERGY_TOTAL = 0x051E;
+constexpr uint16_t STATISTICS_L1_REACTIVE_ENERGY_TOTAL_T1 = 0x0520;
+constexpr uint16_t STATISTICS_L1_REACTIVE_ENERGY_TOTAL_T2 = 0x0522;
+constexpr uint16_t STATISTICS_L1_REACTIVE_ENERGY_TOTAL_T3 = 0x0524;
+constexpr uint16_t STATISTICS_L1_REACTIVE_ENERGY_TOTAL_T4 = 0x0526;
+// Import
+constexpr uint16_t STATISTICS_L1_REACTIVE_ENERGY_IMPORT = 0x0528;
+constexpr uint16_t STATISTICS_L1_REACTIVE_ENERGY_IMPORT_T1 = 0x052A;
+constexpr uint16_t STATISTICS_L1_REACTIVE_ENERGY_IMPORT_T2 = 0x052C;
+constexpr uint16_t STATISTICS_L1_REACTIVE_ENERGY_IMPORT_T3 = 0x052E;
+constexpr uint16_t STATISTICS_L1_REACTIVE_ENERGY_IMPORT_T4 = 0x0530;
+// Export
+constexpr uint16_t STATISTICS_L1_REACTIVE_ENERGY_EXPORT = 0x0532;
+constexpr uint16_t STATISTICS_L1_REACTIVE_ENERGY_EXPORT_T1 = 0x0534;
+constexpr uint16_t STATISTICS_L1_REACTIVE_ENERGY_EXPORT_T2 = 0x0536;
+constexpr uint16_t STATISTICS_L1_REACTIVE_ENERGY_EXPORT_T3 = 0x0538;
+constexpr uint16_t STATISTICS_L1_REACTIVE_ENERGY_EXPORT_T4 = 0x053A;
+
+// === REACTIVE ENERGY QUADRANTS ===
+// Q1
+constexpr uint16_t STATISTICS_L1_REACTIVE_ENERGY_Q1 = 0x053C;
+constexpr uint16_t STATISTICS_L1_REACTIVE_ENERGY_Q1_T1 = 0x053E;
+constexpr uint16_t STATISTICS_L1_REACTIVE_ENERGY_Q1_T2 = 0x0540;
+constexpr uint16_t STATISTICS_L1_REACTIVE_ENERGY_Q1_T3 = 0x0542;
+constexpr uint16_t STATISTICS_L1_REACTIVE_ENERGY_Q1_T4 = 0x0544;
+// Q2
+constexpr uint16_t STATISTICS_L1_REACTIVE_ENERGY_Q2 = 0x0546;
+constexpr uint16_t STATISTICS_L1_REACTIVE_ENERGY_Q2_T1 = 0x0548;
+constexpr uint16_t STATISTICS_L1_REACTIVE_ENERGY_Q2_T2 = 0x054A;
+constexpr uint16_t STATISTICS_L1_REACTIVE_ENERGY_Q2_T3 = 0x054C;
+constexpr uint16_t STATISTICS_L1_REACTIVE_ENERGY_Q2_T4 = 0x054E;
+// Q3
+constexpr uint16_t STATISTICS_L1_REACTIVE_ENERGY_Q3 = 0x0550;
+constexpr uint16_t STATISTICS_L1_REACTIVE_ENERGY_Q3_T1 = 0x0552;
+constexpr uint16_t STATISTICS_L1_REACTIVE_ENERGY_Q3_T2 = 0x0554;
+constexpr uint16_t STATISTICS_L1_REACTIVE_ENERGY_Q3_T3 = 0x0556;
+constexpr uint16_t STATISTICS_L1_REACTIVE_ENERGY_Q3_T4 = 0x0558;
+// Q4
+constexpr uint16_t STATISTICS_L1_REACTIVE_ENERGY_Q4 = 0x055A;
+constexpr uint16_t STATISTICS_L1_REACTIVE_ENERGY_Q4_T1 = 0x055C;
+constexpr uint16_t STATISTICS_L1_REACTIVE_ENERGY_Q4_T2 = 0x055E;
+constexpr uint16_t STATISTICS_L1_REACTIVE_ENERGY_Q4_T3 = 0x0560;
+constexpr uint16_t STATISTICS_L1_REACTIVE_ENERGY_Q4_T4 = 0x0562;
+
+// =============================================================================
+// PHASE L2/L3 STATISTICS BASE ADDRESSES
+// =============================================================================
+// L2 and L3 use same structure as L1 with offset
+// L2 = L1 + 0x64, L3 = L1 + 0xC8
+
 constexpr uint16_t STATISTICS_L2_ADDR = 0x0564;
 constexpr uint16_t STATISTICS_L2_LEN = STATISTICS_LEN;
+constexpr uint16_t STATISTICS_L2_OFFSET = STATISTICS_L2_ADDR - STATISTICS_L1_ADDR;
 
 constexpr uint16_t STATISTICS_L3_ADDR = 0x05C8;
 constexpr uint16_t STATISTICS_L3_LEN = STATISTICS_LEN;
+constexpr uint16_t STATISTICS_L3_OFFSET = STATISTICS_L3_ADDR - STATISTICS_L1_ADDR;
 
 // =============================================================================
 // RESETTABLE STATISTICS REGISTERS (Holding Registers)
@@ -525,15 +603,23 @@ constexpr size_t livedata_offset(uint16_t reg_addr) { return static_cast<size_t>
 // Formula: offset = (address - 0x010E) × 2
 constexpr size_t statistics_offset(uint16_t reg_addr) { return static_cast<size_t>(reg_addr - STATISTICS_ADDR) * 2; }
 
-// Convert demand register address to byte offset (base: 0x043A)
-// Formula: offset = (address - 0x043A) × 2
-constexpr size_t demand_offset(uint16_t reg_addr) { return static_cast<size_t>(reg_addr - DEMAND_ADDR) * 2; }
+// Convert phase statistics register address to byte offset within phase block (base: 0x0500)
+// Formula: offset = (address - 0x0500) × 2
+// Note: All phase registers are defined relative to L1 base. For L2/L3, calculate offset
+// from response data using: phase_statistics_offset(reg_addr) + (phase_idx * 100 * 2)
+constexpr size_t phase_statistics_offset(uint16_t reg_addr) {
+  return static_cast<size_t>(reg_addr - STATISTICS_L1_ADDR) * 2;
+}
 
 // Convert resettable statistics register address to byte offset (base: 0x062C)
 // Formula: offset = (address - 0x062C) × 2
 constexpr size_t resettable_statistics_offset(uint16_t reg_addr) {
   return static_cast<size_t>(reg_addr - STATISTICS_RESETTABLE_ADDR) * 2;
 }
+
+// Convert demand register address to byte offset (base: 0x043A)
+// Formula: offset = (address - 0x043A) × 2
+constexpr size_t demand_offset(uint16_t reg_addr) { return static_cast<size_t>(reg_addr - DEMAND_ADDR) * 2; }
 
 // Convert resettable demand register address to byte offset (base: 0x0680)
 // Formula: offset = (address - 0x0680) × 2
