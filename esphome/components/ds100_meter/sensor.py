@@ -741,13 +741,23 @@ def _check_quadrants_used(config):
 
 def _check_reactive_energy_used(config):
     """Check if any reactive energy sensors are configured (for statistics length calculation)."""
-    # Check total reactive energy sensors
+    # Check total reactive energy sensors (top-level)
     if CONF_REACTIVE_ENERGY in config:
         return True
     if CONF_IMPORT_REACTIVE_ENERGY in config:
         return True
     if CONF_EXPORT_REACTIVE_ENERGY in config:
         return True
+
+    # Check reactive energy in unified statistics structure
+    if CONF_STATISTICS in config:
+        stats_config = config[CONF_STATISTICS]
+        if CONF_REACTIVE_ENERGY in stats_config:
+            return True
+        if CONF_IMPORT_REACTIVE_ENERGY in stats_config:
+            return True
+        if CONF_EXPORT_REACTIVE_ENERGY in stats_config:
+            return True
 
     # Check reactive energy in tariffs
     for tariff in [CONF_TARIFF_1, CONF_TARIFF_2, CONF_TARIFF_3, CONF_TARIFF_4]:
