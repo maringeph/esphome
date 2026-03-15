@@ -829,10 +829,16 @@ void DS100Meter::dump_config() {
 }
 
 void DS100Meter::read_energy_sensors(const uint8_t *data, uint16_t base_addr, float scale, uint16_t max_data_len) {
-  // Helper lambda: Read 32-bit value directly from register address
-  // Converts register address to byte offset: (reg_addr - base_addr) * 2
+  // Helper lambda: Read 32-bit value using offset functions from registers.h
   auto read_int32_at = [&](uint16_t reg_addr) -> int32_t {
-    size_t byte_offset = (reg_addr - base_addr) * 2;
+    size_t byte_offset;
+    if (base_addr >= STATISTICS_RESETTABLE_ADDR && base_addr <= STATISTICS_RESETTABLE_REACTIVE_L3_EXPORT) {
+      // Resettable statistics use resettable_statistics_offset
+      byte_offset = resettable_statistics_offset(reg_addr);
+    } else {
+      // Normal statistics use statistics_offset with dynamic base
+      byte_offset = statistics_offset(reg_addr, base_addr);
+    }
     if (byte_offset + 3 >= max_data_len) {
       ESP_LOGW(TAG, "Energy sensor read would exceed bounds: reg=0x%04X, base=0x%04X, offset=%zu, max=%u", reg_addr,
                base_addr, byte_offset, max_data_len);
