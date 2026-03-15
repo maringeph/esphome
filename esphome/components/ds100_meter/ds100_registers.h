@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <cstddef>
+#include "esphome/core/defines.h"
 
 namespace esphome {
 namespace ds100_meter {
