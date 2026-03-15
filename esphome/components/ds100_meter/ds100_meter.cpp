@@ -599,49 +599,39 @@ void DS100Meter::handle_livedata_response(const std::vector<uint8_t> &data) {
     this->voltage_l3_l1_sensor_->publish_state(voltage);
   }
 
-  // Read average voltages
+  // Read average values using arrays at index 0
   if (this->voltage_l_n_avg_sensor_ != nullptr) {
-    float voltage = get_int32_helper(data, livedata_offset(LIVEDATA_VOLTAGE_L_N_AVG), 0.001f);  // mV -> V
+    float voltage = get_int32_helper(data, livedata_offset(LIVEDATA_VOLTAGE_LN[0]), 0.001f);  // mV -> V
     this->voltage_l_n_avg_sensor_->publish_state(voltage);
   }
   if (this->voltage_l_l_avg_sensor_ != nullptr) {
     float voltage = get_int32_helper(data, livedata_offset(LIVEDATA_VOLTAGE_L_L_AVG), 0.001f);  // mV -> V
     this->voltage_l_l_avg_sensor_->publish_state(voltage);
   }
-
-  // Read average current
   if (this->current_avg_sensor_ != nullptr) {
-    float current = get_int32_helper(data, livedata_offset(LIVEDATA_CURRENT_AVG), 0.001f);  // mA -> A
+    float current = get_int32_helper(data, livedata_offset(LIVEDATA_CURRENT[0]), 0.001f);  // mA -> A
     this->current_avg_sensor_->publish_state(current);
   }
 
-  // Read total/combined values
+  // Read total/average values using arrays at index 0
   if (this->total_power_sensor_ != nullptr) {
-    float total_power = get_int32_helper(data, livedata_offset(LIVEDATA_ACTIVE_POWER_TOTAL), 1.0f);  // unit: W (direct)
+    float total_power = get_int32_helper(data, livedata_offset(LIVEDATA_ACTIVE_POWER[0]), 1.0f);  // unit: W (direct)
     this->total_power_sensor_->publish_state(total_power);
   }
-
-  // Total apparent power
   if (this->apparent_power_total_sensor_ != nullptr) {
-    float apparent_power = get_int32_helper(data, livedata_offset(LIVEDATA_APPARENT_POWER_TOTAL), 1.0f);  // unit: VA
+    float apparent_power = get_int32_helper(data, livedata_offset(LIVEDATA_APPARENT_POWER[0]), 1.0f);  // unit: VA
     this->apparent_power_total_sensor_->publish_state(apparent_power);
   }
-
-  // Total reactive power
   if (this->reactive_power_total_sensor_ != nullptr) {
-    float reactive_power = get_int32_helper(data, livedata_offset(LIVEDATA_REACTIVE_POWER_TOTAL), 1.0f);  // unit: var
+    float reactive_power = get_int32_helper(data, livedata_offset(LIVEDATA_REACTIVE_POWER[0]), 1.0f);  // unit: var
     this->reactive_power_total_sensor_->publish_state(reactive_power);
   }
-
-  // Total power factor
   if (this->power_factor_avg_sensor_ != nullptr) {
-    float power_factor = get_power_factor_helper(data, livedata_offset(LIVEDATA_POWER_FACTOR_AVG));
+    float power_factor = get_power_factor_helper(data, livedata_offset(LIVEDATA_POWER_FACTOR[0]));
     this->power_factor_avg_sensor_->publish_state(power_factor);
   }
-
-  // Frequency (use L1 frequency as total)
   if (this->frequency_sensor_ != nullptr) {
-    float frequency = get_frequency_helper(data, livedata_offset(LIVEDATA_FREQUENCY_L1));
+    float frequency = get_frequency_helper(data, livedata_offset(LIVEDATA_FREQUENCY[0]));
     this->frequency_sensor_->publish_state(frequency);
   }
 }
