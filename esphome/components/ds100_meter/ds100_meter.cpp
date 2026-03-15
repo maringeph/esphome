@@ -899,6 +899,7 @@ void DS100Meter::read_energy_sensors(const uint8_t *data, uint16_t base_register
       int32_t raw = read_int32(statistics_offset(STATISTICS_ACTIVE_ENERGY_EXPORT), base_register);
       sensors.export_active_->publish_state(static_cast<float>(raw) * scale);
     }
+#ifdef USE_DS100_REACTIVE_ENERGY
     if (sensors.reactive_ != nullptr) {
       int32_t raw = read_int32(statistics_offset(STATISTICS_REACTIVE_ENERGY_TOTAL), base_register);
       sensors.reactive_->publish_state(static_cast<float>(raw) * scale);
@@ -911,6 +912,7 @@ void DS100Meter::read_energy_sensors(const uint8_t *data, uint16_t base_register
       int32_t raw = read_int32(statistics_offset(STATISTICS_REACTIVE_ENERGY_EXPORT), base_register);
       sensors.export_reactive_->publish_state(static_cast<float>(raw) * scale);
     }
+#endif
   }
   // Resettable Statistics (0x062C)
   else if (base_register == STATISTICS_RESETTABLE_ADDR) {
@@ -926,6 +928,7 @@ void DS100Meter::read_energy_sensors(const uint8_t *data, uint16_t base_register
       int32_t raw = read_int32(resettable_statistics_offset(STATISTICS_RESETTABLE_ACTIVE_EXPORT), base_register);
       sensors.export_active_->publish_state(static_cast<float>(raw) * scale);
     }
+#ifdef USE_DS100_REACTIVE_ENERGY
     if (sensors.reactive_ != nullptr) {
       int32_t raw = read_int32(resettable_statistics_offset(STATISTICS_RESETTABLE_REACTIVE_TOTAL), base_register);
       sensors.reactive_->publish_state(static_cast<float>(raw) * scale);
@@ -938,6 +941,7 @@ void DS100Meter::read_energy_sensors(const uint8_t *data, uint16_t base_register
       int32_t raw = read_int32(resettable_statistics_offset(STATISTICS_RESETTABLE_REACTIVE_EXPORT), base_register);
       sensors.export_reactive_->publish_state(static_cast<float>(raw) * scale);
     }
+#endif
   }
 }
 
