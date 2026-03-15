@@ -872,12 +872,11 @@ void DS100Meter::dump_config() {
 
 void DS100Meter::read_energy_sensors(const uint8_t *data, uint16_t base_register, EnergySensors &sensors, float scale,
                                      uint16_t max_data_len) {
-  // Helper lambda to safely read 32-bit value from data using statistics_offset
-  auto read_int32_at = [&](uint16_t reg_addr) -> int32_t {
-    size_t byte_offset = statistics_offset(reg_addr);
+  // Helper lambda to read 32-bit value from data at byte offset
+  auto read_int32 = [&](size_t byte_offset, uint16_t base) -> int32_t {
     if (byte_offset + 3 >= max_data_len) {
-      ESP_LOGW(TAG, "Energy sensor read would exceed data bounds: register 0x%04X (offset %zu), max=%u", reg_addr,
-               byte_offset, max_data_len);
+      ESP_LOGW(TAG, "Energy sensor read would exceed bounds: addr=0x%04X, base=0x%04X, offset=%zu, max=%u",
+               base + byte_offset, base, byte_offset, max_data_len);
       return 0;
     }
     return (static_cast<int32_t>(data[byte_offset]) << 24) | (static_cast<int32_t>(data[byte_offset + 1]) << 16) |
@@ -885,59 +884,58 @@ void DS100Meter::read_energy_sensors(const uint8_t *data, uint16_t base_register
   };
 
   // Total Statistics (0x010E) and Phase Statistics (0x0500, 0x0564, 0x05C8)
-  // Both use the same register structure and offset calculation
-  // Formula: actual_reg = base_register + (total_reg - STATISTICS_ADDR)
+  // Both use the same register structure, so byte offsets are identical
   if (base_register == STATISTICS_ADDR || base_register == STATISTICS_L1_ADDR || base_register == STATISTICS_L2_ADDR ||
       base_register == STATISTICS_L3_ADDR) {
     if (sensors.active_ != nullptr) {
-      int32_t raw = read_int32_at(base_register + statistics_offset(STATISTICS_ACTIVE_ENERGY_TOTAL));
+      int32_t raw = read_int32(statistics_offset(STATISTICS_ACTIVE_ENERGY_TOTAL), base_register);
       sensors.active_->publish_state(static_cast<float>(raw) * scale);
     }
     if (sensors.import_active_ != nullptr) {
-      int32_t raw = read_int32_at(base_register + statistics_offset(STATISTICS_ACTIVE_ENERGY_IMPORT));
+      int32_t raw = read_int32(statistics_offset(STATISTICS_ACTIVE_ENERGY_IMPORT), base_register);
       sensors.import_active_->publish_state(static_cast<float>(raw) * scale);
     }
     if (sensors.export_active_ != nullptr) {
-      int32_t raw = read_int32_at(base_register + statistics_offset(STATISTICS_ACTIVE_ENERGY_EXPORT));
+      int32_t raw = read_int32(statistics_offset(STATISTICS_ACTIVE_ENERGY_EXPORT), base_register);
       sensors.export_active_->publish_state(static_cast<float>(raw) * scale);
     }
     if (sensors.reactive_ != nullptr) {
-      int32_t raw = read_int32_at(base_register + statistics_offset(STATISTICS_REACTIVE_ENERGY_TOTAL));
+      int32_t raw = read_int32(statistics_offset(STATISTICS_REACTIVE_ENERGY_TOTAL), base_register);
       sensors.reactive_->publish_state(static_cast<float>(raw) * scale);
     }
     if (sensors.import_reactive_ != nullptr) {
-      int32_t raw = read_int32_at(base_register + statistics_offset(STATISTICS_REACTIVE_ENERGY_IMPORT));
+      int32_t raw = read_int32(statistics_offset(STATISTICS_REACTIVE_ENERGY_IMPORT), base_register);
       sensors.import_reactive_->publish_state(static_cast<float>(raw) * scale);
     }
     if (sensors.export_reactive_ != nullptr) {
-      int32_t raw = read_int32_at(base_register + statistics_offset(STATISTICS_REACTIVE_ENERGY_EXPORT));
+      int32_t raw = read_int32(statistics_offset(STATISTICS_REACTIVE_ENERGY_EXPORT), base_register);
       sensors.export_reactive_->publish_state(static_cast<float>(raw) * scale);
     }
   }
   // Resettable Statistics (0x062C)
   else if (base_register == STATISTICS_RESETTABLE_ADDR) {
     if (sensors.active_ != nullptr) {
-      int32_t raw = read_int32_at(STATISTICS_RESETTABLE_ACTIVE_TOTAL);
+      int32_t raw = read_int32(resettable_statistics_offset(STATISTICS_RESETTABLE_ACTIVE_TOTAL), base_register);
       sensors.active_->publish_state(static_cast<float>(raw) * scale);
     }
     if (sensors.import_active_ != nullptr) {
-      int32_t raw = read_int32_at(STATISTICS_RESETTABLE_ACTIVE_IMPORT);
+      int32_t raw = read_int32(resettable_statistics_offset(STATISTICS_RESETTABLE_ACTIVE_IMPORT), base_register);
       sensors.import_active_->publish_state(static_cast<float>(raw) * scale);
     }
     if (sensors.export_active_ != nullptr) {
-      int32_t raw = read_int32_at(STATISTICS_RESETTABLE_ACTIVE_EXPORT);
+      int32_t raw = read_int32(resettable_statistics_offset(STATISTICS_RESETTABLE_ACTIVE_EXPORT), base_register);
       sensors.export_active_->publish_state(static_cast<float>(raw) * scale);
     }
     if (sensors.reactive_ != nullptr) {
-      int32_t raw = read_int32_at(STATISTICS_RESETTABLE_REACTIVE_TOTAL);
+      int32_t raw = read_int32(resettable_statistics_offset(STATISTICS_RESETTABLE_REACTIVE_TOTAL), base_register);
       sensors.reactive_->publish_state(static_cast<float>(raw) * scale);
     }
     if (sensors.import_reactive_ != nullptr) {
-      int32_t raw = read_int32_at(STATISTICS_RESETTABLE_REACTIVE_IMPORT);
+      int32_t raw = read_int32(resettable_statistics_offset(STATISTICS_RESETTABLE_REACTIVE_IMPORT), base_register);
       sensors.import_reactive_->publish_state(static_cast<float>(raw) * scale);
     }
     if (sensors.export_reactive_ != nullptr) {
-      int32_t raw = read_int32_at(STATISTICS_RESETTABLE_REACTIVE_EXPORT);
+      int32_t raw = read_int32(resettable_statistics_offset(STATISTICS_RESETTABLE_REACTIVE_EXPORT), base_register);
       sensors.export_reactive_->publish_state(static_cast<float>(raw) * scale);
     }
   }
