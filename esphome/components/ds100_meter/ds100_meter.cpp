@@ -665,6 +665,27 @@ void DS100Meter::handle_resettable_statistics_response(const std::vector<uint8_t
   // Resettable statistics - Total at index 0, then L1, L2, L3
   // Total: registers 0x062C-0x065B (48 bytes)
   this->read_energy_sensors(data.data(), STATISTICS_RESETTABLE_ADDR, 0.01f, resettable_statistics_size);
+
+  // Phase L1
+  if (this->resettable_phase_energy_sensors_[DS100_PHASE_IDX_L1].active_ != nullptr ||
+      this->resettable_phase_energy_sensors_[DS100_PHASE_IDX_L1].import_active_ != nullptr ||
+      this->resettable_phase_energy_sensors_[DS100_PHASE_IDX_L1].export_active_ != nullptr) {
+    this->read_energy_sensors(data.data(), STATISTICS_RESETTABLE_ACTIVE_L1_TOTAL, 0.01f, resettable_statistics_size);
+  }
+
+  // Phase L2
+  if (this->resettable_phase_energy_sensors_[DS100_PHASE_IDX_L2].active_ != nullptr ||
+      this->resettable_phase_energy_sensors_[DS100_PHASE_IDX_L2].import_active_ != nullptr ||
+      this->resettable_phase_energy_sensors_[DS100_PHASE_IDX_L2].export_active_ != nullptr) {
+    this->read_energy_sensors(data.data(), STATISTICS_RESETTABLE_ACTIVE_L2_TOTAL, 0.01f, resettable_statistics_size);
+  }
+
+  // Phase L3
+  if (this->resettable_phase_energy_sensors_[DS100_PHASE_IDX_L3].active_ != nullptr ||
+      this->resettable_phase_energy_sensors_[DS100_PHASE_IDX_L3].import_active_ != nullptr ||
+      this->resettable_phase_energy_sensors_[DS100_PHASE_IDX_L3].export_active_ != nullptr) {
+    this->read_energy_sensors(data.data(), STATISTICS_RESETTABLE_ACTIVE_L3_TOTAL, 0.01f, resettable_statistics_size);
+  }
 }
 #endif
 
@@ -834,31 +855,77 @@ void DS100Meter::read_energy_sensors(const uint8_t *data, uint16_t base_addr, fl
   }
 
   // Handle resettable statistics separately (1D array, no tariffs)
-  if (base_addr == STATISTICS_RESETTABLE_ADDR) {
-    auto &sensors = this->resettable_phase_energy_sensors_[DS100_PHASE_IDX_TOTAL];
+  // All resettable data comes in one block, but we need to read different registers for each phase
+  if (base_addr >= STATISTICS_RESETTABLE_ADDR && base_addr <= STATISTICS_RESETTABLE_REACTIVE_L3_EXPORT) {
+    // Determine which resettable phase based on base_addr
+    uint8_t resettable_phase;
+    uint16_t reg_active_total, reg_active_import, reg_active_export;
+    uint16_t reg_reactive_total, reg_reactive_import, reg_reactive_export;
+
+    if (base_addr == STATISTICS_RESETTABLE_ADDR) {
+      // Total
+      resettable_phase = DS100_PHASE_IDX_TOTAL;
+      reg_active_total = STATISTICS_RESETTABLE_ACTIVE_TOTAL;
+      reg_active_import = STATISTICS_RESETTABLE_ACTIVE_IMPORT;
+      reg_active_export = STATISTICS_RESETTABLE_ACTIVE_EXPORT;
+      reg_reactive_total = STATISTICS_RESETTABLE_REACTIVE_TOTAL;
+      reg_reactive_import = STATISTICS_RESETTABLE_REACTIVE_IMPORT;
+      reg_reactive_export = STATISTICS_RESETTABLE_REACTIVE_EXPORT;
+    } else if (base_addr == STATISTICS_RESETTABLE_ACTIVE_L1_TOTAL) {
+      // L1
+      resettable_phase = DS100_PHASE_IDX_L1;
+      reg_active_total = STATISTICS_RESETTABLE_ACTIVE_L1_TOTAL;
+      reg_active_import = STATISTICS_RESETTABLE_ACTIVE_L1_IMPORT;
+      reg_active_export = STATISTICS_RESETTABLE_ACTIVE_L1_EXPORT;
+      reg_reactive_total = STATISTICS_RESETTABLE_REACTIVE_L1_TOTAL;
+      reg_reactive_import = STATISTICS_RESETTABLE_REACTIVE_L1_IMPORT;
+      reg_reactive_export = STATISTICS_RESETTABLE_REACTIVE_L1_EXPORT;
+    } else if (base_addr == STATISTICS_RESETTABLE_ACTIVE_L2_TOTAL) {
+      // L2
+      resettable_phase = DS100_PHASE_IDX_L2;
+      reg_active_total = STATISTICS_RESETTABLE_ACTIVE_L2_TOTAL;
+      reg_active_import = STATISTICS_RESETTABLE_ACTIVE_L2_IMPORT;
+      reg_active_export = STATISTICS_RESETTABLE_ACTIVE_L2_EXPORT;
+      reg_reactive_total = STATISTICS_RESETTABLE_REACTIVE_L2_TOTAL;
+      reg_reactive_import = STATISTICS_RESETTABLE_REACTIVE_L2_IMPORT;
+      reg_reactive_export = STATISTICS_RESETTABLE_REACTIVE_L2_EXPORT;
+    } else {
+      // L3
+      resettable_phase = DS100_PHASE_IDX_L3;
+      reg_active_total = STATISTICS_RESETTABLE_ACTIVE_L3_TOTAL;
+      reg_active_import = STATISTICS_RESETTABLE_ACTIVE_L3_IMPORT;
+      reg_active_export = STATISTICS_RESETTABLE_ACTIVE_L3_EXPORT;
+      reg_reactive_total = STATISTICS_RESETTABLE_REACTIVE_L3_TOTAL;
+      reg_reactive_import = STATISTICS_RESETTABLE_REACTIVE_L3_IMPORT;
+      reg_reactive_export = STATISTICS_RESETTABLE_REACTIVE_L3_EXPORT;
+    }
+
+    auto &sensors = this->resettable_phase_energy_sensors_[resettable_phase];
 
     if (sensors.active_ != nullptr) {
-      sensors.active_->publish_state(static_cast<float>(read_int32_at(STATISTICS_RESETTABLE_ACTIVE_TOTAL)) * scale);
+      int32_t raw = read_int32_at(reg_active_total);
+      sensors.active_->publish_state(static_cast<float>(raw) * scale);
     }
     if (sensors.import_active_ != nullptr) {
-      sensors.import_active_->publish_state(static_cast<float>(read_int32_at(STATISTICS_RESETTABLE_ACTIVE_IMPORT)) *
-                                            scale);
+      int32_t raw = read_int32_at(reg_active_import);
+      sensors.import_active_->publish_state(static_cast<float>(raw) * scale);
     }
     if (sensors.export_active_ != nullptr) {
-      sensors.export_active_->publish_state(static_cast<float>(read_int32_at(STATISTICS_RESETTABLE_ACTIVE_EXPORT)) *
-                                            scale);
+      int32_t raw = read_int32_at(reg_active_export);
+      sensors.export_active_->publish_state(static_cast<float>(raw) * scale);
     }
 #ifdef USE_DS100_REACTIVE_ENERGY
     if (sensors.reactive_ != nullptr) {
-      sensors.reactive_->publish_state(static_cast<float>(read_int32_at(STATISTICS_RESETTABLE_REACTIVE_TOTAL)) * scale);
+      int32_t raw = read_int32_at(reg_reactive_total);
+      sensors.reactive_->publish_state(static_cast<float>(raw) * scale);
     }
     if (sensors.import_reactive_ != nullptr) {
-      sensors.import_reactive_->publish_state(static_cast<float>(read_int32_at(STATISTICS_RESETTABLE_REACTIVE_IMPORT)) *
-                                              scale);
+      int32_t raw = read_int32_at(reg_reactive_import);
+      sensors.import_reactive_->publish_state(static_cast<float>(raw) * scale);
     }
     if (sensors.export_reactive_ != nullptr) {
-      sensors.export_reactive_->publish_state(static_cast<float>(read_int32_at(STATISTICS_RESETTABLE_REACTIVE_EXPORT)) *
-                                              scale);
+      int32_t raw = read_int32_at(reg_reactive_export);
+      sensors.export_reactive_->publish_state(static_cast<float>(raw) * scale);
     }
 #endif
     return;
@@ -876,31 +943,31 @@ void DS100Meter::read_energy_sensors(const uint8_t *data, uint16_t base_addr, fl
 
     // Read Active Energy
     if (sensors.active_ != nullptr) {
-      sensors.active_->publish_state(
-          static_cast<float>(read_int32_at(REGARR_STATISTICS_ACTIVE_TOTAL[phase_idx][tariff_idx])) * scale);
+      int32_t raw = read_int32_at(REGARR_STATISTICS_ACTIVE_TOTAL[phase_idx][tariff_idx]);
+      sensors.active_->publish_state(static_cast<float>(raw) * scale);
     }
     if (sensors.import_active_ != nullptr) {
-      sensors.import_active_->publish_state(
-          static_cast<float>(read_int32_at(REGARR_STATISTICS_ACTIVE_IMPORT[phase_idx][tariff_idx])) * scale);
+      int32_t raw = read_int32_at(REGARR_STATISTICS_ACTIVE_IMPORT[phase_idx][tariff_idx]);
+      sensors.import_active_->publish_state(static_cast<float>(raw) * scale);
     }
     if (sensors.export_active_ != nullptr) {
-      sensors.export_active_->publish_state(
-          static_cast<float>(read_int32_at(REGARR_STATISTICS_ACTIVE_EXPORT[phase_idx][tariff_idx])) * scale);
+      int32_t raw = read_int32_at(REGARR_STATISTICS_ACTIVE_EXPORT[phase_idx][tariff_idx]);
+      sensors.export_active_->publish_state(static_cast<float>(raw) * scale);
     }
 
 #ifdef USE_DS100_REACTIVE_ENERGY
     // Read Reactive Energy
     if (sensors.reactive_ != nullptr) {
-      sensors.reactive_->publish_state(
-          static_cast<float>(read_int32_at(REGARR_STATISTICS_REACTIVE_TOTAL[phase_idx][tariff_idx])) * scale);
+      int32_t raw = read_int32_at(REGARR_STATISTICS_REACTIVE_TOTAL[phase_idx][tariff_idx]);
+      sensors.reactive_->publish_state(static_cast<float>(raw) * scale);
     }
     if (sensors.import_reactive_ != nullptr) {
-      sensors.import_reactive_->publish_state(
-          static_cast<float>(read_int32_at(REGARR_STATISTICS_REACTIVE_IMPORT[phase_idx][tariff_idx])) * scale);
+      int32_t raw = read_int32_at(REGARR_STATISTICS_REACTIVE_IMPORT[phase_idx][tariff_idx]);
+      sensors.import_reactive_->publish_state(static_cast<float>(raw) * scale);
     }
     if (sensors.export_reactive_ != nullptr) {
-      sensors.export_reactive_->publish_state(
-          static_cast<float>(read_int32_at(REGARR_STATISTICS_REACTIVE_EXPORT[phase_idx][tariff_idx])) * scale);
+      int32_t raw = read_int32_at(REGARR_STATISTICS_REACTIVE_EXPORT[phase_idx][tariff_idx]);
+      sensors.export_reactive_->publish_state(static_cast<float>(raw) * scale);
     }
 #endif
   }
