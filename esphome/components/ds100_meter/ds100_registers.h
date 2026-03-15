@@ -84,18 +84,21 @@ constexpr uint16_t LIVEDATA_POWER_FACTOR_L2 = 0x0437;   // Phase L2 Power Factor
 constexpr uint16_t LIVEDATA_POWER_FACTOR_L3 = 0x0438;   // Phase L3 Power Factor
 constexpr uint16_t LIVEDATA_POWER_FACTOR_AVG = 0x0439;  // Average Power Factor
 
-// Phase register arrays for iteration (index 0=L1, 1=L2, 2=L3)
-constexpr uint16_t LIVEDATA_VOLTAGE_LN[3] = {LIVEDATA_VOLTAGE_L1_N, LIVEDATA_VOLTAGE_L2_N, LIVEDATA_VOLTAGE_L3_N};
-constexpr uint16_t LIVEDATA_CURRENT[3] = {LIVEDATA_CURRENT_L1, LIVEDATA_CURRENT_L2, LIVEDATA_CURRENT_L3};
-constexpr uint16_t LIVEDATA_ACTIVE_POWER[3] = {LIVEDATA_ACTIVE_POWER_L1, LIVEDATA_ACTIVE_POWER_L2,
-                                               LIVEDATA_ACTIVE_POWER_L3};
-constexpr uint16_t LIVEDATA_APPARENT_POWER[3] = {LIVEDATA_APPARENT_POWER_L1, LIVEDATA_APPARENT_POWER_L2,
-                                                 LIVEDATA_APPARENT_POWER_L3};
-constexpr uint16_t LIVEDATA_REACTIVE_POWER[3] = {LIVEDATA_REACTIVE_POWER_L1, LIVEDATA_REACTIVE_POWER_L2,
-                                                 LIVEDATA_REACTIVE_POWER_L3};
-constexpr uint16_t LIVEDATA_FREQUENCY[3] = {LIVEDATA_FREQUENCY_L1, LIVEDATA_FREQUENCY_L2, LIVEDATA_FREQUENCY_L3};
-constexpr uint16_t LIVEDATA_POWER_FACTOR[3] = {LIVEDATA_POWER_FACTOR_L1, LIVEDATA_POWER_FACTOR_L2,
-                                               LIVEDATA_POWER_FACTOR_L3};
+// Phase register arrays for iteration (index 0=Total/Avg, 1=L1, 2=L2, 3=L3)
+constexpr uint16_t LIVEDATA_VOLTAGE_LN[4] = {LIVEDATA_VOLTAGE_L_N_AVG, LIVEDATA_VOLTAGE_L1_N, LIVEDATA_VOLTAGE_L2_N,
+                                             LIVEDATA_VOLTAGE_L3_N};
+constexpr uint16_t LIVEDATA_CURRENT[4] = {LIVEDATA_CURRENT_AVG, LIVEDATA_CURRENT_L1, LIVEDATA_CURRENT_L2,
+                                          LIVEDATA_CURRENT_L3};
+constexpr uint16_t LIVEDATA_ACTIVE_POWER[4] = {LIVEDATA_ACTIVE_POWER_TOTAL, LIVEDATA_ACTIVE_POWER_L1,
+                                               LIVEDATA_ACTIVE_POWER_L2, LIVEDATA_ACTIVE_POWER_L3};
+constexpr uint16_t LIVEDATA_APPARENT_POWER[4] = {LIVEDATA_APPARENT_POWER_TOTAL, LIVEDATA_APPARENT_POWER_L1,
+                                                 LIVEDATA_APPARENT_POWER_L2, LIVEDATA_APPARENT_POWER_L3};
+constexpr uint16_t LIVEDATA_REACTIVE_POWER[4] = {LIVEDATA_REACTIVE_POWER_TOTAL, LIVEDATA_REACTIVE_POWER_L1,
+                                                 LIVEDATA_REACTIVE_POWER_L2, LIVEDATA_REACTIVE_POWER_L3};
+constexpr uint16_t LIVEDATA_FREQUENCY[4] = {LIVEDATA_FREQUENCY_AVG, LIVEDATA_FREQUENCY_L1, LIVEDATA_FREQUENCY_L2,
+                                            LIVEDATA_FREQUENCY_L3};
+constexpr uint16_t LIVEDATA_POWER_FACTOR[4] = {LIVEDATA_POWER_FACTOR_AVG, LIVEDATA_POWER_FACTOR_L1,
+                                               LIVEDATA_POWER_FACTOR_L2, LIVEDATA_POWER_FACTOR_L3};
 
 // =============================================================================
 // DEMAND REGISTERS (Block read from 0x043A, Holding Registers)
