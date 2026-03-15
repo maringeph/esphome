@@ -524,6 +524,15 @@ void DS100Meter::handle_livedata_response(const std::vector<uint8_t> &data) {
   // Process livedata response
   ESP_LOGV(TAG, "Processing livedata (%zu bytes)", data.size());
 
+  // Log raw data buffer for debugging
+  for (size_t i = 0; i < data.size(); i += 20) {
+    char hex_buf[61] = {0};
+    for (size_t j = 0; j < 20 && (i + j) < data.size(); j++) {
+      sprintf(hex_buf + j * 3, "%02X ", data[i + j]);
+    }
+    ESP_LOGVV(TAG, "%s", hex_buf);
+  }
+
   // Read phase data
   for (uint8_t i = 0; i < 3; i++) {
     if (!this->phases_[i].setup_) {
@@ -664,6 +673,16 @@ void DS100Meter::handle_demand_response(const std::vector<uint8_t> &data) {
   }
 
   ESP_LOGV(TAG, "Processing demand (%zu bytes)", data.size());
+
+  // Log raw data buffer for debugging
+  for (size_t i = 0; i < data.size(); i += 20) {
+    char hex_buf[61] = {0};
+    for (size_t j = 0; j < 20 && (i + j) < data.size(); j++) {
+      sprintf(hex_buf + j * 3, "%02X ", data[i + j]);
+    }
+    ESP_LOGVV(TAG, "%s", hex_buf);
+  }
+
   // Read demand sensors using helper function (0.1W resolution)
   this->read_power_demand_sensors(data.data(), DEMAND_ADDR, this->demand_sensors_, 0.1f);
 }
@@ -688,6 +707,15 @@ void DS100Meter::handle_resettable_statistics_response(const std::vector<uint8_t
   }
 
   ESP_LOGV(TAG, "Processing resettable statistics (%zu bytes)", data.size());
+
+  // Log raw data buffer for debugging
+  for (size_t i = 0; i < data.size(); i += 20) {
+    char hex_buf[61] = {0};
+    for (size_t j = 0; j < 20 && (i + j) < data.size(); j++) {
+      sprintf(hex_buf + j * 3, "%02X ", data[i + j]);
+    }
+    ESP_LOGVV(TAG, "%s", hex_buf);
+  }
 
   // Resettable statistics - use base register address
   // Total: registers 0x062C-0x065B (48 bytes)
@@ -726,6 +754,15 @@ void DS100Meter::handle_total_statistics_response(const std::vector<uint8_t> &da
   }
 
   ESP_LOGV(TAG, "Processing statistics (%zu bytes)", data.size());
+
+  // Log raw data buffer for debugging
+  for (size_t i = 0; i < data.size(); i += 20) {
+    char hex_buf[61] = {0};
+    for (size_t j = 0; j < 20 && (i + j) < data.size(); j++) {
+      sprintf(hex_buf + j * 3, "%02X ", data[i + j]);
+    }
+    ESP_LOGVV(TAG, "%s", hex_buf);
+  }
 
   // Check if reactive energy sensor is configured
   ESP_LOGV(TAG, "Reactive energy sensor: %p", this->total_energy_sensors_.reactive_);
@@ -807,6 +844,15 @@ void DS100Meter::handle_phase_statistics_response(const std::vector<uint8_t> &da
   }
 
   ESP_LOGV(TAG, "Processing statistics (%zu bytes) for phase %d", data.size(), phase);
+
+  // Log raw data buffer for debugging
+  for (size_t i = 0; i < data.size(); i += 20) {
+    char hex_buf[61] = {0};
+    for (size_t j = 0; j < 20 && (i + j) < data.size(); j++) {
+      sprintf(hex_buf + j * 3, "%02X ", data[i + j]);
+    }
+    ESP_LOGVV(TAG, "%s", hex_buf);
+  }
 
   // Determine base register for phase statistics
   uint16_t phase_base = (phase == 1) ? STATISTICS_L1_ADDR : (phase == 2) ? STATISTICS_L2_ADDR : STATISTICS_L3_ADDR;
