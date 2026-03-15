@@ -752,12 +752,15 @@ def _check_reactive_energy_used(config):
     # Check reactive energy in unified statistics structure
     if CONF_STATISTICS in config:
         stats_config = config[CONF_STATISTICS]
-        if CONF_REACTIVE_ENERGY in stats_config:
-            return True
-        if CONF_IMPORT_REACTIVE_ENERGY in stats_config:
-            return True
-        if CONF_EXPORT_REACTIVE_ENERGY in stats_config:
-            return True
+        # Check all statistics sub-keys (total, total_t1, total_t2, total_t3, total_t4, etc.)
+        for key in stats_config:
+            if isinstance(stats_config[key], dict):
+                if CONF_REACTIVE_ENERGY in stats_config[key]:
+                    return True
+                if CONF_IMPORT_REACTIVE_ENERGY in stats_config[key]:
+                    return True
+                if CONF_EXPORT_REACTIVE_ENERGY in stats_config[key]:
+                    return True
 
     # Check reactive energy in tariffs
     for tariff in [CONF_TARIFF_1, CONF_TARIFF_2, CONF_TARIFF_3, CONF_TARIFF_4]:
