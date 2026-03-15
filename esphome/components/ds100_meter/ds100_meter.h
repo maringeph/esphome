@@ -88,117 +88,146 @@ class DS100Meter : public modbus_controller::ModbusController {
     this->phases_[phase].setup_ = true;
     this->phases_[phase].frequency_sensor_ = frequency_sensor;
   }
-  // Total/combined sensors (livedata)
-  void set_total_power_sensor(sensor::Sensor *total_power_sensor) { this->total_power_sensor_ = total_power_sensor; }
-  void set_frequency_sensor(sensor::Sensor *frequency_sensor) { this->frequency_sensor_ = frequency_sensor; }
+  // Total/combined sensors (livedata) - now using phases_[0] like a regular phase
+  void set_total_power_sensor(sensor::Sensor *total_power_sensor) {
+    this->phases_[0].active_power_sensor_ = total_power_sensor;
+  }
+  void set_apparent_power_total_sensor(sensor::Sensor *sensor) { this->phases_[0].apparent_power_sensor_ = sensor; }
+  void set_reactive_power_total_sensor(sensor::Sensor *sensor) { this->phases_[0].reactive_power_sensor_ = sensor; }
+  void set_power_factor_avg_sensor(sensor::Sensor *sensor) { this->phases_[0].power_factor_sensor_ = sensor; }
+  void set_frequency_sensor(sensor::Sensor *frequency_sensor) { this->phases_[0].frequency_sensor_ = frequency_sensor; }
   void set_current_n_sensor(sensor::Sensor *current_n_sensor) { this->current_n_sensor_ = current_n_sensor; }
   // Line-to-line voltage sensors
   void set_voltage_l1_l2_sensor(sensor::Sensor *sensor) { this->voltage_l1_l2_sensor_ = sensor; }
   void set_voltage_l2_l3_sensor(sensor::Sensor *sensor) { this->voltage_l2_l3_sensor_ = sensor; }
   void set_voltage_l3_l1_sensor(sensor::Sensor *sensor) { this->voltage_l3_l1_sensor_ = sensor; }
-  // Average voltage sensors
-  void set_voltage_l_n_avg_sensor(sensor::Sensor *sensor) { this->voltage_l_n_avg_sensor_ = sensor; }
+  // Average voltage sensors (L-N average = phase 0 voltage)
+  void set_voltage_l_n_avg_sensor(sensor::Sensor *sensor) { this->phases_[0].voltage_sensor_ = sensor; }
   void set_voltage_l_l_avg_sensor(sensor::Sensor *sensor) { this->voltage_l_l_avg_sensor_ = sensor; }
-  // Average current sensor
-  void set_current_avg_sensor(sensor::Sensor *sensor) { this->current_avg_sensor_ = sensor; }
-  // Total power sensors
-  void set_apparent_power_total_sensor(sensor::Sensor *sensor) { this->apparent_power_total_sensor_ = sensor; }
-  void set_reactive_power_total_sensor(sensor::Sensor *sensor) { this->reactive_power_total_sensor_ = sensor; }
-  // Power factor average
-  void set_power_factor_avg_sensor(sensor::Sensor *sensor) { this->power_factor_avg_sensor_ = sensor; }
+  // Average current sensor (phase 0 current = average)
+  void set_current_avg_sensor(sensor::Sensor *sensor) { this->phases_[0].current_sensor_ = sensor; }
 
-  // Total energy sensors (statistics)
-  void set_active_energy_sensor(sensor::Sensor *sensor) { this->total_energy_sensors_.active_ = sensor; }
-  void set_import_active_energy_sensor(sensor::Sensor *sensor) { this->total_energy_sensors_.import_active_ = sensor; }
-  void set_export_active_energy_sensor(sensor::Sensor *sensor) { this->total_energy_sensors_.export_active_ = sensor; }
-  void set_reactive_energy_sensor(sensor::Sensor *sensor) { this->total_energy_sensors_.reactive_ = sensor; }
+  // Total energy sensors (statistics) - LEGACY, use set_energy_sensor instead
+  void set_active_energy_sensor(sensor::Sensor *sensor) { this->phase_energy_sensors_[0].active_ = sensor; }
+  void set_import_active_energy_sensor(sensor::Sensor *sensor) {
+    this->phase_energy_sensors_[0].import_active_ = sensor;
+  }
+  void set_export_active_energy_sensor(sensor::Sensor *sensor) {
+    this->phase_energy_sensors_[0].export_active_ = sensor;
+  }
+  void set_reactive_energy_sensor(sensor::Sensor *sensor) { this->phase_energy_sensors_[0].reactive_ = sensor; }
   void set_import_reactive_energy_sensor(sensor::Sensor *sensor) {
-    this->total_energy_sensors_.import_reactive_ = sensor;
+    this->phase_energy_sensors_[0].import_reactive_ = sensor;
   }
   void set_export_reactive_energy_sensor(sensor::Sensor *sensor) {
-    this->total_energy_sensors_.export_reactive_ = sensor;
+    this->phase_energy_sensors_[0].export_reactive_ = sensor;
+  }
+
+  // NEW: Unified 2D array based energy sensors [phase][tariff]
+  // phase_idx: 0=Total, 1=L1, 2=L2, 3=L3
+  // tariff_idx: 0=No tariff, 1=T1, 2=T2, 3=T3, 4=T4
+  void set_energy_sensor(uint8_t phase_idx, uint8_t tariff_idx, const char *type, sensor::Sensor *sensor) {
+    if (phase_idx < 4 && tariff_idx < 5) {
+      if (strcmp(type, "active") == 0)
+        this->energy_sensors_[phase_idx][tariff_idx].active_ = sensor;
+      else if (strcmp(type, "import_active") == 0)
+        this->energy_sensors_[phase_idx][tariff_idx].import_active_ = sensor;
+      else if (strcmp(type, "export_active") == 0)
+        this->energy_sensors_[phase_idx][tariff_idx].export_active_ = sensor;
+      else if (strcmp(type, "reactive") == 0)
+        this->energy_sensors_[phase_idx][tariff_idx].reactive_ = sensor;
+      else if (strcmp(type, "import_reactive") == 0)
+        this->energy_sensors_[phase_idx][tariff_idx].import_reactive_ = sensor;
+      else if (strcmp(type, "export_reactive") == 0)
+        this->energy_sensors_[phase_idx][tariff_idx].export_reactive_ = sensor;
+    }
+  }
+  void set_quadrant_sensor(uint8_t phase_idx, uint8_t tariff_idx, uint8_t quadrant, sensor::Sensor *sensor) {
+    if (phase_idx < 4 && tariff_idx < 5 && quadrant >= 1 && quadrant <= 4) {
+      this->quadrant_sensors_[phase_idx][tariff_idx][quadrant - 1] = sensor;
+    }
   }
 
   // Resettable statistics sensors (total)
   void set_resettable_active_energy_sensor(sensor::Sensor *sensor) {
-    this->resettable_total_energy_sensors_.active_ = sensor;
+    this->resettable_phase_energy_sensors_[0].active_ = sensor;
   }
   void set_resettable_import_active_energy_sensor(sensor::Sensor *sensor) {
-    this->resettable_total_energy_sensors_.import_active_ = sensor;
+    this->resettable_phase_energy_sensors_[0].import_active_ = sensor;
   }
   void set_resettable_export_active_energy_sensor(sensor::Sensor *sensor) {
-    this->resettable_total_energy_sensors_.export_active_ = sensor;
+    this->resettable_phase_energy_sensors_[0].export_active_ = sensor;
   }
   void set_resettable_reactive_energy_sensor(sensor::Sensor *sensor) {
-    this->resettable_total_energy_sensors_.reactive_ = sensor;
+    this->resettable_phase_energy_sensors_[0].reactive_ = sensor;
   }
   void set_resettable_import_reactive_energy_sensor(sensor::Sensor *sensor) {
-    this->resettable_total_energy_sensors_.import_reactive_ = sensor;
+    this->resettable_phase_energy_sensors_[0].import_reactive_ = sensor;
   }
   void set_resettable_export_reactive_energy_sensor(sensor::Sensor *sensor) {
-    this->resettable_total_energy_sensors_.export_reactive_ = sensor;
+    this->resettable_phase_energy_sensors_[0].export_reactive_ = sensor;
   }
 
-  // Per-phase energy sensors (0=A, 1=B, 2=C)
+  // Per-phase energy sensors (0=Total, 1=L1, 2=L2, 3=L3)
   void set_phase_active_energy_sensor(uint8_t phase, sensor::Sensor *sensor) {
-    if (phase < 3) {
+    if (phase < 4) {
       this->phase_energy_sensors_[phase].active_ = sensor;
     }
   }
   void set_phase_import_active_energy_sensor(uint8_t phase, sensor::Sensor *sensor) {
-    if (phase < 3) {
+    if (phase < 4) {
       this->phase_energy_sensors_[phase].import_active_ = sensor;
     }
   }
   void set_phase_export_active_energy_sensor(uint8_t phase, sensor::Sensor *sensor) {
-    if (phase < 3) {
+    if (phase < 4) {
       this->phase_energy_sensors_[phase].export_active_ = sensor;
     }
   }
   void set_phase_reactive_energy_sensor(uint8_t phase, sensor::Sensor *sensor) {
-    if (phase < 3) {
+    if (phase < 4) {
       this->phase_energy_sensors_[phase].reactive_ = sensor;
     }
   }
   void set_phase_import_reactive_energy_sensor(uint8_t phase, sensor::Sensor *sensor) {
-    if (phase < 3) {
+    if (phase < 4) {
       this->phase_energy_sensors_[phase].import_reactive_ = sensor;
     }
   }
   void set_phase_export_reactive_energy_sensor(uint8_t phase, sensor::Sensor *sensor) {
-    if (phase < 3) {
+    if (phase < 4) {
       this->phase_energy_sensors_[phase].export_reactive_ = sensor;
     }
   }
 
-  // Resettable per-phase energy sensors (0=A, 1=B, 2=C)
+  // Resettable per-phase energy sensors (0=Total, 1=L1, 2=L2, 3=L3)
   void set_resettable_phase_active_energy_sensor(uint8_t phase, sensor::Sensor *sensor) {
-    if (phase < 3) {
+    if (phase < 4) {
       this->resettable_phase_energy_sensors_[phase].active_ = sensor;
     }
   }
   void set_resettable_phase_import_active_energy_sensor(uint8_t phase, sensor::Sensor *sensor) {
-    if (phase < 3) {
+    if (phase < 4) {
       this->resettable_phase_energy_sensors_[phase].import_active_ = sensor;
     }
   }
   void set_resettable_phase_export_active_energy_sensor(uint8_t phase, sensor::Sensor *sensor) {
-    if (phase < 3) {
+    if (phase < 4) {
       this->resettable_phase_energy_sensors_[phase].export_active_ = sensor;
     }
   }
   void set_resettable_phase_reactive_energy_sensor(uint8_t phase, sensor::Sensor *sensor) {
-    if (phase < 3) {
+    if (phase < 4) {
       this->resettable_phase_energy_sensors_[phase].reactive_ = sensor;
     }
   }
   void set_resettable_phase_import_reactive_energy_sensor(uint8_t phase, sensor::Sensor *sensor) {
-    if (phase < 3) {
+    if (phase < 4) {
       this->resettable_phase_energy_sensors_[phase].import_reactive_ = sensor;
     }
   }
   void set_resettable_phase_export_reactive_energy_sensor(uint8_t phase, sensor::Sensor *sensor) {
-    if (phase < 3) {
+    if (phase < 4) {
       this->resettable_phase_energy_sensors_[phase].export_reactive_ = sensor;
     }
   }
@@ -249,7 +278,7 @@ class DS100Meter : public modbus_controller::ModbusController {
     }
   }
 
-  // Demand sensors (current power demand) - per phase (0=Total, 1=A, 2=B, 3=C)
+  // Demand sensors (current power demand) - per phase (0=Total, 1=L1, 2=L2, 3=L3)
   void set_import_active_demand_sensor(uint8_t phase, sensor::Sensor *sensor) {
     this->set_phase_sensor(this->demand_sensors_.import_active_, phase, sensor);
   }
@@ -269,7 +298,7 @@ class DS100Meter : public modbus_controller::ModbusController {
     this->set_phase_sensor(this->demand_sensors_.total_reactive_, phase, sensor);
   }
 
-  // Maximum Demand sensors (peak power demand) - per phase (0=Total, 1=A, 2=B, 3=C)
+  // Maximum Demand sensors (peak power demand) - per phase (0=Total, 1=L1, 2=L2, 3=L3)
   void set_import_active_maximum_demand_sensor(uint8_t phase, sensor::Sensor *sensor) {
     this->set_phase_sensor(this->maximum_demand_sensors_.import_active_, phase, sensor);
   }
@@ -423,6 +452,11 @@ class DS100Meter : public modbus_controller::ModbusController {
     }
   }
 
+  // NEW: Read statistics using 2D arrays [phase][tariff]
+  // phase: 0=Total, 1=L1, 2=L2, 3=L3
+  // tariff: 0=No tariff, 1=T1, 2=T2, 3=T3, 4=T4
+  void read_statistics_2d(const uint8_t *data, float scale, uint16_t max_data_len);
+
   // Helper method to read energy sensors following the DS100 pattern
   // All energy statistics follow the same pattern, just at different register addresses
   // base_register: Starting register address (e.g., STATISTICS_ADDR, STATISTICS_RESETTABLE_ADDR, STATISTICS_L1_ADDR)
@@ -434,37 +468,41 @@ class DS100Meter : public modbus_controller::ModbusController {
   void read_power_demand_sensors(const uint8_t *data, uint16_t base_register, PowerDemandSensors &sensors,
                                  float scale = 1.0f);
 
-  // Phase data (3 phases: A, B, C)
-  std::array<DS100Phase, 3> phases_;
+  // Phase data (4 phases: Total, L1, L2, L3)
+  std::array<DS100Phase, 4> phases_;  // Index 0=Total, 1=L1, 2=L2, 3=L3
 
   // Total/combined sensors (livedata)
-  sensor::Sensor *frequency_sensor_{nullptr};
-  sensor::Sensor *total_power_sensor_{nullptr};
   sensor::Sensor *current_n_sensor_{nullptr};
   // Line-to-line voltage sensors
   sensor::Sensor *voltage_l1_l2_sensor_{nullptr};
   sensor::Sensor *voltage_l2_l3_sensor_{nullptr};
   sensor::Sensor *voltage_l3_l1_sensor_{nullptr};
-  // Average voltage sensors
-  sensor::Sensor *voltage_l_n_avg_sensor_{nullptr};
+  // Line-to-line average voltage sensor
   sensor::Sensor *voltage_l_l_avg_sensor_{nullptr};
-  // Average current sensor
-  sensor::Sensor *current_avg_sensor_{nullptr};
-  // Total power sensors
-  sensor::Sensor *apparent_power_total_sensor_{nullptr};
-  sensor::Sensor *reactive_power_total_sensor_{nullptr};
-  // Frequency sensors per phase and average
+  // Note: Total/Average sensors now use phases_[0]:
+  // - total_power_sensor_ -> phases_[0].active_power_sensor_
+  // - apparent_power_total_sensor_ -> phases_[0].apparent_power_sensor_
+  // - reactive_power_total_sensor_ -> phases_[0].reactive_power_sensor_
+  // - power_factor_avg_sensor_ -> phases_[0].power_factor_sensor_
+  // - frequency_sensor_ -> phases_[0].frequency_sensor_
+  // - voltage_l_n_avg_sensor_ -> phases_[0].voltage_sensor_
+  // - current_avg_sensor_ -> phases_[0].current_sensor_
 
-  // Power factor average
-  sensor::Sensor *power_factor_avg_sensor_{nullptr};
+  // NEW: Unified 2D energy sensors [phase][tariff]
+  // phase: 0=Total, 1=L1, 2=L2, 3=L3
+  // tariff: 0=No tariff, 1=T1, 2=T2, 3=T3, 4=T4
+  std::array<std::array<EnergySensors, 5>, 4> energy_sensors_;
 
-  // Total energy sensors (statistics)
-  EnergySensors total_energy_sensors_;
-
-  // Quadrant sensors for total (Q1-Q4)
+  // Quadrant sensors for total (Q1-Q4) - LEGACY, use quadrant_sensors_ instead
   std::array<sensor::Sensor *, 4> reactive_energy_quadrant_sensors_{nullptr, nullptr, nullptr, nullptr};
 
-  // Tariff energy sensors (T1-T4)
+  // NEW: Unified 2D quadrant sensors [phase][tariff][quadrant]
+  // phase: 0=Total, 1=L1, 2=L2, 3=L3
+  // tariff: 0=No tariff, 1=T1, 2=T2, 3=T3, 4=T4
+  // quadrant: 0=Q1, 1=Q2, 2=Q3, 3=Q4
+  std::array<std::array<std::array<sensor::Sensor *, 4>, 5>, 4> quadrant_sensors_;
+
+  // Tariff energy sensors (T1-T4) - LEGACY, use energy_sensors_ instead
   std::array<EnergySensors, 4> tariff_energy_sensors_;
 
   // Tariff + quadrant sensors (T1-T4, Q1-Q4)
@@ -478,12 +516,10 @@ class DS100Meter : public modbus_controller::ModbusController {
   PowerDemandSensors demand_sensors_;          // Current power demand
   PowerDemandSensors maximum_demand_sensors_;  // Peak power demand
 
-  // Resettable statistics sensors
-  EnergySensors resettable_total_energy_sensors_;                 // Total resettable
-  std::array<EnergySensors, 3> resettable_phase_energy_sensors_;  // Per-phase resettable (A, B, C)
-
-  // Per-phase energy statistics
-  std::array<EnergySensors, 3> phase_energy_sensors_;  // Per-phase statistics (A, B, C)
+  // Resettable statistics sensors - Phase index 0=Total, 1=L1, 2=L2, 3=L3
+  std::array<EnergySensors, 4> resettable_phase_energy_sensors_;
+  // Per-phase energy statistics - Phase index 0=Total, 1=L1, 2=L2, 3=L3
+  std::array<EnergySensors, 4> phase_energy_sensors_;
 
 #ifdef USE_TEXT_SENSOR
   // Text sensor - Serial Number (6 bytes from register 0x1000)

@@ -3,52 +3,67 @@ sensor:
     modbus_id: modbus_bus
     address: 0x01
     update_interval: 10s
-    phase_a:
-      voltage:
-        name: L1 Voltage
-      current:
-        name: L1 Current
-      active_power:
-        name: L1 Active Power
-      apparent_power:
-        name: L1 Apparent Power
-      reactive_power:
-        name: L1 Reactive Power
-      power_factor:
-        name: L1 Power Factor
-    phase_b:
-      voltage:
-        name: L2 Voltage
-    phase_c:
-      current:
-        name: L3 Current
-    total_power:
-      name: Total Power
-    frequency:
-      name: Frequency
-    active_energy:
-      name: Active Energy
-    import_active_energy:
-      name: Import Active Energy
-    export_active_energy:
-      name: Export Active Energy
-    reactive_energy:
-      name: Reactive Energy
-    import_reactive_energy:
-      name: Import Reactive Energy
-    export_reactive_energy:
-      name: Export Reactive Energy
-    # Test quadrants
-    quadrant_1:
-      name: Reactive Energy Q1
-    quadrant_2:
-      name: Reactive Energy Q2
-    # Test tariffs
-    tariff_1:
-      import_active_energy:
-        name: T1 Import Active Energy
-      quadrant_1:
-        name: T1 Reactive Energy Q1
-    tariff_2:
-      export_active_energy:
-        name: T2 Export Active Energy
+    livedata:
+      total:
+        active_power:
+          name: Total Power
+        apparent_power:
+          name: Total Apparent Power
+        reactive_power:
+          name: Total Reactive Power
+        power_factor:
+          name: Avg Power Factor
+        frequency:
+          name: Frequency
+        voltage:
+          name: L-N Avg Voltage
+        current:
+          name: Avg Current
+      l1:
+        voltage:
+          name: L1 Voltage
+        current:
+          name: L1 Current
+        active_power:
+          name: L1 Active Power
+        apparent_power:
+          name: L1 Apparent Power
+        reactive_power:
+          name: L1 Reactive Power
+        power_factor:
+          name: L1 Power Factor
+      l2:
+        voltage:
+          name: L2 Voltage
+      l3:
+        current:
+          name: L3 Current
+    statistics:
+      total:
+        active_energy:
+          name: Total Active Energy
+        import_active_energy:
+          name: Total Import Active Energy
+        export_active_energy:
+          name: Total Export Active Energy
+        reactive_energy:
+          name: Total Reactive Energy
+        quadrant_1:
+          name: Total Q1
+      total_t1:
+        active_energy:
+          name: Total T1 Active Energy
+      l1:
+        active_energy:
+          name: L1 Active Energy
+        reactive_energy:
+          name: L1 Reactive Energy
+      l1_t1:
+        active_energy:
+          name: L1 T1 Active Energy
+      l2:
+        active_energy:
+          name: L2 Active Energy
+      l3:
+        active_energy:
+          name: L3 Active Energy

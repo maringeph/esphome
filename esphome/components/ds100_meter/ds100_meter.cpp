@@ -533,48 +533,42 @@ void DS100Meter::handle_livedata_response(const std::vector<uint8_t> &data) {
     ESP_LOGVV(TAG, "%s", hex_buf);
   }
 
-  // Read phase data (arrays are indexed: 0=Total/Avg, 1=L1, 2=L2, 3=L3)
-  for (uint8_t i = 0; i < 3; i++) {
+  // Read all phases including Total (arrays are indexed: 0=Total, 1=L1, 2=L2, 3=L3)
+  for (uint8_t i = 0; i < 4; i++) {
     if (!this->phases_[i].setup_) {
       continue;
     }
 
-    // Phase index in arrays is i+1 (L1=1, L2=2, L3=3)
-    const uint8_t array_idx = i + 1;
-
     if (this->phases_[i].voltage_sensor_ != nullptr) {
-      float voltage = get_int32_helper(data, livedata_offset(LIVEDATA_VOLTAGE_LN[array_idx]), 0.001f);  // mV -> V
+      float voltage = get_int32_helper(data, livedata_offset(LIVEDATA_VOLTAGE_LN[i]), 0.001f);  // mV -> V
       this->phases_[i].voltage_sensor_->publish_state(voltage);
     }
     if (this->phases_[i].current_sensor_ != nullptr) {
-      float current = get_int32_helper(data, livedata_offset(LIVEDATA_CURRENT[array_idx]), 0.001f);  // mA -> A
+      float current = get_int32_helper(data, livedata_offset(LIVEDATA_CURRENT[i]), 0.001f);  // mA -> A
       this->phases_[i].current_sensor_->publish_state(current);
     }
     if (this->phases_[i].active_power_sensor_ != nullptr) {
-      float active_power = get_int32_helper(data, livedata_offset(LIVEDATA_ACTIVE_POWER[array_idx]),
+      float active_power = get_int32_helper(data, livedata_offset(LIVEDATA_ACTIVE_POWER[i]),
                                             1.0f);  // unit: W (direct)
       this->phases_[i].active_power_sensor_->publish_state(active_power);
     }
     if (this->phases_[i].apparent_power_sensor_ != nullptr) {
-      float apparent_power = get_int32_helper(data, livedata_offset(LIVEDATA_APPARENT_POWER[array_idx]),
+      float apparent_power = get_int32_helper(data, livedata_offset(LIVEDATA_APPARENT_POWER[i]),
                                               1.0f);  // unit: VA (direct)
       this->phases_[i].apparent_power_sensor_->publish_state(apparent_power);
     }
     if (this->phases_[i].reactive_power_sensor_ != nullptr) {
-      float reactive_power = get_int32_helper(data, livedata_offset(LIVEDATA_REACTIVE_POWER[array_idx]),
+      float reactive_power = get_int32_helper(data, livedata_offset(LIVEDATA_REACTIVE_POWER[i]),
                                               1.0f);  // unit: var (direct)
       this->phases_[i].reactive_power_sensor_->publish_state(reactive_power);
     }
     if (this->phases_[i].power_factor_sensor_ != nullptr) {
-      uint16_t raw_pf = get_uint16_helper(data, livedata_offset(LIVEDATA_POWER_FACTOR[array_idx]));
-      float power_factor = get_power_factor_helper(data, livedata_offset(LIVEDATA_POWER_FACTOR[array_idx]));
-      ESP_LOGV(TAG, "Phase %d Power Factor - raw: %u (0x%04X), scaled: %.3f", i + 1, raw_pf, raw_pf, power_factor);
+      float power_factor = get_power_factor_helper(data, livedata_offset(LIVEDATA_POWER_FACTOR[i]));
+      ESP_LOGV(TAG, "Phase %d Power Factor - scaled: %.3f", i, power_factor);
       this->phases_[i].power_factor_sensor_->publish_state(power_factor);
-    } else {
-      ESP_LOGV(TAG, "Phase %d Power Factor sensor is nullptr", i + 1);
     }
     if (this->phases_[i].frequency_sensor_ != nullptr) {
-      float frequency = get_frequency_helper(data, livedata_offset(LIVEDATA_FREQUENCY[array_idx]));
+      float frequency = get_frequency_helper(data, livedata_offset(LIVEDATA_FREQUENCY[i]));
       this->phases_[i].frequency_sensor_->publish_state(frequency);
     }
   }
@@ -599,40 +593,10 @@ void DS100Meter::handle_livedata_response(const std::vector<uint8_t> &data) {
     this->voltage_l3_l1_sensor_->publish_state(voltage);
   }
 
-  // Read average values using arrays at index 0
-  if (this->voltage_l_n_avg_sensor_ != nullptr) {
-    float voltage = get_int32_helper(data, livedata_offset(LIVEDATA_VOLTAGE_LN[0]), 0.001f);  // mV -> V
-    this->voltage_l_n_avg_sensor_->publish_state(voltage);
-  }
+  // L-L Average voltage (not per-phase, separate sensor)
   if (this->voltage_l_l_avg_sensor_ != nullptr) {
     float voltage = get_int32_helper(data, livedata_offset(LIVEDATA_VOLTAGE_L_L_AVG), 0.001f);  // mV -> V
     this->voltage_l_l_avg_sensor_->publish_state(voltage);
-  }
-  if (this->current_avg_sensor_ != nullptr) {
-    float current = get_int32_helper(data, livedata_offset(LIVEDATA_CURRENT[0]), 0.001f);  // mA -> A
-    this->current_avg_sensor_->publish_state(current);
-  }
-
-  // Read total/average values using arrays at index 0
-  if (this->total_power_sensor_ != nullptr) {
-    float total_power = get_int32_helper(data, livedata_offset(LIVEDATA_ACTIVE_POWER[0]), 1.0f);  // unit: W (direct)
-    this->total_power_sensor_->publish_state(total_power);
-  }
-  if (this->apparent_power_total_sensor_ != nullptr) {
-    float apparent_power = get_int32_helper(data, livedata_offset(LIVEDATA_APPARENT_POWER[0]), 1.0f);  // unit: VA
-    this->apparent_power_total_sensor_->publish_state(apparent_power);
-  }
-  if (this->reactive_power_total_sensor_ != nullptr) {
-    float reactive_power = get_int32_helper(data, livedata_offset(LIVEDATA_REACTIVE_POWER[0]), 1.0f);  // unit: var
-    this->reactive_power_total_sensor_->publish_state(reactive_power);
-  }
-  if (this->power_factor_avg_sensor_ != nullptr) {
-    float power_factor = get_power_factor_helper(data, livedata_offset(LIVEDATA_POWER_FACTOR[0]));
-    this->power_factor_avg_sensor_->publish_state(power_factor);
-  }
-  if (this->frequency_sensor_ != nullptr) {
-    float frequency = get_frequency_helper(data, livedata_offset(LIVEDATA_FREQUENCY[0]));
-    this->frequency_sensor_->publish_state(frequency);
   }
 }
 
@@ -698,22 +662,22 @@ void DS100Meter::handle_resettable_statistics_response(const std::vector<uint8_t
     ESP_LOGVV(TAG, "%s", hex_buf);
   }
 
-  // Resettable statistics - use base register address
+  // Resettable statistics - Total at index 0, then L1, L2, L3
   // Total: registers 0x062C-0x065B (48 bytes)
-  this->read_energy_sensors(data.data(), STATISTICS_RESETTABLE_ADDR, this->resettable_total_energy_sensors_, 0.01f,
+  this->read_energy_sensors(data.data(), STATISTICS_RESETTABLE_ADDR, this->resettable_phase_energy_sensors_[0], 0.01f,
                             resettable_statistics_size);
 
-  // Phase A: registers 0x0632-0x065B (48 bytes)
+  // Phase L1: registers 0x0632-0x065B (48 bytes)
   this->read_energy_sensors(data.data(), STATISTICS_RESETTABLE_ACTIVE_L1_TOTAL,
-                            this->resettable_phase_energy_sensors_[0], 0.01f, resettable_statistics_size);
-
-  // Phase B: registers 0x0638-0x065B (48 bytes)
-  this->read_energy_sensors(data.data(), STATISTICS_RESETTABLE_ACTIVE_L2_TOTAL,
                             this->resettable_phase_energy_sensors_[1], 0.01f, resettable_statistics_size);
 
-  // Phase C: registers 0x063E-0x065B (48 bytes)
-  this->read_energy_sensors(data.data(), STATISTICS_RESETTABLE_ACTIVE_L3_TOTAL,
+  // Phase L2: registers 0x0638-0x065B (48 bytes)
+  this->read_energy_sensors(data.data(), STATISTICS_RESETTABLE_ACTIVE_L2_TOTAL,
                             this->resettable_phase_energy_sensors_[2], 0.01f, resettable_statistics_size);
+
+  // Phase L3: registers 0x063E-0x065B (48 bytes)
+  this->read_energy_sensors(data.data(), STATISTICS_RESETTABLE_ACTIVE_L3_TOTAL,
+                            this->resettable_phase_energy_sensors_[3], 0.01f, resettable_statistics_size);
 }
 #endif
 
@@ -746,59 +710,15 @@ void DS100Meter::handle_total_statistics_response(const std::vector<uint8_t> &da
   }
 
   // Check if reactive energy sensor is configured
-  ESP_LOGV(TAG, "Reactive energy sensor: %p", this->total_energy_sensors_.reactive_);
+  ESP_LOGV(TAG, "Reactive energy sensor: %p", this->phase_energy_sensors_[0].reactive_);
 
   // Total energy values (always present) - use base register STATISTICS_ADDR (0x010E)
-  this->read_energy_sensors(data.data(), STATISTICS_ADDR, this->total_energy_sensors_, 0.01f, statistics_size);
-
-#ifdef USE_DS100_TARIFFS
-  // Tariff energy values - each tariff starts at a different register
-  const uint16_t tariff_registers[] = {
-      STATISTICS_ACTIVE_ENERGY_IMPORT_T1,  // T1 starts at 0x0110
-      STATISTICS_ACTIVE_ENERGY_IMPORT_T2,  // T2 starts at 0x0112
-      STATISTICS_ACTIVE_ENERGY_IMPORT_T3,  // T3 starts at 0x0114
-      STATISTICS_ACTIVE_ENERGY_IMPORT_T4   // T4 starts at 0x0116
-  };
-  for (uint8_t i = 0; i < 4; i++) {
-    this->read_energy_sensors(data.data(), tariff_registers[i], this->tariff_energy_sensors_[i], 0.01f,
-                              statistics_size);
-  }
-#endif
+  this->read_energy_sensors(data.data(), STATISTICS_ADDR, this->phase_energy_sensors_[0], 0.01f, statistics_size);
 
 #ifdef USE_DS100_QUADRANTS
-  // Quadrant reactive energy values
-  const uint16_t quadrant_offsets[] = {STATISTICS_REACTIVE_ENERGY_Q1, STATISTICS_REACTIVE_ENERGY_Q2,
-                                       STATISTICS_REACTIVE_ENERGY_Q3, STATISTICS_REACTIVE_ENERGY_Q4};
-
-  for (uint8_t i = 0; i < 4; i++) {
-    if (this->reactive_energy_quadrant_sensors_[i] != nullptr) {
-      float value = get_int32_helper(data, quadrant_offsets[i], 0.01f);
-      this->reactive_energy_quadrant_sensors_[i]->publish_state(value);
-    }
-  }
-
-#ifdef USE_DS100_TARIFFS
-  // Tariff + quadrant combinations
-  const uint16_t tariff_quadrant_offsets[4][4] = {
-      {STATISTICS_REACTIVE_ENERGY_Q1_T1, STATISTICS_REACTIVE_ENERGY_Q1_T2, STATISTICS_REACTIVE_ENERGY_Q1_T3,
-       STATISTICS_REACTIVE_ENERGY_Q1_T4},
-      {STATISTICS_REACTIVE_ENERGY_Q2_T1, STATISTICS_REACTIVE_ENERGY_Q2_T2, STATISTICS_REACTIVE_ENERGY_Q2_T3,
-       STATISTICS_REACTIVE_ENERGY_Q2_T4},
-      {STATISTICS_REACTIVE_ENERGY_Q3_T1, STATISTICS_REACTIVE_ENERGY_Q3_T2, STATISTICS_REACTIVE_ENERGY_Q3_T3,
-       STATISTICS_REACTIVE_ENERGY_Q3_T4},
-      {STATISTICS_REACTIVE_ENERGY_Q4_T1, STATISTICS_REACTIVE_ENERGY_Q4_T2, STATISTICS_REACTIVE_ENERGY_Q4_T3,
-       STATISTICS_REACTIVE_ENERGY_Q4_T4},
-  };
-
-  for (uint8_t q = 0; q < 4; q++) {
-    for (uint8_t t = 0; t < 4; t++) {
-      if (this->tariff_reactive_energy_quadrant_sensors_[t][q] != nullptr) {
-        float value = get_int32_helper(data, tariff_quadrant_offsets[q][t], 0.01f);
-        this->tariff_reactive_energy_quadrant_sensors_[t][q]->publish_state(value);
-      }
-    }
-  }
-#endif
+  // NOTE: Quadrants are now handled by read_statistics_2d()
+  // This legacy code block is kept for backwards compatibility
+  // but will be removed in a future version
 #endif
 }
 
@@ -818,8 +738,8 @@ void DS100Meter::handle_phase_statistics_response(const std::vector<uint8_t> &da
     return;
   }
 
-  uint8_t phase_idx = phase - 1;  // Convert 1-3 to 0-2
-  if (phase_idx > 2) {
+  uint8_t phase_idx = phase;  // phase 1-3 maps to index 1-3 (0 is Total)
+  if (phase_idx < 1 || phase_idx > 3) {
     ESP_LOGW(TAG, "Invalid phase: %d", phase);
     return;
   }
@@ -847,42 +767,45 @@ void DS100Meter::dump_config() {
   ESP_LOGCONFIG(TAG, "DS100 Meter:");
   ESP_LOGCONFIG(TAG, "  Address: 0x%02X", this->address_);
 
-  // Log phase sensors
-  for (uint8_t i = 0; i < 3; i++) {
+  // Log total sensors (phases_[0])
+  ESP_LOGCONFIG(TAG, "  Total:");
+  LOG_SENSOR("    ", "Voltage L-N Avg", this->phases_[0].voltage_sensor_);
+  LOG_SENSOR("    ", "Current Avg", this->phases_[0].current_sensor_);
+  LOG_SENSOR("    ", "Active Power", this->phases_[0].active_power_sensor_);
+  LOG_SENSOR("    ", "Apparent Power", this->phases_[0].apparent_power_sensor_);
+  LOG_SENSOR("    ", "Reactive Power", this->phases_[0].reactive_power_sensor_);
+  LOG_SENSOR("    ", "Power Factor", this->phases_[0].power_factor_sensor_);
+  LOG_SENSOR("    ", "Frequency", this->phases_[0].frequency_sensor_);
+
+  // Log individual phase sensors (L1, L2, L3)
+  for (uint8_t i = 1; i < 4; i++) {
     if (!this->phases_[i].setup_) {
       continue;
     }
-    ESP_LOGCONFIG(TAG, "  Phase %c:", i + 'A');
+    ESP_LOGCONFIG(TAG, "  Phase L%d:", i);
     LOG_SENSOR("    ", "Voltage", this->phases_[i].voltage_sensor_);
     LOG_SENSOR("    ", "Current", this->phases_[i].current_sensor_);
     LOG_SENSOR("    ", "Active Power", this->phases_[i].active_power_sensor_);
     LOG_SENSOR("    ", "Apparent Power", this->phases_[i].apparent_power_sensor_);
     LOG_SENSOR("    ", "Reactive Power", this->phases_[i].reactive_power_sensor_);
     LOG_SENSOR("    ", "Power Factor", this->phases_[i].power_factor_sensor_);
-    LOG_SENSOR("    ", "Phase Angle", this->phases_[i].phase_angle_sensor_);
+    LOG_SENSOR("    ", "Frequency", this->phases_[i].frequency_sensor_);
   }
 
-  // Log total/combined sensors
-  LOG_SENSOR("  ", "Total Power", this->total_power_sensor_);
-  LOG_SENSOR("  ", "Frequency", this->frequency_sensor_);
+  // Log other sensors
   LOG_SENSOR("  ", "Current N", this->current_n_sensor_);
   LOG_SENSOR("  ", "Voltage L1-L2", this->voltage_l1_l2_sensor_);
   LOG_SENSOR("  ", "Voltage L2-L3", this->voltage_l2_l3_sensor_);
   LOG_SENSOR("  ", "Voltage L3-L1", this->voltage_l3_l1_sensor_);
-  LOG_SENSOR("  ", "Voltage L-N Avg", this->voltage_l_n_avg_sensor_);
   LOG_SENSOR("  ", "Voltage L-L Avg", this->voltage_l_l_avg_sensor_);
-  LOG_SENSOR("  ", "Current Avg", this->current_avg_sensor_);
-  LOG_SENSOR("  ", "Apparent Power Total", this->apparent_power_total_sensor_);
-  LOG_SENSOR("  ", "Reactive Power Total", this->reactive_power_total_sensor_);
-  LOG_SENSOR("  ", "Power Factor Avg", this->power_factor_avg_sensor_);
 
   // Log energy sensors
-  LOG_SENSOR("  ", "Active Energy", this->total_energy_sensors_.active_);
-  LOG_SENSOR("  ", "Import Active Energy", this->total_energy_sensors_.import_active_);
-  LOG_SENSOR("  ", "Export Active Energy", this->total_energy_sensors_.export_active_);
-  LOG_SENSOR("  ", "Reactive Energy", this->total_energy_sensors_.reactive_);
-  LOG_SENSOR("  ", "Import Reactive Energy", this->total_energy_sensors_.import_reactive_);
-  LOG_SENSOR("  ", "Export Reactive Energy", this->total_energy_sensors_.export_reactive_);
+  LOG_SENSOR("  ", "Active Energy", this->phase_energy_sensors_[0].active_);
+  LOG_SENSOR("  ", "Import Active Energy", this->phase_energy_sensors_[0].import_active_);
+  LOG_SENSOR("  ", "Export Active Energy", this->phase_energy_sensors_[0].export_active_);
+  LOG_SENSOR("  ", "Reactive Energy", this->phase_energy_sensors_[0].reactive_);
+  LOG_SENSOR("  ", "Import Reactive Energy", this->phase_energy_sensors_[0].import_reactive_);
+  LOG_SENSOR("  ", "Export Reactive Energy", this->phase_energy_sensors_[0].export_reactive_);
 
   // Log text sensors
 #ifdef USE_TEXT_SENSOR
@@ -909,6 +832,12 @@ void DS100Meter::read_energy_sensors(const uint8_t *data, uint16_t base_register
     return (static_cast<int32_t>(data[byte_offset]) << 24) | (static_cast<int32_t>(data[byte_offset + 1]) << 16) |
            (static_cast<int32_t>(data[byte_offset + 2]) << 8) | static_cast<int32_t>(data[byte_offset + 3]);
   };
+
+  // NEW: Read using 2D arrays if this is a statistics block
+  if (base_register == STATISTICS_ADDR) {
+    this->read_statistics_2d(data, scale, max_data_len);
+    return;
+  }
 
   switch (base_register) {
     case STATISTICS_ADDR:  // Total Statistics (0x010E)
@@ -1126,6 +1055,104 @@ void DS100ResetStatisticsButton::press_action() {
   }
 }
 #endif
+
+// NEW: Read statistics using 2D arrays [phase][tariff]
+// This replaces the old flat structure with unified 2D access
+void DS100Meter::read_statistics_2d(const uint8_t *data, float scale, uint16_t max_data_len) {
+  // Helper lambda to read 32-bit value from data at byte offset
+  auto read_int32_at = [&](uint16_t reg_addr) -> int32_t {
+    size_t byte_offset = statistics_offset(reg_addr);
+    if (byte_offset + 3 >= max_data_len) {
+      ESP_LOGW(TAG, "Statistics 2D read would exceed bounds: addr=0x%04X, offset=%zu, max=%u", reg_addr, byte_offset,
+               max_data_len);
+      return 0;
+    }
+    return (static_cast<int32_t>(data[byte_offset]) << 24) | (static_cast<int32_t>(data[byte_offset + 1]) << 16) |
+           (static_cast<int32_t>(data[byte_offset + 2]) << 8) | static_cast<int32_t>(data[byte_offset + 3]);
+  };
+
+  // Iterate through all phases (0=Total, 1=L1, 2=L2, 3=L3)
+  for (uint8_t phase = 0; phase < 4; phase++) {
+    // Check if any sensors are configured for this phase
+    bool has_sensors = false;
+    for (uint8_t tariff = 0; tariff < 5 && !has_sensors; tariff++) {
+      if (this->energy_sensors_[phase][tariff].active_ != nullptr ||
+          this->energy_sensors_[phase][tariff].import_active_ != nullptr ||
+          this->energy_sensors_[phase][tariff].export_active_ != nullptr) {
+        has_sensors = true;
+      }
+#ifdef USE_DS100_REACTIVE_ENERGY
+      else if (this->energy_sensors_[phase][tariff].reactive_ != nullptr ||
+               this->energy_sensors_[phase][tariff].import_reactive_ != nullptr ||
+               this->energy_sensors_[phase][tariff].export_reactive_ != nullptr) {
+        has_sensors = true;
+      }
+#endif
+    }
+
+    if (!has_sensors)
+      continue;
+
+    // Read all tariffs for this phase
+    for (uint8_t tariff = 0; tariff < 5; tariff++) {
+      auto &sensors = this->energy_sensors_[phase][tariff];
+
+      // Active Energy
+      if (sensors.active_ != nullptr) {
+        int32_t raw = read_int32_at(REGARR_STATISTICS_ACTIVE_TOTAL[phase][tariff]);
+        sensors.active_->publish_state(static_cast<float>(raw) * scale);
+      }
+      if (sensors.import_active_ != nullptr) {
+        int32_t raw = read_int32_at(REGARR_STATISTICS_ACTIVE_IMPORT[phase][tariff]);
+        sensors.import_active_->publish_state(static_cast<float>(raw) * scale);
+      }
+      if (sensors.export_active_ != nullptr) {
+        int32_t raw = read_int32_at(REGARR_STATISTICS_ACTIVE_EXPORT[phase][tariff]);
+        sensors.export_active_->publish_state(static_cast<float>(raw) * scale);
+      }
+
+#ifdef USE_DS100_REACTIVE_ENERGY
+      // Reactive Energy
+      if (sensors.reactive_ != nullptr) {
+        int32_t raw = read_int32_at(REGARR_STATISTICS_REACTIVE_TOTAL[phase][tariff]);
+        sensors.reactive_->publish_state(static_cast<float>(raw) * scale);
+      }
+      if (sensors.import_reactive_ != nullptr) {
+        int32_t raw = read_int32_at(REGARR_STATISTICS_REACTIVE_IMPORT[phase][tariff]);
+        sensors.import_reactive_->publish_state(static_cast<float>(raw) * scale);
+      }
+      if (sensors.export_reactive_ != nullptr) {
+        int32_t raw = read_int32_at(REGARR_STATISTICS_REACTIVE_EXPORT[phase][tariff]);
+        sensors.export_reactive_->publish_state(static_cast<float>(raw) * scale);
+      }
+
+#ifdef USE_DS100_QUADRANTS
+      // Quadrants
+      for (uint8_t q = 0; q < 4; q++) {
+        if (this->quadrant_sensors_[phase][tariff][q] != nullptr) {
+          int32_t raw = 0;
+          switch (q) {
+            case 0:
+              raw = read_int32_at(REGARR_STATISTICS_QUADRANT_1[phase][tariff]);
+              break;
+            case 1:
+              raw = read_int32_at(REGARR_STATISTICS_QUADRANT_2[phase][tariff]);
+              break;
+            case 2:
+              raw = read_int32_at(REGARR_STATISTICS_QUADRANT_3[phase][tariff]);
+              break;
+            case 3:
+              raw = read_int32_at(REGARR_STATISTICS_QUADRANT_4[phase][tariff]);
+              break;
+          }
+          this->quadrant_sensors_[phase][tariff][q]->publish_state(static_cast<float>(raw) * scale);
+        }
+      }
+#endif
+#endif
+    }
+  }
+}
 
 }  // namespace ds100_meter
 }  // namespace esphome

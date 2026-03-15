@@ -91,6 +91,13 @@ CONF_VOLTAGE_L_L_AVG = "voltage_l_l_avg"
 CONF_APPARENT_POWER_TOTAL = "apparent_power"
 CONF_REACTIVE_POWER_TOTAL = "reactive_power"
 
+# New livedata structure
+CONF_LIVEDATA = "livedata"
+CONF_L1 = "l1"
+CONF_L2 = "l2"
+CONF_L3 = "l3"
+CONF_TOTAL = "total"
+
 ds100_meter_ns = cg.esphome_ns.namespace("ds100_meter")
 DS100Meter = ds100_meter_ns.class_(
     "DS100Meter", cg.PollingComponent, modbus.ModbusDevice
@@ -316,11 +323,113 @@ MAXIMUM_DEMAND_SCHEMA = cv.Schema(
 
 CONF_DEMAND = "demand"
 CONF_MAXIMUM_DEMAND = "maximum_demand"
-CONF_TOTAL = "total"
 CONF_RESETTABLE_STATISTICS = "resettable_statistics"
-CONF_STATISTICS_L1 = "statistics_l1"
-CONF_STATISTICS_L2 = "statistics_l2"
-CONF_STATISTICS_L3 = "statistics_l3"
+# New unified statistics structure
+CONF_STATISTICS = "statistics"
+CONF_STATISTICS_TOTAL = "total"
+CONF_STATISTICS_TOTAL_T1 = "total_t1"
+CONF_STATISTICS_TOTAL_T2 = "total_t2"
+CONF_STATISTICS_TOTAL_T3 = "total_t3"
+CONF_STATISTICS_TOTAL_T4 = "total_t4"
+CONF_STATISTICS_L1 = "l1"
+CONF_STATISTICS_L1_T1 = "l1_t1"
+CONF_STATISTICS_L1_T2 = "l1_t2"
+CONF_STATISTICS_L1_T3 = "l1_t3"
+CONF_STATISTICS_L1_T4 = "l1_t4"
+CONF_STATISTICS_L2 = "l2"
+CONF_STATISTICS_L2_T1 = "l2_t1"
+CONF_STATISTICS_L2_T2 = "l2_t2"
+CONF_STATISTICS_L2_T3 = "l2_t3"
+CONF_STATISTICS_L2_T4 = "l2_t4"
+CONF_STATISTICS_L3 = "l3"
+CONF_STATISTICS_L3_T1 = "l3_t1"
+CONF_STATISTICS_L3_T2 = "l3_t2"
+CONF_STATISTICS_L3_T3 = "l3_t3"
+CONF_STATISTICS_L3_T4 = "l3_t4"
+
+# New livedata structure with total and phases
+LIVEDATA_TOTAL_SCHEMA = cv.Schema(
+    {
+        cv.Optional(CONF_ACTIVE_POWER): sensor.sensor_schema(
+            unit_of_measurement=UNIT_WATT,
+            accuracy_decimals=0,
+            device_class=DEVICE_CLASS_POWER,
+            state_class=STATE_CLASS_MEASUREMENT,
+        ),
+        cv.Optional(CONF_APPARENT_POWER): sensor.sensor_schema(
+            unit_of_measurement=UNIT_VOLT_AMPS,
+            accuracy_decimals=0,
+            state_class=STATE_CLASS_MEASUREMENT,
+        ),
+        cv.Optional(CONF_REACTIVE_POWER): sensor.sensor_schema(
+            unit_of_measurement=UNIT_VOLT_AMPS_REACTIVE,
+            accuracy_decimals=0,
+            state_class=STATE_CLASS_MEASUREMENT,
+        ),
+        cv.Optional(CONF_POWER_FACTOR): sensor.sensor_schema(
+            accuracy_decimals=3,
+            device_class=DEVICE_CLASS_POWER_FACTOR,
+            state_class=STATE_CLASS_MEASUREMENT,
+        ),
+        cv.Optional(CONF_FREQUENCY): sensor.sensor_schema(
+            unit_of_measurement=UNIT_HERTZ,
+            icon=ICON_CURRENT_AC,
+            accuracy_decimals=1,
+            state_class=STATE_CLASS_MEASUREMENT,
+        ),
+        cv.Optional(CONF_CURRENT): sensor.sensor_schema(
+            unit_of_measurement=UNIT_AMPERE,
+            accuracy_decimals=3,
+            device_class=DEVICE_CLASS_CURRENT,
+            state_class=STATE_CLASS_MEASUREMENT,
+        ),
+        cv.Optional(CONF_VOLTAGE): sensor.sensor_schema(
+            unit_of_measurement=UNIT_VOLT,
+            accuracy_decimals=3,
+            device_class=DEVICE_CLASS_VOLTAGE,
+            state_class=STATE_CLASS_MEASUREMENT,
+        ),
+    }
+)
+
+LIVEDATA_SCHEMA = cv.Schema(
+    {
+        cv.Optional(CONF_TOTAL): LIVEDATA_TOTAL_SCHEMA,
+        cv.Optional(CONF_L1): PHASE_SCHEMA,
+        cv.Optional(CONF_L2): PHASE_SCHEMA,
+        cv.Optional(CONF_L3): PHASE_SCHEMA,
+        cv.Optional(CONF_CURRENT_N): sensor.sensor_schema(
+            unit_of_measurement=UNIT_AMPERE,
+            accuracy_decimals=3,
+            device_class=DEVICE_CLASS_CURRENT,
+            state_class=STATE_CLASS_MEASUREMENT,
+        ),
+        cv.Optional(CONF_VOLTAGE_L1_L2): sensor.sensor_schema(
+            unit_of_measurement=UNIT_VOLT,
+            accuracy_decimals=3,
+            device_class=DEVICE_CLASS_VOLTAGE,
+            state_class=STATE_CLASS_MEASUREMENT,
+        ),
+        cv.Optional(CONF_VOLTAGE_L2_L3): sensor.sensor_schema(
+            unit_of_measurement=UNIT_VOLT,
+            accuracy_decimals=3,
+            device_class=DEVICE_CLASS_VOLTAGE,
+            state_class=STATE_CLASS_MEASUREMENT,
+        ),
+        cv.Optional(CONF_VOLTAGE_L3_L1): sensor.sensor_schema(
+            unit_of_measurement=UNIT_VOLT,
+            accuracy_decimals=3,
+            device_class=DEVICE_CLASS_VOLTAGE,
+            state_class=STATE_CLASS_MEASUREMENT,
+        ),
+        cv.Optional(CONF_VOLTAGE_L_L_AVG): sensor.sensor_schema(
+            unit_of_measurement=UNIT_VOLT,
+            accuracy_decimals=3,
+            device_class=DEVICE_CLASS_VOLTAGE,
+            state_class=STATE_CLASS_MEASUREMENT,
+        ),
+    }
+)
 
 # Update interval configuration for different data categories
 # Note: Demand includes both current demand and maximum demand
@@ -348,85 +457,8 @@ CONFIG_SCHEMA = (
             cv.Optional(CONF_UPDATE_INTERVAL_DEMAND): cv.update_interval,
             cv.Optional(CONF_UPDATE_INTERVAL_STATISTICS): cv.update_interval,
             cv.Optional(CONF_UPDATE_INTERVAL_SETTINGS): cv.update_interval,
-            # Livedata - phase-specific sensors
-            cv.Optional(CONF_PHASE_A): PHASE_SCHEMA,
-            cv.Optional(CONF_PHASE_B): PHASE_SCHEMA,
-            cv.Optional(CONF_PHASE_C): PHASE_SCHEMA,
-            # Livedata - total/combined sensors
-            cv.Optional(CONF_FREQUENCY): sensor.sensor_schema(
-                unit_of_measurement=UNIT_HERTZ,
-                icon=ICON_CURRENT_AC,
-                accuracy_decimals=1,
-                state_class=STATE_CLASS_MEASUREMENT,
-            ),
-            cv.Optional(CONF_TOTAL_POWER): sensor.sensor_schema(
-                unit_of_measurement=UNIT_WATT,
-                accuracy_decimals=0,
-                device_class=DEVICE_CLASS_POWER,
-                state_class=STATE_CLASS_MEASUREMENT,
-            ),
-            cv.Optional(CONF_CURRENT_N): sensor.sensor_schema(
-                unit_of_measurement=UNIT_AMPERE,
-                accuracy_decimals=3,
-                device_class=DEVICE_CLASS_CURRENT,
-                state_class=STATE_CLASS_MEASUREMENT,
-            ),
-            # Line-to-line voltages
-            cv.Optional(CONF_VOLTAGE_L1_L2): sensor.sensor_schema(
-                unit_of_measurement=UNIT_VOLT,
-                accuracy_decimals=3,
-                device_class=DEVICE_CLASS_VOLTAGE,
-                state_class=STATE_CLASS_MEASUREMENT,
-            ),
-            cv.Optional(CONF_VOLTAGE_L2_L3): sensor.sensor_schema(
-                unit_of_measurement=UNIT_VOLT,
-                accuracy_decimals=3,
-                device_class=DEVICE_CLASS_VOLTAGE,
-                state_class=STATE_CLASS_MEASUREMENT,
-            ),
-            cv.Optional(CONF_VOLTAGE_L3_L1): sensor.sensor_schema(
-                unit_of_measurement=UNIT_VOLT,
-                accuracy_decimals=3,
-                device_class=DEVICE_CLASS_VOLTAGE,
-                state_class=STATE_CLASS_MEASUREMENT,
-            ),
-            # Average voltages
-            cv.Optional(CONF_VOLTAGE_L_N_AVG): sensor.sensor_schema(
-                unit_of_measurement=UNIT_VOLT,
-                accuracy_decimals=3,
-                device_class=DEVICE_CLASS_VOLTAGE,
-                state_class=STATE_CLASS_MEASUREMENT,
-            ),
-            cv.Optional(CONF_VOLTAGE_L_L_AVG): sensor.sensor_schema(
-                unit_of_measurement=UNIT_VOLT,
-                accuracy_decimals=3,
-                device_class=DEVICE_CLASS_VOLTAGE,
-                state_class=STATE_CLASS_MEASUREMENT,
-            ),
-            # Average current
-            cv.Optional(CONF_CURRENT): sensor.sensor_schema(
-                unit_of_measurement=UNIT_AMPERE,
-                accuracy_decimals=3,
-                device_class=DEVICE_CLASS_CURRENT,
-                state_class=STATE_CLASS_MEASUREMENT,
-            ),
-            # Total power sensors
-            cv.Optional(CONF_APPARENT_POWER_TOTAL): sensor.sensor_schema(
-                unit_of_measurement=UNIT_VOLT_AMPS,
-                accuracy_decimals=0,
-                state_class=STATE_CLASS_MEASUREMENT,
-            ),
-            cv.Optional(CONF_REACTIVE_POWER_TOTAL): sensor.sensor_schema(
-                unit_of_measurement=UNIT_VOLT_AMPS_REACTIVE,
-                accuracy_decimals=0,
-                state_class=STATE_CLASS_MEASUREMENT,
-            ),
-            # Power factor average
-            cv.Optional(CONF_POWER_FACTOR): sensor.sensor_schema(
-                accuracy_decimals=3,
-                device_class=DEVICE_CLASS_POWER_FACTOR,
-                state_class=STATE_CLASS_MEASUREMENT,
-            ),
+            # Livedata with new structure: total, l1, l2, l3
+            cv.Optional(CONF_LIVEDATA): LIVEDATA_SCHEMA,
             # Statistics - total energy values with optional quadrants
             cv.Optional(CONF_ACTIVE_ENERGY): sensor.sensor_schema(
                 unit_of_measurement=UNIT_KILOWATT_HOURS,
@@ -491,33 +523,58 @@ CONFIG_SCHEMA = (
             cv.Optional(CONF_DEMAND): cv.Schema(
                 {
                     cv.Optional(CONF_TOTAL): DEMAND_SCHEMA,
-                    cv.Optional(CONF_PHASE_A): DEMAND_SCHEMA,
-                    cv.Optional(CONF_PHASE_B): DEMAND_SCHEMA,
-                    cv.Optional(CONF_PHASE_C): DEMAND_SCHEMA,
+                    cv.Optional(CONF_L1): DEMAND_SCHEMA,
+                    cv.Optional(CONF_L2): DEMAND_SCHEMA,
+                    cv.Optional(CONF_L3): DEMAND_SCHEMA,
                 }
             ),
             # Maximum Demand - peak power demand values (per phase or total)
             cv.Optional(CONF_MAXIMUM_DEMAND): cv.Schema(
                 {
                     cv.Optional(CONF_TOTAL): MAXIMUM_DEMAND_SCHEMA,
-                    cv.Optional(CONF_PHASE_A): MAXIMUM_DEMAND_SCHEMA,
-                    cv.Optional(CONF_PHASE_B): MAXIMUM_DEMAND_SCHEMA,
-                    cv.Optional(CONF_PHASE_C): MAXIMUM_DEMAND_SCHEMA,
+                    cv.Optional(CONF_L1): MAXIMUM_DEMAND_SCHEMA,
+                    cv.Optional(CONF_L2): MAXIMUM_DEMAND_SCHEMA,
+                    cv.Optional(CONF_L3): MAXIMUM_DEMAND_SCHEMA,
                 }
             ),
             # Resettable Statistics - energy values that can be reset
             cv.Optional(CONF_RESETTABLE_STATISTICS): cv.Schema(
                 {
                     cv.Optional(CONF_TOTAL): ENERGY_SCHEMA,
-                    cv.Optional(CONF_PHASE_A): ENERGY_SCHEMA,
-                    cv.Optional(CONF_PHASE_B): ENERGY_SCHEMA,
-                    cv.Optional(CONF_PHASE_C): ENERGY_SCHEMA,
+                    cv.Optional(CONF_L1): ENERGY_SCHEMA,
+                    cv.Optional(CONF_L2): ENERGY_SCHEMA,
+                    cv.Optional(CONF_L3): ENERGY_SCHEMA,
                 }
             ),
-            # Per-phase statistics (L1, L2, L3) - separate from livedata
-            cv.Optional(CONF_STATISTICS_L1): ENERGY_SCHEMA,
-            cv.Optional(CONF_STATISTICS_L2): ENERGY_SCHEMA,
-            cv.Optional(CONF_STATISTICS_L3): ENERGY_SCHEMA,
+            # Unified statistics structure
+            cv.Optional(CONF_STATISTICS): cv.Schema(
+                {
+                    # Total (all phases combined)
+                    cv.Optional(CONF_STATISTICS_TOTAL): ENERGY_WITH_QUADRANTS_SCHEMA,
+                    cv.Optional(CONF_STATISTICS_TOTAL_T1): ENERGY_WITH_QUADRANTS_SCHEMA,
+                    cv.Optional(CONF_STATISTICS_TOTAL_T2): ENERGY_WITH_QUADRANTS_SCHEMA,
+                    cv.Optional(CONF_STATISTICS_TOTAL_T3): ENERGY_WITH_QUADRANTS_SCHEMA,
+                    cv.Optional(CONF_STATISTICS_TOTAL_T4): ENERGY_WITH_QUADRANTS_SCHEMA,
+                    # Phase L1
+                    cv.Optional(CONF_STATISTICS_L1): ENERGY_WITH_QUADRANTS_SCHEMA,
+                    cv.Optional(CONF_STATISTICS_L1_T1): ENERGY_WITH_QUADRANTS_SCHEMA,
+                    cv.Optional(CONF_STATISTICS_L1_T2): ENERGY_WITH_QUADRANTS_SCHEMA,
+                    cv.Optional(CONF_STATISTICS_L1_T3): ENERGY_WITH_QUADRANTS_SCHEMA,
+                    cv.Optional(CONF_STATISTICS_L1_T4): ENERGY_WITH_QUADRANTS_SCHEMA,
+                    # Phase L2
+                    cv.Optional(CONF_STATISTICS_L2): ENERGY_WITH_QUADRANTS_SCHEMA,
+                    cv.Optional(CONF_STATISTICS_L2_T1): ENERGY_WITH_QUADRANTS_SCHEMA,
+                    cv.Optional(CONF_STATISTICS_L2_T2): ENERGY_WITH_QUADRANTS_SCHEMA,
+                    cv.Optional(CONF_STATISTICS_L2_T3): ENERGY_WITH_QUADRANTS_SCHEMA,
+                    cv.Optional(CONF_STATISTICS_L2_T4): ENERGY_WITH_QUADRANTS_SCHEMA,
+                    # Phase L3
+                    cv.Optional(CONF_STATISTICS_L3): ENERGY_WITH_QUADRANTS_SCHEMA,
+                    cv.Optional(CONF_STATISTICS_L3_T1): ENERGY_WITH_QUADRANTS_SCHEMA,
+                    cv.Optional(CONF_STATISTICS_L3_T2): ENERGY_WITH_QUADRANTS_SCHEMA,
+                    cv.Optional(CONF_STATISTICS_L3_T3): ENERGY_WITH_QUADRANTS_SCHEMA,
+                    cv.Optional(CONF_STATISTICS_L3_T4): ENERGY_WITH_QUADRANTS_SCHEMA,
+                }
+            ),
         }
     )
     .extend(cv.polling_component_schema("10s"))
@@ -624,8 +681,8 @@ def _check_demand_used(config):
     if CONF_DEMAND not in config:
         return False
     demand_config = config[CONF_DEMAND]
-    # Check if any sensors are configured in any phase or total
-    for phase_key in [CONF_TOTAL, CONF_PHASE_A, CONF_PHASE_B, CONF_PHASE_C]:
+    # Check if any sensors are configured in total or any phase
+    for phase_key in [CONF_L1, CONF_L2, CONF_L3, CONF_TOTAL]:
         if phase_key in demand_config and demand_config[phase_key]:
             return True
     return False
@@ -636,8 +693,8 @@ def _check_maximum_demand_used(config):
     if CONF_MAXIMUM_DEMAND not in config:
         return False
     max_demand_config = config[CONF_MAXIMUM_DEMAND]
-    # Check if any sensors are configured in any phase or total
-    for phase_key in [CONF_TOTAL, CONF_PHASE_A, CONF_PHASE_B, CONF_PHASE_C]:
+    # Check if any sensors are configured in total or any phase
+    for phase_key in [CONF_L1, CONF_L2, CONF_L3, CONF_TOTAL]:
         if phase_key in max_demand_config and max_demand_config[phase_key]:
             return True
     return False
@@ -648,17 +705,9 @@ def _check_resettable_statistics_used(config):
     if CONF_RESETTABLE_STATISTICS not in config:
         return False
     resettable_config = config[CONF_RESETTABLE_STATISTICS]
-    # Check if any sensors are configured in any phase or total
-    for phase_key in [CONF_TOTAL, CONF_PHASE_A, CONF_PHASE_B, CONF_PHASE_C]:
+    # Check if any sensors are configured in total or any phase
+    for phase_key in [CONF_L1, CONF_L2, CONF_L3, CONF_TOTAL]:
         if phase_key in resettable_config and resettable_config[phase_key]:
-            return True
-    return False
-
-
-def _check_phase_statistics_used(config):
-    """Check if any per-phase statistics sensors are configured."""
-    for stats_key in [CONF_STATISTICS_L1, CONF_STATISTICS_L2, CONF_STATISTICS_L3]:
-        if stats_key in config and config[stats_key]:
             return True
     return False
 
@@ -772,11 +821,8 @@ async def to_code(config):
     use_demand = _check_demand_used(config)
     use_maximum_demand = _check_maximum_demand_used(config)
     use_resettable_statistics = _check_resettable_statistics_used(config)
-    use_phase_statistics = _check_phase_statistics_used(config)
     use_statistics = _check_statistics_used(config)
 
-    if use_tariffs:
-        cg.add_define("USE_DS100_TARIFFS")
     if use_quadrants:
         cg.add_define("USE_DS100_QUADRANTS")
     if use_reactive_energy:
@@ -787,212 +833,178 @@ async def to_code(config):
         cg.add_define("USE_DS100_MAXIMUM_DEMAND")
     if use_resettable_statistics:
         cg.add_define("USE_DS100_RESETTABLE_STATISTICS")
-    if use_phase_statistics:
-        cg.add_define("USE_DS100_PHASE_STATISTICS")
     if use_statistics:
         cg.add_define("USE_DS100_STATISTICS")
 
-    # Livedata - total/combined sensors
-    if CONF_TOTAL_POWER in config:
-        sens = await _register_sensor_with_device(config[CONF_TOTAL_POWER], device_obj)
-        cg.add(var.set_total_power_sensor(sens))
+    # Livedata with new structure
+    if CONF_LIVEDATA in config:
+        livedata_config = config[CONF_LIVEDATA]
 
-    if CONF_FREQUENCY in config:
-        sens = await _register_sensor_with_device(config[CONF_FREQUENCY], device_obj)
-        cg.add(var.set_frequency_sensor(sens))
+        # Livedata sensors - unified handling with phase index
+        # Index 0=Total, 1=L1, 2=L2, 3=L3
+        livedata_phase_mapping = {
+            CONF_TOTAL: 0,
+            CONF_L1: 1,
+            CONF_L2: 2,
+            CONF_L3: 3,
+        }
 
-    if CONF_CURRENT_N in config:
-        sens = await _register_sensor_with_device(config[CONF_CURRENT_N], device_obj)
-        cg.add(var.set_current_n_sensor(sens))
+        for phase_key, phase_idx in livedata_phase_mapping.items():
+            if phase_key not in livedata_config:
+                continue
+            phase_config = livedata_config[phase_key]
+            for sensor_type in PHASE_SENSORS:
+                if sensor_type in phase_config:
+                    sens = await _register_sensor_with_device(
+                        phase_config[sensor_type], device_obj
+                    )
+                    if sensor_type == CONF_FREQUENCY:
+                        cg.add(var.set_phase_frequency_sensor(phase_idx, sens))
+                    else:
+                        cg.add(
+                            getattr(var, f"set_{sensor_type}_sensor")(phase_idx, sens)
+                        )
 
-    # Line-to-line voltages
-    if CONF_VOLTAGE_L1_L2 in config:
-        sens = await _register_sensor_with_device(
-            config[CONF_VOLTAGE_L1_L2], device_obj
-        )
-        cg.add(var.set_voltage_l1_l2_sensor(sens))
-
-    if CONF_VOLTAGE_L2_L3 in config:
-        sens = await _register_sensor_with_device(
-            config[CONF_VOLTAGE_L2_L3], device_obj
-        )
-        cg.add(var.set_voltage_l2_l3_sensor(sens))
-
-    if CONF_VOLTAGE_L3_L1 in config:
-        sens = await _register_sensor_with_device(
-            config[CONF_VOLTAGE_L3_L1], device_obj
-        )
-        cg.add(var.set_voltage_l3_l1_sensor(sens))
-
-    # Average voltages
-    if CONF_VOLTAGE_L_N_AVG in config:
-        sens = await _register_sensor_with_device(
-            config[CONF_VOLTAGE_L_N_AVG], device_obj
-        )
-        cg.add(var.set_voltage_l_n_avg_sensor(sens))
-
-    if CONF_VOLTAGE_L_L_AVG in config:
-        sens = await _register_sensor_with_device(
-            config[CONF_VOLTAGE_L_L_AVG], device_obj
-        )
-        cg.add(var.set_voltage_l_l_avg_sensor(sens))
-
-    # Average current
-    if CONF_CURRENT in config:
-        sens = await _register_sensor_with_device(config[CONF_CURRENT], device_obj)
-        cg.add(var.set_current_avg_sensor(sens))
-
-    # Total power sensors
-    if CONF_APPARENT_POWER_TOTAL in config:
-        sens = await _register_sensor_with_device(
-            config[CONF_APPARENT_POWER_TOTAL], device_obj
-        )
-        cg.add(var.set_apparent_power_total_sensor(sens))
-
-    if CONF_REACTIVE_POWER_TOTAL in config:
-        sens = await _register_sensor_with_device(
-            config[CONF_REACTIVE_POWER_TOTAL], device_obj
-        )
-        cg.add(var.set_reactive_power_total_sensor(sens))
-
-    # Power factor average
-    if CONF_POWER_FACTOR in config:
-        sens = await _register_sensor_with_device(config[CONF_POWER_FACTOR], device_obj)
-        cg.add(var.set_power_factor_avg_sensor(sens))
-
-    # Statistics - total energy sensors
-    if CONF_ACTIVE_ENERGY in config:
-        sens = await _register_sensor_with_device(
-            config[CONF_ACTIVE_ENERGY], device_obj
-        )
-        cg.add(var.set_active_energy_sensor(sens))
-
-    if CONF_IMPORT_ACTIVE_ENERGY in config:
-        sens = await _register_sensor_with_device(
-            config[CONF_IMPORT_ACTIVE_ENERGY], device_obj
-        )
-        cg.add(var.set_import_active_energy_sensor(sens))
-
-    if CONF_EXPORT_ACTIVE_ENERGY in config:
-        sens = await _register_sensor_with_device(
-            config[CONF_EXPORT_ACTIVE_ENERGY], device_obj
-        )
-        cg.add(var.set_export_active_energy_sensor(sens))
-
-    if CONF_REACTIVE_ENERGY in config:
-        sens = await _register_sensor_with_device(
-            config[CONF_REACTIVE_ENERGY], device_obj
-        )
-        cg.add(var.set_reactive_energy_sensor(sens))
-
-    if CONF_IMPORT_REACTIVE_ENERGY in config:
-        sens = await _register_sensor_with_device(
-            config[CONF_IMPORT_REACTIVE_ENERGY], device_obj
-        )
-        cg.add(var.set_import_reactive_energy_sensor(sens))
-
-    if CONF_EXPORT_REACTIVE_ENERGY in config:
-        sens = await _register_sensor_with_device(
-            config[CONF_EXPORT_REACTIVE_ENERGY], device_obj
-        )
-        cg.add(var.set_export_reactive_energy_sensor(sens))
-
-    # Quadrants - total
-    for i, quadrant in enumerate(
-        [CONF_QUADRANT_1, CONF_QUADRANT_2, CONF_QUADRANT_3, CONF_QUADRANT_4]
-    ):
-        if quadrant in config:
-            sens = await _register_sensor_with_device(config[quadrant], device_obj)
-            cg.add(var.set_reactive_energy_quadrant_sensor(i + 1, sens))
-
-    # Tariffs
-    for tariff_idx, tariff in enumerate(
-        [CONF_TARIFF_1, CONF_TARIFF_2, CONF_TARIFF_3, CONF_TARIFF_4]
-    ):
-        if tariff not in config:
-            continue
-
-        tariff_config = config[tariff]
-        tariff_num = tariff_idx + 1
-
-        # Energy sensors for this tariff
-        if CONF_ACTIVE_ENERGY in tariff_config:
+        # Special sensors (current_n, line-to-line voltages, averages)
+        if CONF_CURRENT_N in livedata_config:
             sens = await _register_sensor_with_device(
-                tariff_config[CONF_ACTIVE_ENERGY], device_obj
+                livedata_config[CONF_CURRENT_N], device_obj
             )
-            cg.add(var.set_tariff_active_energy_sensor(tariff_num, sens))
+            cg.add(var.set_current_n_sensor(sens))
 
-        if CONF_IMPORT_ACTIVE_ENERGY in tariff_config:
+        if CONF_VOLTAGE_L1_L2 in livedata_config:
             sens = await _register_sensor_with_device(
-                tariff_config[CONF_IMPORT_ACTIVE_ENERGY], device_obj
+                livedata_config[CONF_VOLTAGE_L1_L2], device_obj
             )
-            cg.add(var.set_tariff_import_active_energy_sensor(tariff_num, sens))
+            cg.add(var.set_voltage_l1_l2_sensor(sens))
 
-        if CONF_EXPORT_ACTIVE_ENERGY in tariff_config:
+        if CONF_VOLTAGE_L2_L3 in livedata_config:
             sens = await _register_sensor_with_device(
-                tariff_config[CONF_EXPORT_ACTIVE_ENERGY], device_obj
+                livedata_config[CONF_VOLTAGE_L2_L3], device_obj
             )
-            cg.add(var.set_tariff_export_active_energy_sensor(tariff_num, sens))
+            cg.add(var.set_voltage_l2_l3_sensor(sens))
 
-        if CONF_REACTIVE_ENERGY in tariff_config:
+        if CONF_VOLTAGE_L3_L1 in livedata_config:
             sens = await _register_sensor_with_device(
-                tariff_config[CONF_REACTIVE_ENERGY], device_obj
+                livedata_config[CONF_VOLTAGE_L3_L1], device_obj
             )
-            cg.add(var.set_tariff_reactive_energy_sensor(tariff_num, sens))
+            cg.add(var.set_voltage_l3_l1_sensor(sens))
 
-        if CONF_IMPORT_REACTIVE_ENERGY in tariff_config:
+        if CONF_VOLTAGE_L_L_AVG in livedata_config:
             sens = await _register_sensor_with_device(
-                tariff_config[CONF_IMPORT_REACTIVE_ENERGY], device_obj
+                livedata_config[CONF_VOLTAGE_L_L_AVG], device_obj
             )
-            cg.add(var.set_tariff_import_reactive_energy_sensor(tariff_num, sens))
+            cg.add(var.set_voltage_l_l_avg_sensor(sens))
 
-        if CONF_EXPORT_REACTIVE_ENERGY in tariff_config:
-            sens = await _register_sensor_with_device(
-                tariff_config[CONF_EXPORT_REACTIVE_ENERGY], device_obj
-            )
-            cg.add(var.set_tariff_export_reactive_energy_sensor(tariff_num, sens))
+    # Unified Statistics with 2D arrays [phase][tariff]
+    # Mapping: total=0, l1=1, l2=2, l3=3 / no tariff=0, t1=1, t2=2, t3=3, t4=4
+    if CONF_STATISTICS in config:
+        stats_config = config[CONF_STATISTICS]
 
-        # Quadrants for this tariff
-        for quadrant_idx, quadrant in enumerate(
-            [CONF_QUADRANT_1, CONF_QUADRANT_2, CONF_QUADRANT_3, CONF_QUADRANT_4]
-        ):
-            if quadrant in tariff_config:
+        # Statistics key mapping to (phase_idx, tariff_idx)
+        stats_mapping = {
+            CONF_STATISTICS_TOTAL: (0, 0),
+            CONF_STATISTICS_TOTAL_T1: (0, 1),
+            CONF_STATISTICS_TOTAL_T2: (0, 2),
+            CONF_STATISTICS_TOTAL_T3: (0, 3),
+            CONF_STATISTICS_TOTAL_T4: (0, 4),
+            CONF_STATISTICS_L1: (1, 0),
+            CONF_STATISTICS_L1_T1: (1, 1),
+            CONF_STATISTICS_L1_T2: (1, 2),
+            CONF_STATISTICS_L1_T3: (1, 3),
+            CONF_STATISTICS_L1_T4: (1, 4),
+            CONF_STATISTICS_L2: (2, 0),
+            CONF_STATISTICS_L2_T1: (2, 1),
+            CONF_STATISTICS_L2_T2: (2, 2),
+            CONF_STATISTICS_L2_T3: (2, 3),
+            CONF_STATISTICS_L2_T4: (2, 4),
+            CONF_STATISTICS_L3: (3, 0),
+            CONF_STATISTICS_L3_T1: (3, 1),
+            CONF_STATISTICS_L3_T2: (3, 2),
+            CONF_STATISTICS_L3_T3: (3, 3),
+            CONF_STATISTICS_L3_T4: (3, 4),
+        }
+
+        for stats_key, (phase_idx, tariff_idx) in stats_mapping.items():
+            if stats_key not in stats_config:
+                continue
+
+            section_config = stats_config[stats_key]
+
+            # Active Energy
+            if CONF_ACTIVE_ENERGY in section_config:
                 sens = await _register_sensor_with_device(
-                    tariff_config[quadrant], device_obj
+                    section_config[CONF_ACTIVE_ENERGY], device_obj
+                )
+                cg.add(var.set_energy_sensor(phase_idx, tariff_idx, "active", sens))
+
+            if CONF_IMPORT_ACTIVE_ENERGY in section_config:
+                sens = await _register_sensor_with_device(
+                    section_config[CONF_IMPORT_ACTIVE_ENERGY], device_obj
                 )
                 cg.add(
-                    var.set_tariff_reactive_energy_quadrant_sensor(
-                        tariff_num, quadrant_idx + 1, sens
+                    var.set_energy_sensor(phase_idx, tariff_idx, "import_active", sens)
+                )
+
+            if CONF_EXPORT_ACTIVE_ENERGY in section_config:
+                sens = await _register_sensor_with_device(
+                    section_config[CONF_EXPORT_ACTIVE_ENERGY], device_obj
+                )
+                cg.add(
+                    var.set_energy_sensor(phase_idx, tariff_idx, "export_active", sens)
+                )
+
+            # Reactive Energy
+            if CONF_REACTIVE_ENERGY in section_config:
+                sens = await _register_sensor_with_device(
+                    section_config[CONF_REACTIVE_ENERGY], device_obj
+                )
+                cg.add(var.set_energy_sensor(phase_idx, tariff_idx, "reactive", sens))
+
+            if CONF_IMPORT_REACTIVE_ENERGY in section_config:
+                sens = await _register_sensor_with_device(
+                    section_config[CONF_IMPORT_REACTIVE_ENERGY], device_obj
+                )
+                cg.add(
+                    var.set_energy_sensor(
+                        phase_idx, tariff_idx, "import_reactive", sens
                     )
                 )
 
-    # Livedata - phase sensors
-    for i, phase in enumerate([CONF_PHASE_A, CONF_PHASE_B, CONF_PHASE_C]):
-        if phase not in config:
-            continue
-
-        phase_config = config[phase]
-        for sensor_type in PHASE_SENSORS:
-            if sensor_type in phase_config:
+            if CONF_EXPORT_REACTIVE_ENERGY in section_config:
                 sens = await _register_sensor_with_device(
-                    phase_config[sensor_type], device_obj
+                    section_config[CONF_EXPORT_REACTIVE_ENERGY], device_obj
                 )
-                # Use set_phase_frequency_sensor for phase frequency, set_{type}_sensor for others
-                if sensor_type == CONF_FREQUENCY:
-                    cg.add(var.set_phase_frequency_sensor(i, sens))
-                else:
-                    cg.add(getattr(var, f"set_{sensor_type}_sensor")(i, sens))
+                cg.add(
+                    var.set_energy_sensor(
+                        phase_idx, tariff_idx, "export_reactive", sens
+                    )
+                )
+
+            # Quadrants
+            for q_idx, q_conf in enumerate(
+                [CONF_QUADRANT_1, CONF_QUADRANT_2, CONF_QUADRANT_3, CONF_QUADRANT_4],
+                start=1,
+            ):
+                if q_conf in section_config:
+                    sens = await _register_sensor_with_device(
+                        section_config[q_conf], device_obj
+                    )
+                    cg.add(var.set_quadrant_sensor(phase_idx, tariff_idx, q_idx, sens))
+
+    # Legacy flat statistics (for backward compatibility - will be deprecated)
+    # TODO: Remove in future version
 
     # Demand sensors - per phase or total
     if CONF_DEMAND in config:
         demand_config = config[CONF_DEMAND]
 
-        # Phase index mapping: total=3, phase_a=0, phase_b=1, phase_c=2
+        # Phase index mapping matching C++ arrays: total=0, l1=1, l2=2, l3=3
         phase_mapping = {
-            CONF_TOTAL: 3,
-            CONF_PHASE_A: 0,
-            CONF_PHASE_B: 1,
-            CONF_PHASE_C: 2,
+            CONF_TOTAL: 0,
+            CONF_L1: 1,
+            CONF_L2: 2,
+            CONF_L3: 3,
         }
 
         for phase_key, phase_idx in phase_mapping.items():
@@ -1041,12 +1053,12 @@ async def to_code(config):
     if CONF_MAXIMUM_DEMAND in config:
         max_demand_config = config[CONF_MAXIMUM_DEMAND]
 
-        # Phase index mapping: total=3, phase_a=0, phase_b=1, phase_c=2
+        # Phase index mapping matching C++ arrays: total=0, l1=1, l2=2, l3=3
         phase_mapping = {
-            CONF_TOTAL: 3,
-            CONF_PHASE_A: 0,
-            CONF_PHASE_B: 1,
-            CONF_PHASE_C: 2,
+            CONF_TOTAL: 0,
+            CONF_L1: 1,
+            CONF_L2: 2,
+            CONF_L3: 3,
         }
 
         for phase_key, phase_idx in phase_mapping.items():
@@ -1092,52 +1104,19 @@ async def to_code(config):
                 cg.add(var.set_total_reactive_maximum_demand_sensor(phase_idx, sens))
 
     # Resettable Statistics sensors - energy values that can be reset
+    # Unified handling: Total=0, L1=1, L2=2, L3=3
     if CONF_RESETTABLE_STATISTICS in config:
         resettable_config = config[CONF_RESETTABLE_STATISTICS]
 
-        # Total resettable statistics
-        if CONF_TOTAL in resettable_config:
-            total_resettable = resettable_config[CONF_TOTAL]
+        # Phase mapping: Total=0, L1=1, L2=2, L3=3
+        resettable_phase_mapping = {
+            CONF_TOTAL: 0,
+            CONF_L1: 1,
+            CONF_L2: 2,
+            CONF_L3: 3,
+        }
 
-            if CONF_ACTIVE_ENERGY in total_resettable:
-                sens = await _register_sensor_with_device(
-                    total_resettable[CONF_ACTIVE_ENERGY], device_obj
-                )
-                cg.add(var.set_resettable_active_energy_sensor(sens))
-
-            if CONF_IMPORT_ACTIVE_ENERGY in total_resettable:
-                sens = await _register_sensor_with_device(
-                    total_resettable[CONF_IMPORT_ACTIVE_ENERGY], device_obj
-                )
-                cg.add(var.set_resettable_import_active_energy_sensor(sens))
-
-            if CONF_EXPORT_ACTIVE_ENERGY in total_resettable:
-                sens = await _register_sensor_with_device(
-                    total_resettable[CONF_EXPORT_ACTIVE_ENERGY], device_obj
-                )
-                cg.add(var.set_resettable_export_active_energy_sensor(sens))
-
-            if CONF_REACTIVE_ENERGY in total_resettable:
-                sens = await _register_sensor_with_device(
-                    total_resettable[CONF_REACTIVE_ENERGY], device_obj
-                )
-                cg.add(var.set_resettable_reactive_energy_sensor(sens))
-
-            if CONF_IMPORT_REACTIVE_ENERGY in total_resettable:
-                sens = await _register_sensor_with_device(
-                    total_resettable[CONF_IMPORT_REACTIVE_ENERGY], device_obj
-                )
-                cg.add(var.set_resettable_import_reactive_energy_sensor(sens))
-
-            if CONF_EXPORT_REACTIVE_ENERGY in total_resettable:
-                sens = await _register_sensor_with_device(
-                    total_resettable[CONF_EXPORT_REACTIVE_ENERGY], device_obj
-                )
-                cg.add(var.set_resettable_export_reactive_energy_sensor(sens))
-
-        # Per-phase resettable statistics (A, B, C)
-        phase_keys = [CONF_PHASE_A, CONF_PHASE_B, CONF_PHASE_C]
-        for phase_idx, phase_key in enumerate(phase_keys):
+        for phase_key, phase_idx in resettable_phase_mapping.items():
             if phase_key not in resettable_config:
                 continue
 
@@ -1194,47 +1173,3 @@ async def to_code(config):
                         phase_idx, sens
                     )
                 )
-
-    # Per-phase statistics (L1, L2, L3) - separate from livedata
-    phase_stats_keys = [CONF_STATISTICS_L1, CONF_STATISTICS_L2, CONF_STATISTICS_L3]
-    for phase_idx, stats_key in enumerate(phase_stats_keys):
-        if stats_key not in config:
-            continue
-
-        phase_stats = config[stats_key]
-
-        if CONF_ACTIVE_ENERGY in phase_stats:
-            sens = await _register_sensor_with_device(
-                phase_stats[CONF_ACTIVE_ENERGY], device_obj
-            )
-            cg.add(var.set_phase_active_energy_sensor(phase_idx, sens))
-
-        if CONF_IMPORT_ACTIVE_ENERGY in phase_stats:
-            sens = await _register_sensor_with_device(
-                phase_stats[CONF_IMPORT_ACTIVE_ENERGY], device_obj
-            )
-            cg.add(var.set_phase_import_active_energy_sensor(phase_idx, sens))
-
-        if CONF_EXPORT_ACTIVE_ENERGY in phase_stats:
-            sens = await _register_sensor_with_device(
-                phase_stats[CONF_EXPORT_ACTIVE_ENERGY], device_obj
-            )
-            cg.add(var.set_phase_export_active_energy_sensor(phase_idx, sens))
-
-        if CONF_REACTIVE_ENERGY in phase_stats:
-            sens = await _register_sensor_with_device(
-                phase_stats[CONF_REACTIVE_ENERGY], device_obj
-            )
-            cg.add(var.set_phase_reactive_energy_sensor(phase_idx, sens))
-
-        if CONF_IMPORT_REACTIVE_ENERGY in phase_stats:
-            sens = await _register_sensor_with_device(
-                phase_stats[CONF_IMPORT_REACTIVE_ENERGY], device_obj
-            )
-            cg.add(var.set_phase_import_reactive_energy_sensor(phase_idx, sens))
-
-        if CONF_EXPORT_REACTIVE_ENERGY in phase_stats:
-            sens = await _register_sensor_with_device(
-                phase_stats[CONF_EXPORT_REACTIVE_ENERGY], device_obj
-            )
-            cg.add(var.set_phase_export_reactive_energy_sensor(phase_idx, sens))
