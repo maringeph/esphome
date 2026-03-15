@@ -952,35 +952,7 @@ void DS100Meter::read_resettable_statistics(const uint8_t *data, float scale, ui
            (static_cast<int32_t>(data[byte_offset + 2]) << 8) | static_cast<int32_t>(data[byte_offset + 3]);
   };
 
-  // Phase mapping for resettable statistics
-  struct PhaseRegisters {
-    uint16_t active_total;
-    uint16_t active_import;
-    uint16_t active_export;
-    uint16_t reactive_total;
-    uint16_t reactive_import;
-    uint16_t reactive_export;
-  };
-
-  const PhaseRegisters phase_regs[DS100_PHASE_COUNT] = {
-      // Total (phase 0)
-      {STATISTICS_RESETTABLE_ACTIVE_TOTAL, STATISTICS_RESETTABLE_ACTIVE_IMPORT, STATISTICS_RESETTABLE_ACTIVE_EXPORT,
-       STATISTICS_RESETTABLE_REACTIVE_TOTAL, STATISTICS_RESETTABLE_REACTIVE_IMPORT,
-       STATISTICS_RESETTABLE_REACTIVE_EXPORT},
-      // L1 (phase 1)
-      {STATISTICS_RESETTABLE_ACTIVE_L1_TOTAL, STATISTICS_RESETTABLE_ACTIVE_L1_IMPORT,
-       STATISTICS_RESETTABLE_ACTIVE_L1_EXPORT, STATISTICS_RESETTABLE_REACTIVE_L1_TOTAL,
-       STATISTICS_RESETTABLE_REACTIVE_L1_IMPORT, STATISTICS_RESETTABLE_REACTIVE_L1_EXPORT},
-      // L2 (phase 2)
-      {STATISTICS_RESETTABLE_ACTIVE_L2_TOTAL, STATISTICS_RESETTABLE_ACTIVE_L2_IMPORT,
-       STATISTICS_RESETTABLE_ACTIVE_L2_EXPORT, STATISTICS_RESETTABLE_REACTIVE_L2_TOTAL,
-       STATISTICS_RESETTABLE_REACTIVE_L2_IMPORT, STATISTICS_RESETTABLE_REACTIVE_L2_EXPORT},
-      // L3 (phase 3)
-      {STATISTICS_RESETTABLE_ACTIVE_L3_TOTAL, STATISTICS_RESETTABLE_ACTIVE_L3_IMPORT,
-       STATISTICS_RESETTABLE_ACTIVE_L3_EXPORT, STATISTICS_RESETTABLE_REACTIVE_L3_TOTAL,
-       STATISTICS_RESETTABLE_REACTIVE_L3_IMPORT, STATISTICS_RESETTABLE_REACTIVE_L3_EXPORT}};
-
-  // Read all phases from the single data block
+  // Read all phases from the single data block using constexpr arrays
   for (uint8_t phase_idx = 0; phase_idx < DS100_PHASE_COUNT; phase_idx++) {
     auto &sensors = this->resettable_phase_energy_sensors_[phase_idx];
 
@@ -990,34 +962,32 @@ void DS100Meter::read_resettable_statistics(const uint8_t *data, float scale, ui
       continue;
     }
 
-    const auto &regs = phase_regs[phase_idx];
-
-    // Read Active Energy
+    // Read Active Energy using constexpr arrays from registers.h
     if (sensors.active_ != nullptr) {
-      int32_t raw = read_int32_at(regs.active_total);
+      int32_t raw = read_int32_at(REGARR_RESETTABLE_ACTIVE_TOTAL[phase_idx]);
       sensors.active_->publish_state(static_cast<float>(raw) * scale);
     }
     if (sensors.import_active_ != nullptr) {
-      int32_t raw = read_int32_at(regs.active_import);
+      int32_t raw = read_int32_at(REGARR_RESETTABLE_ACTIVE_IMPORT[phase_idx]);
       sensors.import_active_->publish_state(static_cast<float>(raw) * scale);
     }
     if (sensors.export_active_ != nullptr) {
-      int32_t raw = read_int32_at(regs.active_export);
+      int32_t raw = read_int32_at(REGARR_RESETTABLE_ACTIVE_EXPORT[phase_idx]);
       sensors.export_active_->publish_state(static_cast<float>(raw) * scale);
     }
 
 #ifdef USE_DS100_REACTIVE_ENERGY
-    // Read Reactive Energy
+    // Read Reactive Energy using constexpr arrays from registers.h
     if (sensors.reactive_ != nullptr) {
-      int32_t raw = read_int32_at(regs.reactive_total);
+      int32_t raw = read_int32_at(REGARR_RESETTABLE_REACTIVE_TOTAL[phase_idx]);
       sensors.reactive_->publish_state(static_cast<float>(raw) * scale);
     }
     if (sensors.import_reactive_ != nullptr) {
-      int32_t raw = read_int32_at(regs.reactive_import);
+      int32_t raw = read_int32_at(REGARR_RESETTABLE_REACTIVE_IMPORT[phase_idx]);
       sensors.import_reactive_->publish_state(static_cast<float>(raw) * scale);
     }
     if (sensors.export_reactive_ != nullptr) {
-      int32_t raw = read_int32_at(regs.reactive_export);
+      int32_t raw = read_int32_at(REGARR_RESETTABLE_REACTIVE_EXPORT[phase_idx]);
       sensors.export_reactive_->publish_state(static_cast<float>(raw) * scale);
     }
 #endif
