@@ -608,14 +608,6 @@ def _check_quadrants_used(config):
     return False
 
 
-def _check_tariffs_used(config):
-    """Check if any tariff sensors are configured."""
-    for tariff in [CONF_TARIFF_1, CONF_TARIFF_2, CONF_TARIFF_3, CONF_TARIFF_4]:
-        if tariff in config:
-            return True
-    return False
-
-
 def _check_reactive_energy_used(config):
     """Check if any reactive energy sensors are configured (for statistics length calculation)."""
     # Check total reactive energy sensors
@@ -793,7 +785,6 @@ async def to_code(config):
     cg.add(var.set_update_interval_settings(settings_ms))
 
     # Set feature flags based on configuration
-    use_tariffs = _check_tariffs_used(config)
     use_quadrants = _check_quadrants_used(config)
     use_reactive_energy = _check_reactive_energy_used(config)
     use_demand = _check_demand_used(config)
