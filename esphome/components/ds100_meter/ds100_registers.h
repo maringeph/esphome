@@ -3,8 +3,6 @@
 #include <cstdint>
 #include <cstddef>
 
-#define USE_DS100_REACTIVE_ENERGY
-
 namespace esphome {
 namespace ds100_meter {
 
