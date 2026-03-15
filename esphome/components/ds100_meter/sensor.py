@@ -713,34 +713,8 @@ def _check_resettable_statistics_used(config):
 
 
 def _check_statistics_used(config):
-    """Check if any total statistics sensors are configured."""
-    # Check total energy sensors
-    if CONF_ACTIVE_ENERGY in config:
-        return True
-    if CONF_IMPORT_ACTIVE_ENERGY in config:
-        return True
-    if CONF_EXPORT_ACTIVE_ENERGY in config:
-        return True
-    if CONF_REACTIVE_ENERGY in config:
-        return True
-    if CONF_IMPORT_REACTIVE_ENERGY in config:
-        return True
-    if CONF_EXPORT_REACTIVE_ENERGY in config:
-        return True
-    # Check quadrants
-    for quadrant in [
-        CONF_QUADRANT_1,
-        CONF_QUADRANT_2,
-        CONF_QUADRANT_3,
-        CONF_QUADRANT_4,
-    ]:
-        if quadrant in config:
-            return True
-    # Check tariffs
-    for tariff in [CONF_TARIFF_1, CONF_TARIFF_2, CONF_TARIFF_3, CONF_TARIFF_4]:
-        if tariff in config and config[tariff]:
-            return True
-    return False
+    """Check if statistics section is configured."""
+    return CONF_STATISTICS in config
 
 
 async def _register_sensor_with_device(sensor_config, device_obj):
