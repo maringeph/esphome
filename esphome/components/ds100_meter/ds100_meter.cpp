@@ -710,10 +710,10 @@ void DS100Meter::handle_total_statistics_response(const std::vector<uint8_t> &da
   }
 
   // Check if reactive energy sensor is configured
-  ESP_LOGV(TAG, "Reactive energy sensor: %p", this->phase_energy_sensors_[0].reactive_);
+  ESP_LOGV(TAG, "Reactive energy sensor: %p", this->energy_sensors_[0][0].reactive_);
 
   // Total energy values (always present) - use base register STATISTICS_ADDR (0x010E)
-  this->read_energy_sensors(data.data(), STATISTICS_ADDR, this->phase_energy_sensors_[0], 0.01f, statistics_size);
+  this->read_energy_sensors(data.data(), STATISTICS_ADDR, this->energy_sensors_[0][0], 0.01f, statistics_size);
 
 #ifdef USE_DS100_QUADRANTS
   // NOTE: Quadrants are now handled by read_statistics_2d()
@@ -759,7 +759,7 @@ void DS100Meter::handle_phase_statistics_response(const std::vector<uint8_t> &da
   uint16_t phase_base = (phase == 1) ? STATISTICS_L1_ADDR : (phase == 2) ? STATISTICS_L2_ADDR : STATISTICS_L3_ADDR;
 
   // Read phase statistics using helper function for the correct phase
-  this->read_energy_sensors(data.data(), phase_base, this->phase_energy_sensors_[phase_idx], 0.01f, data.size());
+  this->read_energy_sensors(data.data(), phase_base, this->energy_sensors_[phase_idx][0], 0.01f, data.size());
 }
 #endif
 
@@ -800,12 +800,12 @@ void DS100Meter::dump_config() {
   LOG_SENSOR("  ", "Voltage L-L Avg", this->voltage_l_l_avg_sensor_);
 
   // Log energy sensors
-  LOG_SENSOR("  ", "Active Energy", this->phase_energy_sensors_[0].active_);
-  LOG_SENSOR("  ", "Import Active Energy", this->phase_energy_sensors_[0].import_active_);
-  LOG_SENSOR("  ", "Export Active Energy", this->phase_energy_sensors_[0].export_active_);
-  LOG_SENSOR("  ", "Reactive Energy", this->phase_energy_sensors_[0].reactive_);
-  LOG_SENSOR("  ", "Import Reactive Energy", this->phase_energy_sensors_[0].import_reactive_);
-  LOG_SENSOR("  ", "Export Reactive Energy", this->phase_energy_sensors_[0].export_reactive_);
+  LOG_SENSOR("  ", "Active Energy", this->energy_sensors_[0][0].active_);
+  LOG_SENSOR("  ", "Import Active Energy", this->energy_sensors_[0][0].import_active_);
+  LOG_SENSOR("  ", "Export Active Energy", this->energy_sensors_[0][0].export_active_);
+  LOG_SENSOR("  ", "Reactive Energy", this->energy_sensors_[0][0].reactive_);
+  LOG_SENSOR("  ", "Import Reactive Energy", this->energy_sensors_[0][0].import_reactive_);
+  LOG_SENSOR("  ", "Export Reactive Energy", this->energy_sensors_[0][0].export_reactive_);
 
   // Log text sensors
 #ifdef USE_TEXT_SENSOR
