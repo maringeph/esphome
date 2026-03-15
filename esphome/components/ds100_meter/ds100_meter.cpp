@@ -664,20 +664,7 @@ void DS100Meter::handle_resettable_statistics_response(const std::vector<uint8_t
 
   // Resettable statistics - Total at index 0, then L1, L2, L3
   // Total: registers 0x062C-0x065B (48 bytes)
-  this->read_energy_sensors(data.data(), STATISTICS_RESETTABLE_ADDR, this->resettable_phase_energy_sensors_[0], 0.01f,
-                            resettable_statistics_size);
-
-  // Phase L1: registers 0x0632-0x065B (48 bytes)
-  this->read_energy_sensors(data.data(), STATISTICS_RESETTABLE_ACTIVE_L1_TOTAL,
-                            this->resettable_phase_energy_sensors_[1], 0.01f, resettable_statistics_size);
-
-  // Phase L2: registers 0x0638-0x065B (48 bytes)
-  this->read_energy_sensors(data.data(), STATISTICS_RESETTABLE_ACTIVE_L2_TOTAL,
-                            this->resettable_phase_energy_sensors_[2], 0.01f, resettable_statistics_size);
-
-  // Phase L3: registers 0x063E-0x065B (48 bytes)
-  this->read_energy_sensors(data.data(), STATISTICS_RESETTABLE_ACTIVE_L3_TOTAL,
-                            this->resettable_phase_energy_sensors_[3], 0.01f, resettable_statistics_size);
+  this->read_energy_sensors(data.data(), STATISTICS_RESETTABLE_ADDR, 0.01f, resettable_statistics_size);
 }
 #endif
 
@@ -713,7 +700,7 @@ void DS100Meter::handle_total_statistics_response(const std::vector<uint8_t> &da
   ESP_LOGV(TAG, "Reactive energy sensor: %p", this->energy_sensors_[0][0].reactive_);
 
   // Total energy values (always present) - use base register STATISTICS_ADDR (0x010E)
-  this->read_energy_sensors(data.data(), STATISTICS_ADDR, this->energy_sensors_[0][0], 0.01f, statistics_size);
+  this->read_energy_sensors(data.data(), STATISTICS_ADDR, 0.01f, statistics_size);
 
 #ifdef USE_DS100_QUADRANTS
   // NOTE: Quadrants are now handled by read_statistics_2d()
@@ -759,7 +746,7 @@ void DS100Meter::handle_phase_statistics_response(const std::vector<uint8_t> &da
   uint16_t phase_base = (phase == 1) ? STATISTICS_L1_ADDR : (phase == 2) ? STATISTICS_L2_ADDR : STATISTICS_L3_ADDR;
 
   // Read phase statistics using helper function for the correct phase
-  this->read_energy_sensors(data.data(), phase_base, this->energy_sensors_[phase_idx][0], 0.01f, data.size());
+  this->read_energy_sensors(data.data(), phase_base, 0.01f, data.size());
 }
 #endif
 
@@ -820,8 +807,7 @@ void DS100Meter::dump_config() {
 #endif
 }
 
-void DS100Meter::read_energy_sensors(const uint8_t *data, uint16_t base_register, EnergySensors &sensors, float scale,
-                                     uint16_t max_data_len) {
+void DS100Meter::read_energy_sensors(const uint8_t *data, uint16_t base_register, float scale, uint16_t max_data_len) {
   // Helper lambda to read 32-bit value from data at byte offset
   auto read_int32 = [&](size_t byte_offset, uint16_t base) -> int32_t {
     if (byte_offset + 3 >= max_data_len) {
@@ -834,48 +820,48 @@ void DS100Meter::read_energy_sensors(const uint8_t *data, uint16_t base_register
   };
 
   // Determine phase index from base_register for 2D array access
-  uint8_t phase_idx = 0;  // Default: Total (0x010E)
+  uint8_t phase_idx = DS100_PHASE_IDX_TOTAL;  // Default: Total (0x010E)
   if (base_register == STATISTICS_L1_ADDR)
-    phase_idx = 1;
+    phase_idx = DS100_PHASE_IDX_L1;
   else if (base_register == STATISTICS_L2_ADDR)
-    phase_idx = 2;
+    phase_idx = DS100_PHASE_IDX_L2;
   else if (base_register == STATISTICS_L3_ADDR)
-    phase_idx = 3;
+    phase_idx = DS100_PHASE_IDX_L3;
   else if (base_register == STATISTICS_RESETTABLE_ADDR) {
-    // Resettable statistics use separate logic
-    if (sensors.active_ != nullptr) {
+    // Resettable statistics - use resettable_phase_energy_sensors_ (Total only for now)
+    auto &resettable_sensors = this->resettable_phase_energy_sensors_[DS100_PHASE_IDX_TOTAL];
+    if (resettable_sensors.active_ != nullptr) {
       int32_t raw = read_int32(resettable_statistics_offset(STATISTICS_RESETTABLE_ACTIVE_TOTAL), base_register);
-      sensors.active_->publish_state(static_cast<float>(raw) * scale);
+      resettable_sensors.active_->publish_state(static_cast<float>(raw) * scale);
     }
-    if (sensors.import_active_ != nullptr) {
+    if (resettable_sensors.import_active_ != nullptr) {
       int32_t raw = read_int32(resettable_statistics_offset(STATISTICS_RESETTABLE_ACTIVE_IMPORT), base_register);
-      sensors.import_active_->publish_state(static_cast<float>(raw) * scale);
+      resettable_sensors.import_active_->publish_state(static_cast<float>(raw) * scale);
     }
-    if (sensors.export_active_ != nullptr) {
+    if (resettable_sensors.export_active_ != nullptr) {
       int32_t raw = read_int32(resettable_statistics_offset(STATISTICS_RESETTABLE_ACTIVE_EXPORT), base_register);
-      sensors.export_active_->publish_state(static_cast<float>(raw) * scale);
+      resettable_sensors.export_active_->publish_state(static_cast<float>(raw) * scale);
     }
 #ifdef USE_DS100_REACTIVE_ENERGY
-    if (sensors.reactive_ != nullptr) {
+    if (resettable_sensors.reactive_ != nullptr) {
       int32_t raw = read_int32(resettable_statistics_offset(STATISTICS_RESETTABLE_REACTIVE_TOTAL), base_register);
-      sensors.reactive_->publish_state(static_cast<float>(raw) * scale);
+      resettable_sensors.reactive_->publish_state(static_cast<float>(raw) * scale);
     }
-    if (sensors.import_reactive_ != nullptr) {
+    if (resettable_sensors.import_reactive_ != nullptr) {
       int32_t raw = read_int32(resettable_statistics_offset(STATISTICS_RESETTABLE_REACTIVE_IMPORT), base_register);
-      sensors.import_reactive_->publish_state(static_cast<float>(raw) * scale);
+      resettable_sensors.import_reactive_->publish_state(static_cast<float>(raw) * scale);
     }
-    if (sensors.export_reactive_ != nullptr) {
+    if (resettable_sensors.export_reactive_ != nullptr) {
       int32_t raw = read_int32(resettable_statistics_offset(STATISTICS_RESETTABLE_REACTIVE_EXPORT), base_register);
-      sensors.export_reactive_->publish_state(static_cast<float>(raw) * scale);
+      resettable_sensors.export_reactive_->publish_state(static_cast<float>(raw) * scale);
     }
 #endif
     return;
   }
 
-  // Read all tariffs (0=no tariff, 1-4=T1-T4) using 2D arrays
-  // Note: tariff 0 is sensors directly, tariffs 1-4 are in energy_sensors_[phase_idx][tariff]
-  for (uint8_t tariff_idx = 0; tariff_idx < 5; tariff_idx++) {
-    auto &tariff_sensors = (tariff_idx == 0) ? sensors : this->energy_sensors_[phase_idx][tariff_idx];
+  // Read all tariffs (0=no tariff, 1-4=T1-T4) using unified 2D array
+  for (uint8_t tariff_idx = DS100_TARIFF_IDX_NONE; tariff_idx < DS100_TARIFF_COUNT; tariff_idx++) {
+    auto &tariff_sensors = this->energy_sensors_[phase_idx][tariff_idx];
 
     // Skip if no sensors configured for this tariff
     if (tariff_sensors.active_ == nullptr && tariff_sensors.import_active_ == nullptr &&

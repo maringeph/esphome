@@ -460,7 +460,8 @@ class DS100Meter : public modbus_controller::ModbusController {
   // Helper method to read energy sensors following the DS100 pattern
   // All energy statistics follow the same pattern, just at different register addresses
   // base_register: Starting register address (e.g., STATISTICS_ADDR, STATISTICS_RESETTABLE_ADDR, STATISTICS_L1_ADDR)
-  void read_energy_sensors(const uint8_t *data, uint16_t base_register, EnergySensors &sensors, float scale = 0.01f,
+  // Uses energy_sensors_ for normal statistics, resettable_energy_sensors_ for resettable statistics
+  void read_energy_sensors(const uint8_t *data, uint16_t base_register, float scale = 0.01f,
                            uint16_t max_data_len = 60);
 
   // Helper method to read power demand sensors (6 types × 4 phases)
@@ -489,9 +490,9 @@ class DS100Meter : public modbus_controller::ModbusController {
   // - current_avg_sensor_ -> phases_[0].current_sensor_
 
   // NEW: Unified 2D energy sensors [phase][tariff]
-  // phase: 0=Total, 1=L1, 2=L2, 3=L3
-  // tariff: 0=No tariff, 1=T1, 2=T2, 3=T3, 4=T4
-  std::array<std::array<EnergySensors, 5>, 4> energy_sensors_;
+  // phase: 0=Total, 1=L1, 2=L2, 3=L3 (DS100_PHASE_IDX_*)
+  // tariff: 0=No tariff, 1=T1, 2=T2, 3=T3, 4=T4 (DS100_TARIFF_IDX_*)
+  std::array<std::array<EnergySensors, DS100_TARIFF_COUNT>, DS100_PHASE_COUNT> energy_sensors_;
 
   // Quadrant sensors for total (Q1-Q4) - LEGACY, use quadrant_sensors_ instead
   std::array<sensor::Sensor *, 4> reactive_energy_quadrant_sensors_{nullptr, nullptr, nullptr, nullptr};
