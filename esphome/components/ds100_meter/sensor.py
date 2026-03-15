@@ -804,8 +804,12 @@ async def to_code(config):
     for interval in intervals[1:]:
         base_interval = gcd(base_interval, interval)
 
-    # Set base update interval (minimum 100ms to avoid too frequent updates)
-    base_interval = max(base_interval, 100)
+    # Set base update interval
+    # Divide GCD by 5 to ensure all pending requests can be processed
+    # Example: intervals=[10s, 10s, 10s] → GCD=10s → base=2s
+    # In 10s there are 5 update() calls, enough for livedata+demand+stats+resettable+settings
+    base_interval = base_interval // 5
+    base_interval = max(base_interval, 100)  # Minimum 100ms
     cg.add(var.set_update_interval(base_interval))
 
     # Set individual category intervals
