@@ -506,6 +506,9 @@ class DS100Meter : public modbus_controller::ModbusController {
   // Helper method to read resettable power demand sensors
   void read_resettable_demand_sensors(const uint8_t *data, PowerDemandSensors &sensors, float scale = 1.0f);
 
+  // Helper method to read all resettable statistics phases from single data block
+  void read_resettable_statistics(const uint8_t *data, float scale = 0.01f, uint16_t max_data_len = 48);
+
   // Phase data (4 phases: Total, L1, L2, L3)
   std::array<DS100Phase, 4> phases_;  // Index 0=Total, 1=L1, 2=L2, 3=L3
 
