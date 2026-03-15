@@ -452,17 +452,11 @@ class DS100Meter : public modbus_controller::ModbusController {
     }
   }
 
-  // NEW: Read statistics using 2D arrays [phase][tariff]
-  // phase: 0=Total, 1=L1, 2=L2, 3=L3
-  // tariff: 0=No tariff, 1=T1, 2=T2, 3=T3, 4=T4
-  void read_statistics_2d(const uint8_t *data, float scale, uint16_t max_data_len);
-
   // Helper method to read energy sensors following the DS100 pattern
   // All energy statistics follow the same pattern, just at different register addresses
-  // base_register: Starting register address (e.g., STATISTICS_ADDR, STATISTICS_RESETTABLE_ADDR, STATISTICS_L1_ADDR)
+  // base_addr: Starting register address (e.g., STATISTICS_ADDR, STATISTICS_RESETTABLE_ADDR, STATISTICS_L1_ADDR)
   // Uses energy_sensors_ for normal statistics, resettable_energy_sensors_ for resettable statistics
-  void read_energy_sensors(const uint8_t *data, uint16_t base_register, float scale = 0.01f,
-                           uint16_t max_data_len = 60);
+  void read_energy_sensors(const uint8_t *data, uint16_t base_addr, float scale = 0.01f, uint16_t max_data_len = 60);
 
   // Helper method to read power demand sensors (6 types × 4 phases)
   // base_register: Starting register address (DEMAND_ADDR = 0x043A)
