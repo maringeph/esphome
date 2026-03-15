@@ -633,6 +633,70 @@ void DS100Meter::handle_demand_response(const std::vector<uint8_t> &data) {
 }
 #endif
 
+#ifdef USE_DS100_RESETTABLE_DEMAND
+void DS100Meter::handle_resettable_demand_response(const std::vector<uint8_t> &data) {
+  ESP_LOGV(TAG, "Received resettable demand response: %zu bytes", data.size());
+
+  if (this->consecutive_timeouts_ > 0) {
+    ESP_LOGV(TAG, "Resetting consecutive timeouts (was %d)", this->consecutive_timeouts_);
+    this->consecutive_timeouts_ = 0;
+  }
+
+  this->request_in_progress_ = false;
+
+  const size_t demand_size = DEMAND_RESETTABLE_LEN * 2;
+  if (data.size() != demand_size) {
+    ESP_LOGW(TAG, "Unexpected resettable demand size: %zu bytes (expected %zu)", data.size(), demand_size);
+    return;
+  }
+
+  ESP_LOGV(TAG, "Processing resettable demand (%zu bytes)", data.size());
+
+  // Log raw data buffer for debugging
+  for (size_t i = 0; i < data.size(); i += 20) {
+    char hex_buf[61] = {0};
+    for (size_t j = 0; j < 20 && (i + j) < data.size(); j++) {
+      sprintf(hex_buf + j * 3, "%02X ", data[i + j]);
+    }
+    ESP_LOGVV(TAG, "%s", hex_buf);
+  }
+
+  // Read resettable demand sensors (0.1W resolution)
+  this->read_resettable_demand_sensors(data.data(), this->resettable_demand_sensors_, 0.1f);
+}
+
+void DS100Meter::handle_resettable_maximum_demand_response(const std::vector<uint8_t> &data) {
+  ESP_LOGV(TAG, "Received resettable maximum demand response: %zu bytes", data.size());
+
+  if (this->consecutive_timeouts_ > 0) {
+    ESP_LOGV(TAG, "Resetting consecutive timeouts (was %d)", this->consecutive_timeouts_);
+    this->consecutive_timeouts_ = 0;
+  }
+
+  this->request_in_progress_ = false;
+
+  const size_t demand_size = DEMAND_RESETTABLE_LEN * 2;
+  if (data.size() != demand_size) {
+    ESP_LOGW(TAG, "Unexpected resettable maximum demand size: %zu bytes (expected %zu)", data.size(), demand_size);
+    return;
+  }
+
+  ESP_LOGV(TAG, "Processing resettable maximum demand (%zu bytes)", data.size());
+
+  // Log raw data buffer for debugging
+  for (size_t i = 0; i < data.size(); i += 20) {
+    char hex_buf[61] = {0};
+    for (size_t j = 0; j < 20 && (i + j) < data.size(); j++) {
+      sprintf(hex_buf + j * 3, "%02X ", data[i + j]);
+    }
+    ESP_LOGVV(TAG, "%s", hex_buf);
+  }
+
+  // Read resettable maximum demand sensors (0.1W resolution)
+  this->read_resettable_demand_sensors(data.data(), this->resettable_maximum_demand_sensors_, 0.1f);
+}
+#endif
+
 #ifdef USE_DS100_RESETTABLE_STATISTICS
 void DS100Meter::handle_resettable_statistics_response(const std::vector<uint8_t> &data) {
   ESP_LOGV(TAG, "Received resettable statistics response: %zu bytes", data.size());
@@ -1082,6 +1146,82 @@ void DS100Meter::write_register(uint16_t address, uint16_t value) {
 
   auto cmd = modbus_controller::ModbusCommandItem::create_write_single_command(this, address, value);
   this->queue_command(cmd);
+}
+
+void DS100Meter::read_resettable_demand_sensors(const uint8_t *data, PowerDemandSensors &sensors, float scale) {
+  // Helper lambda to read 32-bit value using resettable_demand_offset helper
+  auto read_int32_at = [&](uint16_t reg_addr) -> int32_t {
+    size_t byte_offset = resettable_demand_offset(reg_addr);
+    if (byte_offset + 3 >= DEMAND_RESETTABLE_LEN * 2)
+      return 0;
+    return (static_cast<int32_t>(data[byte_offset]) << 24) | (static_cast<int32_t>(data[byte_offset + 1]) << 16) |
+           (static_cast<int32_t>(data[byte_offset + 2]) << 8) | static_cast<int32_t>(data[byte_offset + 3]);
+  };
+
+  // Phase indices: 0=L1, 1=L2, 2=L3, 3=Total
+  // Resettable demand uses different register addresses than regular demand
+
+  // Import active power demand (registers 0x0680-0x0687)
+  const uint16_t import_active_regs[4] = {DEMAND_RESETTABLE_ACTIVE_IMPORT_L1, DEMAND_RESETTABLE_ACTIVE_IMPORT_L2,
+                                          DEMAND_RESETTABLE_ACTIVE_IMPORT_L3, DEMAND_RESETTABLE_ACTIVE_IMPORT};
+  for (uint8_t i = 0; i < 4; i++) {
+    if (sensors.import_active_[i] != nullptr) {
+      int32_t raw = read_int32_at(import_active_regs[i]);
+      sensors.import_active_[i]->publish_state(static_cast<float>(raw) * scale);
+    }
+  }
+
+  // Export active power demand (registers 0x0688-0x068F)
+  const uint16_t export_active_regs[4] = {DEMAND_RESETTABLE_ACTIVE_EXPORT_L1, DEMAND_RESETTABLE_ACTIVE_EXPORT_L2,
+                                          DEMAND_RESETTABLE_ACTIVE_EXPORT_L3, DEMAND_RESETTABLE_ACTIVE_EXPORT};
+  for (uint8_t i = 0; i < 4; i++) {
+    if (sensors.export_active_[i] != nullptr) {
+      int32_t raw = read_int32_at(export_active_regs[i]);
+      sensors.export_active_[i]->publish_state(static_cast<float>(raw) * scale);
+    }
+  }
+
+  // Total active power demand (registers 0x0690-0x0697)
+  const uint16_t total_active_regs[4] = {DEMAND_RESETTABLE_ACTIVE_TOTAL_L1, DEMAND_RESETTABLE_ACTIVE_TOTAL_L2,
+                                         DEMAND_RESETTABLE_ACTIVE_TOTAL_L3, DEMAND_RESETTABLE_ACTIVE_TOTAL};
+  for (uint8_t i = 0; i < 4; i++) {
+    if (sensors.total_active_[i] != nullptr) {
+      int32_t raw = read_int32_at(total_active_regs[i]);
+      sensors.total_active_[i]->publish_state(static_cast<float>(raw) * scale);
+    }
+  }
+
+#ifdef USE_DS100_REACTIVE_ENERGY
+  // Import reactive power demand (registers 0x0698-0x069F)
+  const uint16_t import_reactive_regs[4] = {DEMAND_RESETTABLE_REACTIVE_IMPORT_L1, DEMAND_RESETTABLE_REACTIVE_IMPORT_L2,
+                                            DEMAND_RESETTABLE_REACTIVE_IMPORT_L3, DEMAND_RESETTABLE_REACTIVE_IMPORT};
+  for (uint8_t i = 0; i < 4; i++) {
+    if (sensors.import_reactive_[i] != nullptr) {
+      int32_t raw = read_int32_at(import_reactive_regs[i]);
+      sensors.import_reactive_[i]->publish_state(static_cast<float>(raw) * scale);
+    }
+  }
+
+  // Export reactive power demand (registers 0x06A0-0x06A7)
+  const uint16_t export_reactive_regs[4] = {DEMAND_RESETTABLE_REACTIVE_EXPORT_L1, DEMAND_RESETTABLE_REACTIVE_EXPORT_L2,
+                                            DEMAND_RESETTABLE_REACTIVE_EXPORT_L3, DEMAND_RESETTABLE_REACTIVE_EXPORT};
+  for (uint8_t i = 0; i < 4; i++) {
+    if (sensors.export_reactive_[i] != nullptr) {
+      int32_t raw = read_int32_at(export_reactive_regs[i]);
+      sensors.export_reactive_[i]->publish_state(static_cast<float>(raw) * scale);
+    }
+  }
+
+  // Total reactive power demand (registers 0x06A8-0x06AF)
+  const uint16_t total_reactive_regs[4] = {DEMAND_RESETTABLE_REACTIVE_TOTAL_L1, DEMAND_RESETTABLE_REACTIVE_TOTAL_L2,
+                                           DEMAND_RESETTABLE_REACTIVE_TOTAL_L3, DEMAND_RESETTABLE_REACTIVE_TOTAL};
+  for (uint8_t i = 0; i < 4; i++) {
+    if (sensors.total_reactive_[i] != nullptr) {
+      int32_t raw = read_int32_at(total_reactive_regs[i]);
+      sensors.total_reactive_[i]->publish_state(static_cast<float>(raw) * scale);
+    }
+  }
+#endif
 }
 
 #ifdef USE_BUTTON

@@ -318,6 +318,46 @@ class DS100Meter : public modbus_controller::ModbusController {
     this->set_phase_sensor(this->maximum_demand_sensors_.total_reactive_, phase, sensor);
   }
 
+  // Resettable Demand sensors (current values)
+  void set_import_active_resettable_demand_sensor(uint8_t phase, sensor::Sensor *sensor) {
+    this->set_phase_sensor(this->resettable_demand_sensors_.import_active_, phase, sensor);
+  }
+  void set_export_active_resettable_demand_sensor(uint8_t phase, sensor::Sensor *sensor) {
+    this->set_phase_sensor(this->resettable_demand_sensors_.export_active_, phase, sensor);
+  }
+  void set_total_active_resettable_demand_sensor(uint8_t phase, sensor::Sensor *sensor) {
+    this->set_phase_sensor(this->resettable_demand_sensors_.total_active_, phase, sensor);
+  }
+  void set_import_reactive_resettable_demand_sensor(uint8_t phase, sensor::Sensor *sensor) {
+    this->set_phase_sensor(this->resettable_demand_sensors_.import_reactive_, phase, sensor);
+  }
+  void set_export_reactive_resettable_demand_sensor(uint8_t phase, sensor::Sensor *sensor) {
+    this->set_phase_sensor(this->resettable_demand_sensors_.export_reactive_, phase, sensor);
+  }
+  void set_total_reactive_resettable_demand_sensor(uint8_t phase, sensor::Sensor *sensor) {
+    this->set_phase_sensor(this->resettable_demand_sensors_.total_reactive_, phase, sensor);
+  }
+
+  // Resettable Maximum Demand sensors (peak values)
+  void set_import_active_resettable_maximum_demand_sensor(uint8_t phase, sensor::Sensor *sensor) {
+    this->set_phase_sensor(this->resettable_maximum_demand_sensors_.import_active_, phase, sensor);
+  }
+  void set_export_active_resettable_maximum_demand_sensor(uint8_t phase, sensor::Sensor *sensor) {
+    this->set_phase_sensor(this->resettable_maximum_demand_sensors_.export_active_, phase, sensor);
+  }
+  void set_total_active_resettable_maximum_demand_sensor(uint8_t phase, sensor::Sensor *sensor) {
+    this->set_phase_sensor(this->resettable_maximum_demand_sensors_.total_active_, phase, sensor);
+  }
+  void set_import_reactive_resettable_maximum_demand_sensor(uint8_t phase, sensor::Sensor *sensor) {
+    this->set_phase_sensor(this->resettable_maximum_demand_sensors_.import_reactive_, phase, sensor);
+  }
+  void set_export_reactive_resettable_maximum_demand_sensor(uint8_t phase, sensor::Sensor *sensor) {
+    this->set_phase_sensor(this->resettable_maximum_demand_sensors_.export_reactive_, phase, sensor);
+  }
+  void set_total_reactive_resettable_maximum_demand_sensor(uint8_t phase, sensor::Sensor *sensor) {
+    this->set_phase_sensor(this->resettable_maximum_demand_sensors_.total_reactive_, phase, sensor);
+  }
+
 #ifdef USE_TEXT_SENSOR
   // Text sensor - Serial Number
   void set_serial_number_text_sensor(text_sensor::TextSensor *sensor) { this->serial_number_text_sensor_ = sensor; }
@@ -463,6 +503,9 @@ class DS100Meter : public modbus_controller::ModbusController {
   void read_power_demand_sensors(const uint8_t *data, uint16_t base_register, PowerDemandSensors &sensors,
                                  float scale = 1.0f);
 
+  // Helper method to read resettable power demand sensors
+  void read_resettable_demand_sensors(const uint8_t *data, PowerDemandSensors &sensors, float scale = 1.0f);
+
   // Phase data (4 phases: Total, L1, L2, L3)
   std::array<DS100Phase, 4> phases_;  // Index 0=Total, 1=L1, 2=L2, 3=L3
 
@@ -507,9 +550,11 @@ class DS100Meter : public modbus_controller::ModbusController {
        {nullptr, nullptr, nullptr, nullptr},
        {nullptr, nullptr, nullptr, nullptr}}};
 
-  // Demand and Maximum Demand sensors (grouped by type)
-  PowerDemandSensors demand_sensors_;          // Current power demand
-  PowerDemandSensors maximum_demand_sensors_;  // Peak power demand
+  // Demand sensors (grouped by type)
+  PowerDemandSensors demand_sensors_;                     // Current power demand
+  PowerDemandSensors maximum_demand_sensors_;             // Peak power demand
+  PowerDemandSensors resettable_demand_sensors_;          // Resettable current power demand
+  PowerDemandSensors resettable_maximum_demand_sensors_;  // Resettable peak power demand
 
   // Resettable statistics sensors - Phase index 0=Total, 1=L1, 2=L2, 3=L3
   std::array<EnergySensors, 4> resettable_phase_energy_sensors_;

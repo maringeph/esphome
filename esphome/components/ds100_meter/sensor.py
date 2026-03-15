@@ -76,6 +76,29 @@ CONF_TOTAL_ACTIVE_MAXIMUM_DEMAND = "total_active_maximum_demand"
 CONF_IMPORT_REACTIVE_MAXIMUM_DEMAND = "import_reactive_maximum_demand"
 CONF_EXPORT_REACTIVE_MAXIMUM_DEMAND = "export_reactive_maximum_demand"
 CONF_TOTAL_REACTIVE_MAXIMUM_DEMAND = "total_reactive_maximum_demand"
+
+# Resettable demand sensors
+CONF_IMPORT_ACTIVE_RESETTABLE_DEMAND = "import_active_resettable_demand"
+CONF_EXPORT_ACTIVE_RESETTABLE_DEMAND = "export_active_resettable_demand"
+CONF_TOTAL_ACTIVE_RESETTABLE_DEMAND = "total_active_resettable_demand"
+CONF_IMPORT_REACTIVE_RESETTABLE_DEMAND = "import_reactive_resettable_demand"
+CONF_EXPORT_REACTIVE_RESETTABLE_DEMAND = "export_reactive_resettable_demand"
+CONF_TOTAL_REACTIVE_RESETTABLE_DEMAND = "total_reactive_resettable_demand"
+
+# Resettable maximum demand sensors
+CONF_IMPORT_ACTIVE_RESETTABLE_MAXIMUM_DEMAND = "import_active_resettable_maximum_demand"
+CONF_EXPORT_ACTIVE_RESETTABLE_MAXIMUM_DEMAND = "export_active_resettable_maximum_demand"
+CONF_TOTAL_ACTIVE_RESETTABLE_MAXIMUM_DEMAND = "total_active_resettable_maximum_demand"
+CONF_IMPORT_REACTIVE_RESETTABLE_MAXIMUM_DEMAND = (
+    "import_reactive_resettable_maximum_demand"
+)
+CONF_EXPORT_REACTIVE_RESETTABLE_MAXIMUM_DEMAND = (
+    "export_reactive_resettable_maximum_demand"
+)
+CONF_TOTAL_REACTIVE_RESETTABLE_MAXIMUM_DEMAND = (
+    "total_reactive_resettable_maximum_demand"
+)
+
 CONF_CURRENT_N = "current_n"
 
 # Line-to-line voltages
@@ -321,9 +344,99 @@ MAXIMUM_DEMAND_SCHEMA = cv.Schema(
     }
 )
 
+# Resettable demand sensor schemas (0.1W/0.1var resolution)
+RESETTABLE_DEMAND_SENSORS = {
+    CONF_IMPORT_ACTIVE_RESETTABLE_DEMAND: sensor.sensor_schema(
+        unit_of_measurement=UNIT_WATT,
+        accuracy_decimals=1,
+        device_class=DEVICE_CLASS_POWER,
+        state_class=STATE_CLASS_MEASUREMENT,
+    ),
+    CONF_EXPORT_ACTIVE_RESETTABLE_DEMAND: sensor.sensor_schema(
+        unit_of_measurement=UNIT_WATT,
+        accuracy_decimals=1,
+        device_class=DEVICE_CLASS_POWER,
+        state_class=STATE_CLASS_MEASUREMENT,
+    ),
+    CONF_TOTAL_ACTIVE_RESETTABLE_DEMAND: sensor.sensor_schema(
+        unit_of_measurement=UNIT_WATT,
+        accuracy_decimals=1,
+        device_class=DEVICE_CLASS_POWER,
+        state_class=STATE_CLASS_MEASUREMENT,
+    ),
+    CONF_IMPORT_REACTIVE_RESETTABLE_DEMAND: sensor.sensor_schema(
+        unit_of_measurement=UNIT_VOLT_AMPS_REACTIVE,
+        accuracy_decimals=1,
+        state_class=STATE_CLASS_MEASUREMENT,
+    ),
+    CONF_EXPORT_REACTIVE_RESETTABLE_DEMAND: sensor.sensor_schema(
+        unit_of_measurement=UNIT_VOLT_AMPS_REACTIVE,
+        accuracy_decimals=1,
+        state_class=STATE_CLASS_MEASUREMENT,
+    ),
+    CONF_TOTAL_REACTIVE_RESETTABLE_DEMAND: sensor.sensor_schema(
+        unit_of_measurement=UNIT_VOLT_AMPS_REACTIVE,
+        accuracy_decimals=1,
+        state_class=STATE_CLASS_MEASUREMENT,
+    ),
+}
+
+# Resettable maximum demand sensor schemas
+RESETTABLE_MAXIMUM_DEMAND_SENSORS = {
+    CONF_IMPORT_ACTIVE_RESETTABLE_MAXIMUM_DEMAND: sensor.sensor_schema(
+        unit_of_measurement=UNIT_WATT,
+        accuracy_decimals=1,
+        device_class=DEVICE_CLASS_POWER,
+        state_class=STATE_CLASS_MEASUREMENT,
+    ),
+    CONF_EXPORT_ACTIVE_RESETTABLE_MAXIMUM_DEMAND: sensor.sensor_schema(
+        unit_of_measurement=UNIT_WATT,
+        accuracy_decimals=1,
+        device_class=DEVICE_CLASS_POWER,
+        state_class=STATE_CLASS_MEASUREMENT,
+    ),
+    CONF_TOTAL_ACTIVE_RESETTABLE_MAXIMUM_DEMAND: sensor.sensor_schema(
+        unit_of_measurement=UNIT_WATT,
+        accuracy_decimals=1,
+        device_class=DEVICE_CLASS_POWER,
+        state_class=STATE_CLASS_MEASUREMENT,
+    ),
+    CONF_IMPORT_REACTIVE_RESETTABLE_MAXIMUM_DEMAND: sensor.sensor_schema(
+        unit_of_measurement=UNIT_VOLT_AMPS_REACTIVE,
+        accuracy_decimals=1,
+        state_class=STATE_CLASS_MEASUREMENT,
+    ),
+    CONF_EXPORT_REACTIVE_RESETTABLE_MAXIMUM_DEMAND: sensor.sensor_schema(
+        unit_of_measurement=UNIT_VOLT_AMPS_REACTIVE,
+        accuracy_decimals=1,
+        state_class=STATE_CLASS_MEASUREMENT,
+    ),
+    CONF_TOTAL_REACTIVE_RESETTABLE_MAXIMUM_DEMAND: sensor.sensor_schema(
+        unit_of_measurement=UNIT_VOLT_AMPS_REACTIVE,
+        accuracy_decimals=1,
+        state_class=STATE_CLASS_MEASUREMENT,
+    ),
+}
+
+RESETTABLE_DEMAND_SCHEMA = cv.Schema(
+    {
+        cv.Optional(sensor_type): schema
+        for sensor_type, schema in RESETTABLE_DEMAND_SENSORS.items()
+    }
+)
+
+RESETTABLE_MAXIMUM_DEMAND_SCHEMA = cv.Schema(
+    {
+        cv.Optional(sensor_type): schema
+        for sensor_type, schema in RESETTABLE_MAXIMUM_DEMAND_SENSORS.items()
+    }
+)
+
 CONF_DEMAND = "demand"
 CONF_MAXIMUM_DEMAND = "maximum_demand"
 CONF_RESETTABLE_STATISTICS = "resettable_statistics"
+CONF_RESETTABLE_DEMAND = "resettable_demand"
+CONF_RESETTABLE_MAXIMUM_DEMAND = "resettable_maximum_demand"
 # New unified statistics structure
 CONF_STATISTICS = "statistics"
 CONF_STATISTICS_TOTAL = "total"
@@ -544,6 +657,24 @@ CONFIG_SCHEMA = (
                     cv.Optional(CONF_L1): ENERGY_SCHEMA,
                     cv.Optional(CONF_L2): ENERGY_SCHEMA,
                     cv.Optional(CONF_L3): ENERGY_SCHEMA,
+                }
+            ),
+            # Resettable Demand - power demand values that can be reset
+            cv.Optional(CONF_RESETTABLE_DEMAND): cv.Schema(
+                {
+                    cv.Optional(CONF_TOTAL): RESETTABLE_DEMAND_SCHEMA,
+                    cv.Optional(CONF_L1): RESETTABLE_DEMAND_SCHEMA,
+                    cv.Optional(CONF_L2): RESETTABLE_DEMAND_SCHEMA,
+                    cv.Optional(CONF_L3): RESETTABLE_DEMAND_SCHEMA,
+                }
+            ),
+            # Resettable Maximum Demand - peak power demand values that can be reset
+            cv.Optional(CONF_RESETTABLE_MAXIMUM_DEMAND): cv.Schema(
+                {
+                    cv.Optional(CONF_TOTAL): RESETTABLE_MAXIMUM_DEMAND_SCHEMA,
+                    cv.Optional(CONF_L1): RESETTABLE_MAXIMUM_DEMAND_SCHEMA,
+                    cv.Optional(CONF_L2): RESETTABLE_MAXIMUM_DEMAND_SCHEMA,
+                    cv.Optional(CONF_L3): RESETTABLE_MAXIMUM_DEMAND_SCHEMA,
                 }
             ),
             # Unified statistics structure
@@ -1071,6 +1202,184 @@ async def to_code(config):
                     phase_max_demand[CONF_TOTAL_REACTIVE_MAXIMUM_DEMAND], device_obj
                 )
                 cg.add(var.set_total_reactive_maximum_demand_sensor(phase_idx, sens))
+
+    # Resettable Demand sensors - power demand values that can be reset
+    if CONF_RESETTABLE_DEMAND in config:
+        resettable_demand_config = config[CONF_RESETTABLE_DEMAND]
+
+        # Phase index mapping matching C++ arrays: total=0, l1=1, l2=2, l3=3
+        phase_mapping = {
+            CONF_TOTAL: 0,
+            CONF_L1: 1,
+            CONF_L2: 2,
+            CONF_L3: 3,
+        }
+
+        for phase_key, phase_idx in phase_mapping.items():
+            if phase_key not in resettable_demand_config:
+                continue
+
+            phase_resettable_demand = resettable_demand_config[phase_key]
+
+            if CONF_IMPORT_ACTIVE_RESETTABLE_DEMAND in phase_resettable_demand:
+                sens = await _register_sensor_with_device(
+                    phase_resettable_demand[CONF_IMPORT_ACTIVE_RESETTABLE_DEMAND],
+                    device_obj,
+                )
+                cg.add(var.set_import_active_resettable_demand_sensor(phase_idx, sens))
+
+            if CONF_EXPORT_ACTIVE_RESETTABLE_DEMAND in phase_resettable_demand:
+                sens = await _register_sensor_with_device(
+                    phase_resettable_demand[CONF_EXPORT_ACTIVE_RESETTABLE_DEMAND],
+                    device_obj,
+                )
+                cg.add(var.set_export_active_resettable_demand_sensor(phase_idx, sens))
+
+            if CONF_TOTAL_ACTIVE_RESETTABLE_DEMAND in phase_resettable_demand:
+                sens = await _register_sensor_with_device(
+                    phase_resettable_demand[CONF_TOTAL_ACTIVE_RESETTABLE_DEMAND],
+                    device_obj,
+                )
+                cg.add(var.set_total_active_resettable_demand_sensor(phase_idx, sens))
+
+            if CONF_IMPORT_REACTIVE_RESETTABLE_DEMAND in phase_resettable_demand:
+                sens = await _register_sensor_with_device(
+                    phase_resettable_demand[CONF_IMPORT_REACTIVE_RESETTABLE_DEMAND],
+                    device_obj,
+                )
+                cg.add(
+                    var.set_import_reactive_resettable_demand_sensor(phase_idx, sens)
+                )
+
+            if CONF_EXPORT_REACTIVE_RESETTABLE_DEMAND in phase_resettable_demand:
+                sens = await _register_sensor_with_device(
+                    phase_resettable_demand[CONF_EXPORT_REACTIVE_RESETTABLE_DEMAND],
+                    device_obj,
+                )
+                cg.add(
+                    var.set_export_reactive_resettable_demand_sensor(phase_idx, sens)
+                )
+
+            if CONF_TOTAL_REACTIVE_RESETTABLE_DEMAND in phase_resettable_demand:
+                sens = await _register_sensor_with_device(
+                    phase_resettable_demand[CONF_TOTAL_REACTIVE_RESETTABLE_DEMAND],
+                    device_obj,
+                )
+                cg.add(var.set_total_reactive_resettable_demand_sensor(phase_idx, sens))
+
+    # Resettable Maximum Demand sensors - peak power demand values that can be reset
+    if CONF_RESETTABLE_MAXIMUM_DEMAND in config:
+        resettable_max_demand_config = config[CONF_RESETTABLE_MAXIMUM_DEMAND]
+
+        # Phase index mapping matching C++ arrays: total=0, l1=1, l2=2, l3=3
+        phase_mapping = {
+            CONF_TOTAL: 0,
+            CONF_L1: 1,
+            CONF_L2: 2,
+            CONF_L3: 3,
+        }
+
+        for phase_key, phase_idx in phase_mapping.items():
+            if phase_key not in resettable_max_demand_config:
+                continue
+
+            phase_resettable_max_demand = resettable_max_demand_config[phase_key]
+
+            if (
+                CONF_IMPORT_ACTIVE_RESETTABLE_MAXIMUM_DEMAND
+                in phase_resettable_max_demand
+            ):
+                sens = await _register_sensor_with_device(
+                    phase_resettable_max_demand[
+                        CONF_IMPORT_ACTIVE_RESETTABLE_MAXIMUM_DEMAND
+                    ],
+                    device_obj,
+                )
+                cg.add(
+                    var.set_import_active_resettable_maximum_demand_sensor(
+                        phase_idx, sens
+                    )
+                )
+
+            if (
+                CONF_EXPORT_ACTIVE_RESETTABLE_MAXIMUM_DEMAND
+                in phase_resettable_max_demand
+            ):
+                sens = await _register_sensor_with_device(
+                    phase_resettable_max_demand[
+                        CONF_EXPORT_ACTIVE_RESETTABLE_MAXIMUM_DEMAND
+                    ],
+                    device_obj,
+                )
+                cg.add(
+                    var.set_export_active_resettable_maximum_demand_sensor(
+                        phase_idx, sens
+                    )
+                )
+
+            if (
+                CONF_TOTAL_ACTIVE_RESETTABLE_MAXIMUM_DEMAND
+                in phase_resettable_max_demand
+            ):
+                sens = await _register_sensor_with_device(
+                    phase_resettable_max_demand[
+                        CONF_TOTAL_ACTIVE_RESETTABLE_MAXIMUM_DEMAND
+                    ],
+                    device_obj,
+                )
+                cg.add(
+                    var.set_total_active_resettable_maximum_demand_sensor(
+                        phase_idx, sens
+                    )
+                )
+
+            if (
+                CONF_IMPORT_REACTIVE_RESETTABLE_MAXIMUM_DEMAND
+                in phase_resettable_max_demand
+            ):
+                sens = await _register_sensor_with_device(
+                    phase_resettable_max_demand[
+                        CONF_IMPORT_REACTIVE_RESETTABLE_MAXIMUM_DEMAND
+                    ],
+                    device_obj,
+                )
+                cg.add(
+                    var.set_import_reactive_resettable_maximum_demand_sensor(
+                        phase_idx, sens
+                    )
+                )
+
+            if (
+                CONF_EXPORT_REACTIVE_RESETTABLE_MAXIMUM_DEMAND
+                in phase_resettable_max_demand
+            ):
+                sens = await _register_sensor_with_device(
+                    phase_resettable_max_demand[
+                        CONF_EXPORT_REACTIVE_RESETTABLE_MAXIMUM_DEMAND
+                    ],
+                    device_obj,
+                )
+                cg.add(
+                    var.set_export_reactive_resettable_maximum_demand_sensor(
+                        phase_idx, sens
+                    )
+                )
+
+            if (
+                CONF_TOTAL_REACTIVE_RESETTABLE_MAXIMUM_DEMAND
+                in phase_resettable_max_demand
+            ):
+                sens = await _register_sensor_with_device(
+                    phase_resettable_max_demand[
+                        CONF_TOTAL_REACTIVE_RESETTABLE_MAXIMUM_DEMAND
+                    ],
+                    device_obj,
+                )
+                cg.add(
+                    var.set_total_reactive_resettable_maximum_demand_sensor(
+                        phase_idx, sens
+                    )
+                )
 
     # Resettable Statistics sensors - energy values that can be reset
     # Unified handling: Total=0, L1=1, L2=2, L3=3
