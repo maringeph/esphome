@@ -59,6 +59,7 @@ class Modbus : public uart::UARTDevice, public Component {
   void set_send_wait_time(uint16_t time_in_ms) { this->send_wait_time_ = time_in_ms; }
   void set_turnaround_time(uint16_t time_in_ms) { this->turnaround_delay_ms_ = time_in_ms; }
   void set_disable_crc(bool disable_crc) { this->disable_crc_ = disable_crc; }
+  void set_add_rx_frame_delay(uint16_t delay_ms) { this->add_rx_frame_delay_ms_ = delay_ms; }
 
   ModbusRole role;
 
@@ -73,6 +74,7 @@ class Modbus : public uart::UARTDevice, public Component {
   uint32_t last_send_{0};
   uint32_t last_send_tx_offset_{0};
   uint16_t frame_delay_ms_{5};
+  uint16_t add_rx_frame_delay_ms_{0};
   uint16_t long_rx_buffer_delay_ms_{0};
   uint16_t send_wait_time_{250};
   uint16_t turnaround_delay_ms_{100};
@@ -95,8 +97,8 @@ class ModbusDevice {
   void set_address(uint8_t address) { address_ = address; }
   virtual void on_modbus_data(const std::vector<uint8_t> &data) = 0;
   virtual void on_modbus_error(uint8_t function_code, uint8_t exception_code) {}
-  virtual void on_modbus_read_registers(uint8_t function_code, uint16_t start_address, uint16_t number_of_registers){};
-  virtual void on_modbus_write_registers(uint8_t function_code, const std::vector<uint8_t> &data){};
+  virtual void on_modbus_read_registers(uint8_t function_code, uint16_t start_address, uint16_t number_of_registers) {};
+  virtual void on_modbus_write_registers(uint8_t function_code, const std::vector<uint8_t> &data) {};
   void send(uint8_t function, uint16_t start_address, uint16_t number_of_entities, uint8_t payload_len = 0,
             const uint8_t *payload = nullptr) {
     this->parent_->send(this->address_, function, start_address, number_of_entities, payload_len, payload);

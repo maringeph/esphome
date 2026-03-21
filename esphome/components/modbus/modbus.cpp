@@ -44,10 +44,16 @@ void Modbus::loop() {
   // If the response frame is finished (including interframe delay) - we timeout.
   // The long_rx_buffer_delay accounts for long responses (larger than the UART rx_full_threshold) to avoid timeouts
   // when the buffer is filling the back half of the response
-  const uint16_t timeout = std::max(
+  const uint16_t base_timeout = std::max(
       (uint16_t) this->frame_delay_ms_,
       (uint16_t) (this->rx_buffer_.size() >= this->parent_->get_rx_full_threshold() ? this->long_rx_buffer_delay_ms_
                                                                                     : 0));
+
+  // The add_rx_frame_delay handles devices that violate the Modbus specification by sending
+  // fragmented responses with inter-character gaps larger than 3.5 characters (the frame delimiter).
+  // This delay is only applied when we already received partial data - indicating a fragmented response.
+  uint16_t timeout = base_timeout + (!this->rx_buffer_.empty() ? this->add_rx_frame_delay_ms_ : 0);
+
   // We use millis() here and elsewhere instead of App.get_loop_component_start_time() to avoid stale timestamps
   // It's critical in all timestamp comparisons that the left timestamp comes before the right one in time
   // If we use a cached value in place of millis() and last_modbus_byte_ is updated inside our loop
@@ -323,9 +329,10 @@ void Modbus::dump_config() {
                 "  Send Wait Time: %d ms\n"
                 "  Turnaround Time: %d ms\n"
                 "  Frame Delay: %d ms\n"
+                "  Add RX Frame Delay: %d ms\n"
                 "  Long Rx Buffer Delay: %d ms\n"
                 "  CRC Disabled: %s",
-                this->send_wait_time_, this->turnaround_delay_ms_, this->frame_delay_ms_,
+                this->send_wait_time_, this->turnaround_delay_ms_, this->frame_delay_ms_, this->add_rx_frame_delay_ms_,
                 this->long_rx_buffer_delay_ms_, YESNO(this->disable_crc_));
   LOG_PIN("  Flow Control Pin: ", this->flow_control_pin_);
 }
