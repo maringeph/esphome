@@ -13,7 +13,18 @@ from esphome.const import (
 )
 from esphome.core import CORE
 
-from .const import KEY_HOST, KEY_HOST_OTA, KEY_HOST_USE_ADDRESS
+from .const import KEY_HOST, KEY_HOST_OTA, KEY_HOST_USE_ADDRESS, KEY_HOST_ARCH
+
+CONF_ARCH = "arch"
+
+# Cross-compiler triplets for each target architecture
+COMPILER_TRIPLETS = {
+    "native": None,
+    "aarch64": "aarch64-linux-gnu",
+    "armv7l": "arm-linux-gnueabihf",
+    "x86_64": "x86_64-linux-gnu",
+    "i686": "i686-linux-gnu",
+}
 
 # force import gpio to register pin schema
 from .gpio import host_pin_to_code  # noqa
@@ -42,6 +53,8 @@ def set_core_data(config):
         CORE.data[KEY_HOST][KEY_HOST_OTA] = config[CONF_OTA]
     if CONF_USE_ADDRESS in config:
         CORE.data[KEY_HOST][KEY_HOST_USE_ADDRESS] = config[CONF_USE_ADDRESS]
+    if CONF_ARCH in config:
+        CORE.data[KEY_HOST][KEY_HOST_ARCH] = config[CONF_ARCH]
 
     return config
 
@@ -52,6 +65,9 @@ CONFIG_SCHEMA = cv.All(
             cv.Optional(CONF_MAC_ADDRESS, default="98:35:69:ab:f6:79"): cv.mac_address,
             cv.Optional(CONF_OTA): cv.boolean,
             cv.Optional(CONF_USE_ADDRESS): cv.string_strict,
+            cv.Optional(CONF_ARCH, default="native"): cv.one_of(
+                *COMPILER_TRIPLETS.keys()
+            ),
         }
     ),
     _validate_host_config,
