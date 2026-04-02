@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from esphome.const import __version__
 from esphome.core import CORE
 from esphome.helpers import mkdir_p, read_file, write_file_if_changed
@@ -91,10 +93,46 @@ Import("env")
 """
 
 
+def _get_host_cross_compile_lib_path() -> Path | None:
+    """Get the library path for host cross-compilation if configured.
+
+    Returns the path to the downloaded sysroot libraries if:
+    - We're building for the host platform
+    - A non-native architecture is configured (cross-compilation)
+    - The sysroot directory exists
+
+    Returns None otherwise.
+    """
+    if not CORE.is_host:
+        return None
+
+    from esphome.components.host.const import KEY_HOST, KEY_HOST_ARCH
+    from esphome.platformio_api import _get_cross_sysroot_dir
+
+    arch = CORE.data.get(KEY_HOST, {}).get(KEY_HOST_ARCH, "native")
+    if arch == "native":
+        return None
+
+    sysroot = _get_cross_sysroot_dir(arch)
+    lib_dir = sysroot / "usr" / "lib"
+
+    if lib_dir.exists():
+        return lib_dir
+
+    return None
+
+
 def write_cxx_flags_script() -> None:
     path = CORE.relative_build_path(CXX_FLAGS_FILE_NAME)
     contents = CXX_FLAGS_FILE_CONTENTS
     if not CORE.is_host:
         contents += 'env.Append(CXXFLAGS=["-Wno-volatile"])'
         contents += "\n"
+    else:
+        # Host platform: check for cross-compilation and add library path if needed
+        lib_path = _get_host_cross_compile_lib_path()
+        if lib_path:
+            # Add library search path for the linker
+            contents += f'env.Append(LINKFLAGS=["-L{lib_path}"])'
+            contents += "\n"
     write_file_if_changed(path, contents)

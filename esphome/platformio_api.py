@@ -1,12 +1,16 @@
 from dataclasses import dataclass
+import html.parser
 import json
 import logging
+import lzma
 import os
 from pathlib import Path
 import re
 import subprocess
+import tarfile
 import time
 from typing import Any
+import urllib.request
 
 from esphome.const import CONF_COMPILE_PROCESS_LIMIT, CONF_ESPHOME, KEY_CORE
 from esphome.core import CORE, EsphomeError
@@ -156,6 +160,208 @@ class PlatformioLogFilter(logging.Filter):
         return self._PATTERN.match(record.getMessage()) is None
 
 
+# Mirror URLs for cross-compilation library packages
+_ARCH_MIRRORS = {
+    "aarch64": "http://mirror.archlinuxarm.org/aarch64/core/",
+    "armv7l": "http://mirror.archlinuxarm.org/armv7h/core/",
+}
+
+# Required cross-compilation packages (package name prefix)
+_CROSS_PACKAGES = ["openssl"]
+
+
+class _PackageLinkParser(html.parser.HTMLParser):
+    """Parse package links from Arch Linux ARM mirror directory listing."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.packages: list[str] = []
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        if tag == "a":
+            for attr_name, attr_value in attrs:
+                if (
+                    attr_name == "href"
+                    and attr_value
+                    and attr_value.endswith(".pkg.tar.xz")
+                ):
+                    self.packages.append(attr_value)
+
+
+def _get_cross_sysroot_dir(arch: str) -> Path:
+    """Get the cross-compilation sysroot directory for a given architecture.
+
+    The sysroot is cached in ~/.esphome/cross-sysroot/<arch>/ to avoid
+    re-downloading packages between builds.
+
+    Args:
+        arch: Target architecture (e.g., "aarch64", "armv7l")
+
+    Returns:
+        Path to the sysroot directory.
+    """
+    return Path.home() / ".esphome" / "cross-sysroot" / arch
+
+
+def _ensure_cross_packages(arch: str) -> Path:
+    """Download and cache cross-compilation library packages for the target architecture.
+
+    Downloads required packages (like OpenSSL) from Arch Linux ARM mirrors
+    and extracts them to a persistent sysroot directory. Uses marker files
+    to avoid re-downloading already installed packages.
+
+    Args:
+        arch: Target architecture (e.g., "aarch64", "armv7l")
+
+    Returns:
+        Path to the sysroot directory containing the extracted packages.
+
+    Raises:
+        EsphomeError: If the architecture is not supported, or if downloading
+            or extraction fails.
+    """
+    sysroot = _get_cross_sysroot_dir(arch)
+    mirror_url = _ARCH_MIRRORS.get(arch)
+    if not mirror_url:
+        raise EsphomeError(
+            f"No cross-compilation mirror configured for architecture '{arch}'. "
+            f"Supported architectures: {', '.join(_ARCH_MIRRORS.keys())}"
+        )
+
+    sysroot.mkdir(parents=True, exist_ok=True)
+
+    for package_name in _CROSS_PACKAGES:
+        marker = sysroot / f".{package_name}-installed"
+        if marker.exists():
+            continue
+
+        _LOGGER.info("Downloading %s for %s cross-compilation...", package_name, arch)
+
+        # Fetch mirror directory listing to find package URL
+        try:
+            with urllib.request.urlopen(mirror_url, timeout=30) as response:
+                listing = response.read().decode()
+        except Exception as e:
+            raise EsphomeError(
+                f"Failed to fetch package list from {mirror_url}: {e}"
+            ) from e
+
+        # Parse links to find the package
+        parser = _PackageLinkParser()
+        parser.feed(listing)
+
+        pkg_filename = None
+        for pkg in parser.packages:
+            if pkg.startswith(f"{package_name}-"):
+                pkg_filename = pkg
+                break
+
+        if not pkg_filename:
+            raise EsphomeError(
+                f"Could not find package '{package_name}' at {mirror_url}"
+            )
+
+        # Download the package
+        pkg_url = f"{mirror_url}{pkg_filename}"
+        pkg_path = sysroot / pkg_filename
+        try:
+            _LOGGER.info("Downloading %s", pkg_url)
+            urllib.request.urlretrieve(pkg_url, pkg_path)
+        except Exception as e:
+            raise EsphomeError(f"Failed to download {pkg_url}: {e}") from e
+
+        # Extract the package
+        try:
+            with lzma.open(pkg_path) as xz:
+                with tarfile.open(fileobj=xz) as tar:
+                    # Only extract usr/ directory (skip etc/, .PKGINFO, etc.)
+                    members = [m for m in tar.getmembers() if m.name.startswith("usr/")]
+                    tar.extractall(path=sysroot, members=members)
+        except Exception as e:
+            raise EsphomeError(f"Failed to extract {pkg_filename}: {e}") from e
+        finally:
+            # Clean up downloaded archive
+            pkg_path.unlink(missing_ok=True)
+
+        # Write marker file to track installed version
+        marker.write_text(pkg_filename, encoding="utf-8")
+        _LOGGER.info("Installed %s for %s", package_name, arch)
+
+    return sysroot
+
+
+def _setup_cross_compile_path() -> Path | None:
+    """Set up PATH for cross-compilation on host platform.
+
+    PlatformIO's native platform discovers gcc/g++ by searching PATH for binaries
+    named "gcc", "g++", and "cc". To make it find the cross-compiler, we create
+    a temporary directory with symlinks (gcc -> cross-gcc, g++ -> cross-g++, etc.)
+    and prepend it to PATH.
+
+    Returns the temporary directory path, or None if not cross-compiling.
+    """
+    if not CORE.is_host:
+        return None
+
+    from esphome.components.host import COMPILER_TRIPLETS
+    from esphome.components.host.const import KEY_HOST, KEY_HOST_ARCH
+
+    arch = CORE.data.get(KEY_HOST, {}).get(KEY_HOST_ARCH, "native")
+    triplet = COMPILER_TRIPLETS.get(arch)
+    if not triplet:
+        return None
+
+    # Create a directory for cross-compiler symlinks inside the build directory
+    cc_dir = CORE.relative_build_path("cross-compile-bin")
+    cc_dir.mkdir(parents=True, exist_ok=True)
+
+    # Map of symlink name -> cross-compiler binary
+    symlinks = {
+        "gcc": f"{triplet}-gcc",
+        "cc": f"{triplet}-gcc",
+        "g++": f"{triplet}-g++",
+        "c++": f"{triplet}-g++",
+        "ar": f"{triplet}-ar",
+        "ranlib": f"{triplet}-ranlib",
+        "ld": f"{triplet}-ld",
+    }
+
+    import shutil
+
+    for name, target in symlinks.items():
+        link_path = cc_dir / name
+        # Remove existing symlink if it points to wrong target
+        if link_path.is_symlink() or link_path.exists():
+            link_path.unlink()
+        # Find the actual binary path
+        target_path = shutil.which(target)
+        if target_path is None:
+            raise EsphomeError(
+                f"Cross-compiler '{target}' not found in PATH. "
+                f"Install it with: apt install gcc-{triplet} g++-{triplet}"
+            )
+        link_path.symlink_to(target_path)
+
+    # Prepend cross-compiler directory to PATH
+    os.environ["PATH"] = f"{cc_dir.absolute()}{os.pathsep}{os.environ.get('PATH', '')}"
+
+    # Set up cross-compilation sysroot with required libraries
+    sysroot = _ensure_cross_packages(arch)
+
+    # Set GCC environment variables for include paths.
+    # Headers: /usr/include has platform-independent headers (e.g., openssl/evp.h)
+    host_include = "/usr/include"
+
+    # GCC checks these env vars for additional include search paths
+    os.environ["C_INCLUDE_PATH"] = host_include
+    os.environ["CPLUS_INCLUDE_PATH"] = host_include
+
+    _LOGGER.info(
+        "Cross-compiling for %s using %s (sysroot: %s)", arch, triplet, sysroot
+    )
+    return cc_dir
+
+
 def run_platformio_cli(*args, **kwargs) -> str | int:
     os.environ["PLATFORMIO_FORCE_COLOR"] = "true"
     os.environ["PLATFORMIO_BUILD_DIR"] = str(CORE.relative_pioenvs_path().absolute())
@@ -166,6 +372,15 @@ def run_platformio_cli(*args, **kwargs) -> str | int:
     os.environ.setdefault("PYTHONWARNINGS", "ignore::SyntaxWarning")
     # Increase uv retry count to handle transient network errors (default is 3)
     os.environ.setdefault("UV_HTTP_RETRIES", "10")
+
+    # Set up cross-compiler for host platform if configured.
+    # PlatformIO's native platform deletes CC/CXX from the SCons environment and
+    # re-discovers gcc/g++ via env.Tool("gcc")/env.Tool("g++"), which calls
+    # env.Detect() to find "gcc"/"g++" by name in PATH. To make it find the
+    # cross-compiler, we create symlinks named "gcc"/"g++"/"cc" pointing to the
+    # cross-compiler and prepend that directory to PATH.
+    cross_compile_dir = _setup_cross_compile_path()
+
     cmd = ["platformio"] + list(args)
 
     if not CORE.verbose:
