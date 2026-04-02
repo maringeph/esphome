@@ -93,33 +93,49 @@ Import("env")
 """
 
 
-def _get_host_cross_compile_lib_path() -> Path | None:
-    """Get the library path for host cross-compilation if configured.
+def _get_host_cross_compile_info() -> tuple[Path | None, Path | None]:
+    """Get cross-compilation library path and static libm for host builds.
 
-    Returns the path to the downloaded sysroot libraries if:
-    - We're building for the host platform
-    - A non-native architecture is configured (cross-compilation)
-    - The sysroot directory exists
+    Returns a tuple of:
+    - Path to the downloaded sysroot libraries (for OpenSSL etc.), or None
+    - Path to the static libm archive (libm-*.a), or None
 
-    Returns None otherwise.
+    Both are None when not cross-compiling (native arch or non-host platform).
     """
     if not CORE.is_host:
-        return None
+        return None, None
 
+    from esphome.components.host import COMPILER_TRIPLETS
     from esphome.components.host.const import KEY_HOST, KEY_HOST_ARCH
     from esphome.platformio_api import _get_cross_sysroot_dir
 
     arch = CORE.data.get(KEY_HOST, {}).get(KEY_HOST_ARCH, "native")
     if arch == "native":
-        return None
+        return None, None
 
+    # Sysroot for downloaded libraries (e.g., OpenSSL)
+    sysroot_lib = None
     sysroot = _get_cross_sysroot_dir(arch)
-    lib_dir = sysroot / "usr" / "lib"
+    sysroot_lib_dir = sysroot / "usr" / "lib"
+    if sysroot_lib_dir.exists():
+        sysroot_lib = sysroot_lib_dir
 
-    if lib_dir.exists():
-        return lib_dir
+    # Find static libm archive from cross-compiler toolchain.
+    # The cross-compiler's libm.a is a linker script referencing absolute paths
+    # (e.g., /lib/libm-2.41.a) which the linker resolves relative to --sysroot.
+    # However, g++ implicitly links -lm AFTER our flags, overriding our
+    # -Bstatic with a dynamic resolution. Passing the .a file directly as a
+    # linker input bypasses this issue entirely.
+    static_libm = None
+    triplet = COMPILER_TRIPLETS.get(arch)
+    if triplet:
+        toolchain_lib = Path(f"/usr/{triplet}/lib")
+        # Find libm-<version>.a (the actual archive, not the linker script)
+        candidates = sorted(toolchain_lib.glob("libm-*.a"))
+        if candidates:
+            static_libm = candidates[-1]  # newest version
 
-    return None
+    return sysroot_lib, static_libm
 
 
 def write_cxx_flags_script() -> None:
@@ -129,10 +145,19 @@ def write_cxx_flags_script() -> None:
         contents += 'env.Append(CXXFLAGS=["-Wno-volatile"])'
         contents += "\n"
     else:
-        # Host platform: check for cross-compilation and add library path if needed
-        lib_path = _get_host_cross_compile_lib_path()
-        if lib_path:
-            # Add library search path for the linker
-            contents += f'env.Append(LINKFLAGS=["-L{lib_path}"])'
-            contents += "\n"
+        # Host platform: check for cross-compilation and add linker flags
+        sysroot_lib, static_libm = _get_host_cross_compile_info()
+        if sysroot_lib:
+            # Add library search path for cross-compiled libraries (OpenSSL etc.)
+            contents += f'env.Append(LIBPATH=["{sysroot_lib}"])\n'
+        if static_libm:
+            # Link static libm to avoid GLIBC version mismatch on target.
+            # The build host's glibc may be newer than the target's (e.g., host
+            # has glibc 2.41 with fmod@GLIBC_2.38, but target only has 2.36).
+            # We pass the full path to the archive directly because:
+            # 1. -Bstatic -lm -Bdynamic doesn't work: g++ appends implicit -lm
+            #    AFTER --end-group, re-resolving fmod dynamically
+            # 2. libm.a is a linker script with absolute paths that may not
+            #    resolve correctly in all toolchain configurations
+            contents += f'env.Append(_LIBFLAGS=" {static_libm}")\n'
     write_file_if_changed(path, contents)
