@@ -64,6 +64,9 @@ int HOT IRAM_ATTR GPIOOneWireBus::reset_int() {
 }
 
 void HOT IRAM_ATTR GPIOOneWireBus::write_bit_(bool bit) {
+  if (!this->pin_.digital_read()) {
+    ESP_LOGW(TAG, "write_bit_() called while bus was low, this should not happen");
+  }
   // drive bus low
   this->pin_.digital_write(false);
 
